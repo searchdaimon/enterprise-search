@@ -36,15 +36,15 @@ int main (int argc, char *argv[]) {
 			buff[strlen(buff) -1] = '\0';
 		}
 
-		//normaliserer
+		//normalize
 		if (!url_normalization(buff,sizeof(buff))) {
 	                printf("Error: bad status from url_normalization. Url : \"%\"s\n",buff);
 			continue;
 	        }
 
 		if (strncmp(buff,"ms:",3) == 0) {
-			//hvis vi har på fårhånd manuelt funnet ut at de er ok vil de starte på "ms:"
-			//vi skal ikke gjøre noen tester på om de er ok eller ikke
+			//if we have manually determined beforehand that they are ok they will start with "ms:"
+			//we should not run any tests on whether they are ok or not
 			//strcpy(buff,buff+3);
 			memmove(buff,buff+3,strlen(buff));
 			//printf("ms: \"%s\"\n",buff);
@@ -54,15 +54,15 @@ int main (int argc, char *argv[]) {
 			continue;
 		}
 		
-		//hvis count er større en maks poster vi skal ha i filen setter vi den til 0, slik at en ny blir åpnet
+		//if count is larger than the max records we want in the file we set it to 0, so that a new one is opened
                 if (postcount > 4000000) {
                         postcount = 0;
                 }
 
 		
-		//hvsi vi har post cont 0 er vi på begyndelsen til en ny fil, og må åpne denne
+		//if we have record count 0 we are at the beginning of a new file, and must open it
 		if (postcount == 0) {
-			//hvis dette ikke er den første filen lukker vi den vi har åpen		
+			//if this is not the first file we close the one we have open		
 			if (filcount != 0) {
 				fclose(NYEFILE);
 			}
@@ -81,7 +81,7 @@ int main (int argc, char *argv[]) {
 		strncpy(NyeUrlPost.url,buff,sizeof(NyeUrlPost.url));
 
 		/***********************************************************************
-		Kalkulerer sha1 verdi
+		Calculate the sha1 value
 		************************************************************************/
 		err = SHA1Reset(&sha);
         	if (err) {

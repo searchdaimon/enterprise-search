@@ -207,7 +207,7 @@ char *generate_summary(char summary_cfg, query_array query_parsed, char *body, i
 	  ++Ax:
 	    Snippet for database-records:
 		generate_snippet(query_parsed, body, body_len, &summary, "<b>", "</b>" , db_snippet, SUMMARY_LEN, 4, 80);
-	    De to siste tallene er maks antall rader og maks antall tegn per kolonne.
+	    The last two numbers are the max number of rows and the max number of chars per column.
 	*/
 	else { 
 		bblog(WARN, "Unknown snippet/summery cfg: %d", summary_cfg); 
@@ -231,7 +231,7 @@ void utfclean(char test[],int len) {
 
 void fn( char* word, int pos, enum parsed_unit pu, enum parsed_unit_flag puf, void* wordlist )
 {
-	//trenger ikke å se på hvert ord her
+	//no need to look at every word here
 /*
     if (pos > 25) return;
 
@@ -407,8 +407,8 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 	bblog(INFO, "searchkernel: popResult(antall=%i, DocID=%i, subname=%s)",  antall, DocID, subname->subname);
 
-	//ser om vi har bilde, og at det ikke er på 65535 bytes. (65535  er maks støresle 
-	//for unsigned short. Er bilde så stort skyldes det en feil)
+	//check if we have an image, and that it is not 65535 bytes. (65535 is the max size
+	//for unsigned short. If an image is that large it is due to an error)
 	if (((*Sider).DocumentIndex.imageSize != 0) && ((*Sider).DocumentIndex.imageSize != 65535)) {
 
 		imagep =  getImagepFromRadres((*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2);
@@ -435,16 +435,16 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 		(*Sider).thumbnale[0] = '\0';
 	}
 
-	//tester om vi har en url
+	//test whether we have a url
 	if ((*Sider).DocumentIndex.Url[0] == '\0') {
 		bblog(WARN, "Cant read url for DocID=%i-%i, Subname=\"%s\"", DocID,rLotForDOCid(DocID),subname->subname);
 		returnStatus = 0;
 	}
-	//tester om vi har noe innhold
+	//test whether we have any content
 	else if ((*Sider).DocumentIndex.htmlSize2 == 0) {
-		//har ingen reposetroy data, ikke kravlet anda?
+		//no repository data, not crawled yet?
 
-		//setter utlen som title
+		//set the url as the title
 		strscpy((*Sider).title,(*Sider).DocumentIndex.Url,sizeof((*Sider).title));
 		(*Sider).DocumentIndex.AdultWeight = 0;
 
@@ -458,7 +458,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 		
 
 		if ((*Sider).DocumentIndex.response == 404) {
-			//404 sider kan dukke opp i anchor indeksen, da den som kjent er basert på data som ikke ser på om siden er crawlet
+			//404 pages can show up in the anchor index, since it is as known based on data that doesn't check whether the page is crawled
 			bblog(WARN, "Page has 404 status %i-%i", DocID,rLotForDOCid(DocID));
 			(*SiderHeder).filtered++;
 			returnStatus = 0;
@@ -515,7 +515,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				}
 				free(resbuf);
 			} else if (rReadHtml(&htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
-				//kune ikke lese html. Pointer owerflow ?
+				//could not read html. Pointer overflow ?
 				bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
 				sprintf((*Sider).description,"Html error. Can't read html");
 				(*Sider).title[0] = '\0';
@@ -545,10 +545,10 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				else {
 					sprintf((*Sider).title,"301 Permanent redirect.");
 				}
-				//temp: er sider som gir binørutput her, må filtreres
+				//temp: there are pages that give binary output here, must be filtered
 
-				//hvis det er forholdsvis få tegn her så er det nokk en url. Hvis det 
-				//er mange er det nokk binær støy
+				//if there are relatively few chars here then it is probably a url. If there
+				//are many it is probably binary noise
 				if (strlen(htmlBuffer) < 100) {
 					sprintf((*Sider).description,"Redirecting to %200s",htmlBuffer);
 				}
@@ -604,7 +604,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				bblog(DEBUGINFO, "don't hav Summary on disk. Will hav to read html");	
 				if (rReadHtml(&htmlBuffer,&htmlBufferSize,(*Sider).DocumentIndex.RepositoryPointer,(*Sider).DocumentIndex.htmlSize2,DocID,subname->subname,ReposetoryHeader,acl_allow,acl_denied,(*Sider).DocumentIndex.imageSize, &url, &attributes) != 1) {
 					//printf("Fii faa foo: %s\n", url);
-					//kune ikke lese html. Pointer owerflow ?
+					//could not read html. Pointer overflow ?
 					bblog(ERROR, "error reding html for %s", (*Sider).DocumentIndex.Url);
 					sprintf((*Sider).description,"Html error. Can't read html");
 					(*Sider).title[0] = '\0';
@@ -638,7 +638,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				(*Sider).HtmlPreparsed = 0;
 
 				/*
-				//Debug: får å sette vedier riktig hvis man skal hake ut sumery og hilitning
+				//Debug: to set values correctly if you want to test summary and highlighting
 				metadesc = metakeyw = NULL;
 
 				titleaa = malloc(512);
@@ -652,7 +652,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 
 			char        *summary;
-			//temp: bug generate_snippet er ikke ut til å takle og ha en tom body
+			//temp: bug generate_snippet doesn't seem to handle having an empty body
 			if (strlen(body) == 0) {
 				(*Sider).description[0] = '\0';
 			}
@@ -712,8 +712,8 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 				utfclean((*Sider).description,sizeof((*Sider).description));
 
-				//sjekker om vi har en & på slutten. Hvis vi har skal det også være en ;. Dette får å ungå at
-				//vi har klart å kappe av før ; en kommer, eks: v Frp&rsquo ...
+				//check whether we have a & at the end. If we do there should also be a ;. This is to avoid that
+				//we have managed to cut off before the ; comes, e.g.: v Frp&rsquo ...
 				char *andcp;
 				if ((andcp = strrchr((*Sider).description,'&')) != NULL) {
 					if (strchr(andcp,';') == NULL) {
@@ -749,11 +749,11 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				strscpy(&((*Sider).title[0]),titleaa,copylen);
 
 
-				//søker oss til siste space , eller ; og avslutter der
+				//search to the last space, or ; and end there
 				if ((strpointer = strrchr((*Sider).title,' ')) != NULL) {
-					//midlertidg fiks på at title altid begynner med space på bb.
-					//vil dermed altidd føre til treff i første tegn, og
-					// dermed bare vise ".." som title
+					//temporary fix for the title always starting with a space on bb.
+					//this would otherwise always cause a hit in the first char, and
+					// thus only show ".." as the title
 					if ( (strpointer - (*Sider).title) > 10) {
 						bblog(DEBUGINFO, "chop");
 						strpointer[0] = '\0';
@@ -763,7 +763,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 					#endif
 				}						
 				else if ((strpointer = strrchr((*Sider).title,';')) != NULL) {
-					++strpointer; //pekeren peker på semikolonet. SKal ha det med, så må legge il en
+					++strpointer; //the pointer points at the semicolon. We want to include it, so add one
 					strpointer[0] = '\0';
 
 					#ifdef DEBUG
@@ -789,7 +789,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 				gettimeofday(&start_time, NULL);
 			#endif
 
-			//temp: ser ut til at vi får problemer her hvis vi har status "Html error. Can't read"
+			//temp: seems we get problems here if we have status "Html error. Can't read"
 			if (titleaa != NULL) free(titleaa);
 			if (body != NULL) free(body);
 			if (metakeyw != NULL) free(metakeyw);
@@ -805,7 +805,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 			#endif
 
 			/* Duplicates? */
-			// Byttet fra list til vector da vector er raskere (ax).
+			// Switched from list to vector since vector is faster (ax).
 			struct duplicate_docids *dup = hashtable_search(PagesResults->crc32maphash, &Sider->DocumentIndex.crc32);
 			if (dup != NULL && dup->V != NULL && vector_size(dup->V)>1) {
 				int k;
@@ -821,7 +821,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 
 					if (dup_docid == DocID && !strcmp(dup_subname, subname->subname))
 					    {
-						// Hvis dette er docid-en som vises, skal den ikke filtreres.
+						// If this is the docid being shown, it should not be filtered.
 						continue;
 					    }
 
@@ -917,7 +917,7 @@ int popResult(struct SiderFormat *Sider, struct SiderHederFormat *SiderHeder,int
 			}
 		}
 		else {
-			//ved 601 og andre feil der vi ikke har crawlet
+			//at 601 and other errors where we have not crawled
 			bblog(WARN, "Status error for page %i-%i. Status %i", DocID,rLotForDOCid(DocID),(*Sider).DocumentIndex.response);
 			sprintf((*Sider).title,"%i error.",(*Sider).DocumentIndex.response);
 			returnStatus = 0;
@@ -958,7 +958,7 @@ int nextIndex(struct PagesResultsFormat *PagesResults) {
 		bblog(DEBUGINFO, "nextIndex: filtered (%i) > 300",(*PagesResults).filtered);
 		forreturn = -1;
 	}
-	//mister vi en her? var før >, bytet til >=
+	//do we lose one here? was > before, changed to >=
 	else if ((*PagesResults).indexnr >= (*PagesResults).antall) {
 		bblog(DEBUGINFO, "nextIndex: indexnr (%i) > antall (%i)",(*PagesResults).indexnr,(*PagesResults).antall);
 
@@ -1010,9 +1010,9 @@ int nextPage(struct PagesResultsFormat *PagesResults) {
 
 		forreturn = -1;
 	}
-	//mister vi en her? Var før >, men måte elgge til >= får å håntere at vi kan ha 0. Da er 
-	//indexnr og antall, like, men ikke støre en. Hvis dette er 0 så skal vi da ikke gå vire. Men hva hvis det
-	//er 1?? Vil vi ha 0 først, og det er elemenet 1 ????
+	//do we lose one here? Was > before, but had to add >= to handle that we can have 0. Then
+	//indexnr and count are equal, but not greater. If this is 0 then we should not go further. But what if it
+	//is 1?? Will we have 0 first, and that is element 1 ????
 	else if ((*PagesResults).indexnr >= (*PagesResults).antall) {
 		bblog(DEBUGINFO, "nextPage: indexnr (%i) > antall (%i)",(*PagesResults).indexnr,(*PagesResults).antall);
 
@@ -1105,10 +1105,10 @@ void increaseMemFiltered(struct PagesResultsFormat *PagesResults,int *whichFilte
 
 	++(*whichFilterTraped);
 
-	//runarb:1 13 mars. Hvorfor var denne komentert ut???
-	//runarb:2 for de vi nå bruker subname som filter
-	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
-	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
+	//runarb:1 13 March. Why was this commented out???
+	//runarb:2 because we now use subname as a filter
+	//runarb:3 could it be useful for the web search to have the correct number here?
+	//runarb:4 This makes the hit numbers for subname decrease; instead make it show all, and then show the filtered message
 	//--(*nrInSubname);
 
 	#ifdef BLACK_BOX
@@ -1139,10 +1139,10 @@ void increaseFiltered(struct PagesResultsFormat *PagesResults,int *whichFilterTr
 		++(*whichFilterTraped);
 	}
 
-	//runarb:1 13 mars. Hvorfor var denne komentert ut???
-	//runarb:2 for de vi nå bruker subname som filter
-	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
-	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
+	//runarb:1 13 March. Why was this commented out???
+	//runarb:2 because we now use subname as a filter
+	//runarb:3 could it be useful for the web search to have the correct number here?
+	//runarb:4 This makes the hit numbers for subname decrease; instead make it show all, and then show the filtered message
 	//--(*nrInSubname);
 
 	#ifdef BLACK_BOX
@@ -1176,10 +1176,10 @@ void increaseFilteredSilent(struct PagesResultsFormat *PagesResults,int *whichFi
 		++(*whichFilterTraped);
 	}
 
-	//runarb:1 13 mars. Hvorfor var denne komentert ut???
-	//runarb:2 for de vi nå bruker subname som filter
-	//runarb:3 kan det være det er nyttig for web søket og ha rikitig tall her? 
-	//runarb:4 Dette gjør at tallene for treff i subname minker, gjør heller slik at man viser alle, og så viser filtered meldingen
+	//runarb:1 13 March. Why was this commented out???
+	//runarb:2 because we now use subname as a filter
+	//runarb:3 could it be useful for the web search to have the correct number here?
+	//runarb:4 This makes the hit numbers for subname decrease; instead make it show all, and then show the filtered message
 	//--(*nrInSubname);
 
 	#ifdef BLACK_BOX
@@ -1313,7 +1313,7 @@ static inline int repositoryaccess(struct PagesResultsFormat *PagesResults, int 
 
 #endif
 
-//rutine som gjør en vanlig DIRead, og tar tiden
+//routine that does an ordinary DIRead, and times it
 int time_DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subname[], int file, struct PagesResultsFormat *PagesResults) {
 
 	int ret;
@@ -1384,7 +1384,7 @@ void *generatePagesResults(void *arg)
 
 		#ifdef BLACK_BOX
 
-			//hvis index filter tidligere har funet ut at dette ikke er et bra treff går vi til neste
+			//if the index filter has previously found that this is not a good hit, go to the next
 			if ((*PagesResults).TeffArray->iindex[i].indexFiltered.filename == 1) {
 				#ifdef DEBUG
 					bblog(DEBUGINFO, "filter: index filtered (filename)");
@@ -1438,7 +1438,7 @@ void *generatePagesResults(void *arg)
 			#ifdef DEBUG_TIME
 				gettimeofday(&start_time, NULL);
 			#endif
-			//uanset om vi har filter eller ikke så slår vi opp domainid. Men hvis vi har filter på så teller vi også
+			//regardless of whether we have a filter or not we look up the domainid. But if we have a filter we also count
 			if (!iintegerMemArrayGet ((*PagesResults).DomainIDs,(void**)&DomainID,sizeof(*DomainID),(*PagesResults).TeffArray->iindex[i].DocID) ) {
 				#ifdef DEBUG
 					bblog(DEBUGINFO, "can't lookup DomainID");
@@ -1451,7 +1451,7 @@ void *generatePagesResults(void *arg)
 
 				side->DomainID = (*DomainID);
 			
-				// fornå gjør vi bare denne sjekken hvis vi kunne slå opp DomainID
+				// for now we only do this check if we could look up the DomainID
                 		if (((*PagesResults).filterOn) && (filterSameDomainID(localshowabal,side,(*PagesResults).Sider))) {
 					#ifdef DEBUG
 						bblog(DEBUGINFO, "Have same DomainID");
@@ -1471,10 +1471,10 @@ void *generatePagesResults(void *arg)
 		#endif
 
 		bblog(INFO, "readin di for %u", (*PagesResults).TeffArray->iindex[i].DocID);
-		//leser DI
+		//read DI
 		if (!time_DIRead_i(&side->DocumentIndex,(*PagesResults).TeffArray->iindex[i].DocID,(*(*PagesResults).TeffArray->iindex[i].subname).subname,PagesResults->searchd_config->lotPreOpen.DocumentIndex[rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID)], PagesResults)) 
 		{
-                        //hvis vi av en eller annen grun ikke kunne gjøre det kalger vi
+                        //if for some reason we could not do it we complain
                         bblog(INFO, "Can't read post for %u-%i", (*PagesResults).TeffArray->iindex[i].DocID,rLotForDOCid((*PagesResults).TeffArray->iindex[i].DocID));
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.cantDIRead,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
                         continue;
@@ -1491,7 +1491,7 @@ void *generatePagesResults(void *arg)
 		}
 
 		#ifndef BLACK_BOX
-		//adult fra di
+		//adult from di
 		if (((*PagesResults).filterOn) && (filterAdultWeight_value(side->DocumentIndex.AdultWeight, (*PagesResults).noadultpages)) ) {
 			bblog(INFO, "Filter: filtered adult. DocID %u, adult value %i, adult bool value %i", 
 				(*PagesResults).TeffArray->iindex[i].DocID, 
@@ -1504,7 +1504,7 @@ void *generatePagesResults(void *arg)
 		#endif
 
 
-		//filtrerer ut dublikater fra med crc32 fra DocumentIndex
+		//filter out duplicates using crc32 from DocumentIndex
 		if (side->DocumentIndex.crc32 != 0) {
                        
                         if (((*PagesResults).filterOn) && (filterSameCrc32(localshowabal,side,(*PagesResults).Sider))) {
@@ -1514,7 +1514,7 @@ void *generatePagesResults(void *arg)
                         }
                 }
 
-		//filtrere silent
+		//filter silent
 		if (filterResponseCode(side)) {
 			bblog(INFO, "filter: page har bad respons code");
 			increaseFilteredSilent(PagesResults,NULL,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
@@ -1534,14 +1534,14 @@ void *generatePagesResults(void *arg)
 		}
 
 
-		//finner domene
+		//find domain
 		if (!find_domain_no_subname(side->DocumentIndex.Url,side->domain,sizeof(side->domain))) {
 			bblog(INFO, "can't find domain. Bad url?. Url \"%s\". localshowabal %i", side->DocumentIndex.Url,localshowabal);
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.find_domain_no_subname,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			continue;
 		}
 
-		//hvis vi ikke har noen domeneID så lager vi en
+		//if we have no domainID we create one
 		if (side->DomainID == 0) {
 			side->DomainID = calcDomainID(side->domain);
 
@@ -1558,7 +1558,7 @@ void *generatePagesResults(void *arg)
 
 
 		#ifndef BLACK_BOX
-			//DI filtere
+			//DI filters
 			if (((*PagesResults).filterOn) && (filterResponse(side->DocumentIndex.response) )) {
 				bblog(INFO, "bad respons kode %i for %u.", side->DocumentIndex.response,(*PagesResults).TeffArray->iindex[i].DocID);
 				increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterResponse,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
@@ -1602,7 +1602,7 @@ void *generatePagesResults(void *arg)
 		/****************************************************************************/		
 		#ifndef BLACK_BOX
 
-		//kvalitetsjekker på inn data.
+		//quality-check the input data.
 		if (((*PagesResults).filterOn) && (filterTitle(side->title) )) {
 			bblog(INFO, "bad title \"%s\"", side->title);
 			increaseFiltered(PagesResults,NULL,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
@@ -1627,9 +1627,9 @@ void *generatePagesResults(void *arg)
 			bblog(DEBUGINFO, "pathaccess: start");
 			#endif
 
-			//temp: kortslutter får å implementere sudo. Må implementeres skikkelig, men å spørre boithoad
-			// Runarb 7 jan 2010: Tar dette bort for nå, intil vi begynner å bruke verdien fra config tabellen.
-			// nå kan en bruker sette passordet sitt til water66 og slippe pathaccess.
+			//temp: short-circuit to implement sudo. Must be implemented properly, but asking boithoad
+			// Runarb 7 Jan 2010: Removing this for now, until we start using the value from the config table.
+			// now a user can set their password to water66 and skip pathaccess.
 			//if (strcmp((*PagesResults).password,"water66") == 0) {
 			//	bblog(WARN, "pathaccess: have sodo password. Won't do pathaccess");
 			//}
@@ -1709,7 +1709,7 @@ void *generatePagesResults(void *arg)
 
 		strcpy(side->servername,(*PagesResults).servername);
 
-		//kopierer over subname
+		//copy over subname
 		side->subname = (*(*PagesResults).TeffArray->iindex[i].subname);
 
 		side->posisjon = localshowabal +1;
@@ -1720,7 +1720,7 @@ void *generatePagesResults(void *arg)
 
 
 		/*******************************************************************************************
-		filtere som krever minne trå synkronisering
+		filters that require memory thread synchronization
 		*******************************************************************************************/
 
 		#ifdef WITH_THREAD
@@ -1735,7 +1735,7 @@ void *generatePagesResults(void *arg)
 
 		int treadSyncFilters = 0;
 
-		//håntering av at vi kan ha mer en en pi.
+		//handling that we can have more than one pi.
 		if (pi_switch(nrofGodPages(PagesResults),side,(*PagesResults).Sider)) {
 			bblog(INFO, "filter (treadSyncFilter): switch a pi \"%s\"", side->DocumentIndex.Url);
 			
@@ -1753,7 +1753,7 @@ void *generatePagesResults(void *arg)
                	}
 
 
-		//fjerner eventuelt like urler
+		//remove any duplicate urls
 		if (((*PagesResults).filterOn) && (filterSameUrl(nrofGodPages(PagesResults),side->DocumentIndex.Url,(*PagesResults).Sider)) ) {
 			bblog(INFO, "filter (treadSyncFilter): Hav seen url befor. Url \"%s\"", side->DocumentIndex.Url);
 			
@@ -1773,11 +1773,11 @@ void *generatePagesResults(void *arg)
 
 			increaseFiltered(PagesResults,&(*(*PagesResults).SiderHeder).filtersTraped.filterSameDomain,&(*(*PagesResults).TeffArray->iindex[i].subname).hits,&(*PagesResults).TeffArray->iindex[i]);
 			//continue;	
-			// Det kan være at vi har en side som har lik domene, men er høyere rankert en den nåverende. Dette skjer da
-			// en annen tråd ble ferdig før oss. Bytter om hvis dette er tilfellet
-			//Man kan så gå ut av side genereringsloopen, da dette er siste filter.
+			// It may be that we have a page with the same domain, but ranked higher than the current one. This happens when
+			// another thread finished before us. We swap if this is the case
+			//We can then exit the page generation loop, since this is the last filter.
 			//
-			//må dog ha sat ting som sidetype først, så ikke der et tilfeldig
+			//we must however have set things like page type first, so it isn't random there
  
 		        for (y=0;y<nrofGodPages(PagesResults);y++) {
 
@@ -1829,16 +1829,16 @@ void *generatePagesResults(void *arg)
 
 
 		
-		//gjør post god side ting, som å øke showabal
+		//do post good-page things, like incrementing showabal
 		int myPageNr;
 		myPageNr = foundGodPage(PagesResults);
 
-		//kopierer siden inni den globale side arrayen
+		//copy the page into the global page array
 		(*PagesResults).Sider[myPageNr] = *side;
 		
 		bblog(INFO, "did copy page \"%s\" into spot %i. (read back \"%s\")", side->DocumentIndex.Url,myPageNr,side->subname.subname);
 		
-		break; //går ut av loopen. Vi har funnet at vår index hit var brukenes, vi trenger da en ny side
+		break; //exit the loop. We have found that our index hit was usable, so we need a new page
 	}
 	}
 
@@ -1852,7 +1852,7 @@ void *generatePagesResults(void *arg)
 
 int sider_allrank_sort (const void *p1, const void *p2) {
 
-	// en mer stabil sortering der vi også sorterer på DocID slik at resultatene ikke håpper på serp'ene.
+	// a more stable sort where we also sort on DocID so that the results don't jump around on the serps.
 	if (((struct SiderFormat *)p1)->iindex.allrank == ((struct SiderFormat *)p2)->iindex.allrank) {
 
 		if (((struct SiderFormat *)p1)->iindex.originalPosition < ((struct SiderFormat *)p2)->iindex.originalPosition) {
@@ -2153,7 +2153,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 	
-	// inaliserer alle queryTime elementene
+	// initialize all the queryTime elements
 	memset(&(*SiderHeder).queryTime, 0, sizeof((*SiderHeder).queryTime));
 
 	(*SiderHeder).queryTime.cmc_conect 			= 0;
@@ -2174,14 +2174,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		gettimeofday(&start_time, NULL);
 
 		if (!PagesResults.anonymous) {
-			//henter brukerens passord fra boithoad
-			//henter inn brukerens passord
+			//get the user's password from boithoad
+			//get the user's password
 			bblog(INFO, "geting pw for \"%s\"", PagesResults.search_user);
 			/**************************************************************************
-			Runarb: 08 Jan 2008: Gjør av vi bare hopper over å hente gruppe info hvis vi ikke
-			for det til.
+			Runarb: 08 Jan 2008: Make it so we just skip fetching group info if we
+			can't get it.
 
-			Før stoppet vi opp, men det gjør at det ikke fungerer med 24so søk. 
+			Before we stopped, but that makes it not work with 24so search. 
 			**************************************************************************/
 			if (!cmc_getPassword(PagesResults.search_user,PagesResults.password)) {
 				bblog(ERROR, "Can't boithoad_getPassword. Brukeren er ikke logget inn??");
@@ -2204,7 +2204,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 
 
-	//kopierer query inn i strukturen som holder query date
+	//copy the query into the struct that holds the query data
 	strscpy(PagesResults.QueryData.query,query,sizeof(PagesResults.QueryData.query));
 
 	get_query( PagesResults.QueryData.query, queryLen, &PagesResults.QueryData.queryParsed );
@@ -2215,13 +2215,13 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 		#ifndef WITHOUT_THESAURUS
-			// Kjør stemming på query:
+			// Run stemming on the query:
 			if (searchd_config->thesaurusp != NULL) {
 				thesaurus_expand_query(searchd_config->thesaurusp, &PagesResults.QueryData.queryParsed);
 			}
 		#endif
 		
-   		// Print query med innebygd print-funksjon:
+   		// Print query with built-in print function:
     		char        buf[1024];
     		sprint_expanded_query(buf, 1023, &PagesResults.QueryData.queryParsed);
     		bblog(INFO, "Expanded query: %s",  buf);
@@ -2254,7 +2254,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		bblog(DEBUGINFO, "languageFilternr %i", languageFilternr);
 	#endif
 
-	// inaliseres til 1. Hvis vi har tråstøtte, og ikke kjører i single mode settes den så til NROF_GENERATEPAGES_THREADS lengere nede.
+	// initialized to 1. If we have thread support, and aren't running in single mode, it is then set to NROF_GENERATEPAGES_THREADS further down.
 	PagesResults.activetreads = 1;
 
 	#ifdef WITH_THREAD
@@ -2274,14 +2274,14 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 			bblog(ERROR, "Can't init mutex!");
 		}
 
-		//låser mutex. Vi er jo enda ikke kalre til å kjøre
+		//lock the mutex. We are not ready to run yet
 		if (pthread_mutex_lock(&PagesResults.mutex) != 0) {
 			bblog(ERROR, "Can't lock mutex!");
 		}
 
 		if (!searchd_config->optSingle) {
 
-			//start som thread that can get the pages
+			//start threads that can get the pages
 			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 				if (pthread_create(&threadid[i], NULL, generatePagesResults, &PagesResults) != 0) {
 					bblog(ERROR, "Can't create thread for page geberation!");
@@ -2329,12 +2329,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		bblog(INFO, "making a connection(s) to crawlerManager(s)\n");
 
-		// lager tilkobling for pathaccess
+		// create connection for pathaccess
 		if (!cmConect_and_pool(&PagesResults.cmConn, errorstr, errorLen, MAX_CM_CONSUMERS, searchd_config) ) {
 			return 0;
 		}
 	
-		// lager tilkobling for Urlrewrite
+		// create connection for Urlrewrite
 		if (!cmConect_and_pool(&PagesResults.cmConnUrlrewrite, errorstr, errorLen, MAX_CM_CONSUMERS_URLREWRITE, searchd_config) ) {
 			return 0;
 		}
@@ -2344,9 +2344,9 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		(*SiderHeder).queryTime.cmc_conect = getTimeDifference(&start_time,&end_time);
 	#endif
 
-	//intresang debug info som viser antall treff pr subname
+	//interesting debug info showing the number of hits per subname
 	#ifdef BLACK_BOX
-		//viser hvordan treffene er i subnames
+		//show how the hits are distributed across subnames
 		if (globalOptVerbose) {
 			bblog(INFO, "subname records:");
 			for (i=0;i<nrOfSubnames;i++) {
@@ -2355,12 +2355,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		}
 	#endif
 
-	//setter alle sidene som sletett
+	//mark all pages as deleted
 	for (i=0;i<PagesResults.MaxsHits;i++) {
 		(*Sider)[i].deletet = 1;
 	}
 
-       	// vi bruker ikke denne mer før siden. Vi henter verdien til å lagre i den fra   PagesResults.showabal
+       	// we don't use this until later. We get the value to store in it from   PagesResults.showabal
 	//(*SiderHeder).showabal = 0;
 
        	readedFromIndex = 0;
@@ -2370,7 +2370,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#ifndef BLACK_BOX
 		gettimeofday(&start_time, NULL);
 
-		//kalkulerer antall adult sier i første n resultater
+		//calculate the number of adult pages in the first n results
 		PagesResults.noadultpages = 0;
 		PagesResults.adultpages = 0;
 		for (i=0;((i<1000) && (i<PagesResults.antall));i++) {
@@ -2392,13 +2392,13 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	#endif
 	
 
-	//går i utgangspungete gjenon alle sider, men eskaper når vi når anatllet vi vil ha
+	//basically goes through all pages, but escapes when we reach the number we want
 	PagesResults.showabal = 0;
 	PagesResults.nextPage = 0;
 
 
 	#ifndef BLACK_BOX
-		//sorterer top treffene etter hvilken disk de ligger på, slik at vi kan jobbe mest mulig i paralell
+		//sort the top hits by which disk they are on, so we can work as much as possible in parallel
 		char diskAcces[NrOfDataDirectorys];
 		int toSort = PagesResults.antall;
 		if (toSort > PagesResults.MaxsHits) {
@@ -2410,18 +2410,18 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		}
 
 		/*
-		Runarb: 14 mai 2008:
-		Lager en oversikt over antall disk akesser til hver device. Så hvis vi har device a og b, men følgende access 
-		rekkefølge:
+		Runarb: 14 May 2008:
+		Build an overview of the number of disk accesses to each device. So if we have device a and b, but the following access
+		order:
 			a a a b b b
-		for vi da 
+		we then get 
 			a 1
 			a 2
 			a 3
 			b 1
 			b 2
 			b 3
-		og vi kan så sortere på antal for å få
+		and we can then sort by count to get
 			a 1
 			b 1
 			a 2
@@ -2431,7 +2431,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		*/
 
 		for(i=0;i<toSort;i++) {
-			//temp: nå rebruker vi hraseMatch til dette. Vi må ha et egent felt siden
+			//temp: now we reuse phraseMatch for this. We need a dedicated field later
 			PagesResults.TeffArray->iindex[i].phraseMatch = diskAcces[GetDevIdForLot(rLotForDOCid(PagesResults.TeffArray->iindex[i].DocID))]++;
 		}
 
@@ -2449,17 +2449,17 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 	#ifdef WITH_THREAD
 
-		//vi har data. Lå tårdene jobbe med det
+		//we have data. Let the threads work on it
 		if (pthread_mutex_unlock(&PagesResults.mutex) != 0) {
 			bblog(ERROR, "Can't unlock mutex!");
 		}
 
-		//av gjør om vi skal starte tråder eller kjøre det selv
+		//decide whether to start threads or run it ourselves
 		if (searchd_config->optSingle) {
 			generatePagesResults(&PagesResults);
 		}
 		else {
-			//venter på trådene
+			//wait for the threads
 			for (i=0;i<NROF_GENERATEPAGES_THREADS;i++) {
 				if (pthread_join(threadid[i], NULL) != 0) {
 					bblog(ERROR, "Can't join thread");
@@ -2468,7 +2468,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 		}
 
-		//free mutex'en
+		//free the mutex
 		if (pthread_mutex_destroy(&PagesResults.mutex) != 0) {
 			bblog(ERROR, "Can't destroy mutex!");
 		}
@@ -2512,27 +2512,27 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 
 	/*
-	en siste sortering er nødvendig da sidene kan være i usortert rekkefølgde. Dette skjer da 
-	side nr ut til trådene sekvensielt, men det kan være at de så leser arrayen i annen rekkefølge. 
-	Eller at den siden ikke skal være med lengere (ble slettet)
+	a final sort is necessary since the pages can be in unsorted order. This happens because
+	page numbers are handed out to the threads sequentially, but they may then read the array in a different order.
+	Or that the page should no longer be included (was deleted)
 	*/
 	qsort(*Sider,PagesResults.showabal,sizeof(struct SiderFormat),sider_allrank_sort);
 
 
-	//kopierer over verdien
+	//copy over the value
 	(*SiderHeder).showabal = PagesResults.showabal;
 
 
-	//lager en filtered verdi
+	//create a filtered value
 	(*SiderHeder).filtered = PagesResults.filtered + PagesResults.memfiltered;	
 
-	//runarb: 2 nov 2007: trkker ikke fra disse tallene, da det fører til at totalt treff tallene forandres. Viser heller en filtered beskjed
+	//runarb: 2 Nov 2007: don't subtract these numbers, since it causes the total hit numbers to change. Instead show a filtered message
 	#ifndef BLACK_BOX
-		//fjerner filtered fra total oversikten
-		//ToDo: bør dette også gjøres for web?
-		//runarb: 23 jan 2008: ser ut til at dette bare gjøres for web er ifNdef her???
+		//remove filtered from the total overview
+		//ToDo: should this also be done for web?
+		//runarb: 23 Jan 2008: seems this is only done for web, there is an ifNdef here???
 		(*SiderHeder).TotaltTreff -= (*SiderHeder).filtered;
-		//tar også bort de som ble filtrert stille
+		//also remove those that were filtered silently
 		(*SiderHeder).TotaltTreff -= PagesResults.filteredsilent;
 	#endif
 
@@ -2553,7 +2553,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		free(filteron.sort);
 	#endif
 
-	// må altid inaliseres
+	// must always be initialized
 	SiderHeder->spellcheckedQuery[0] = '\0';
 
 	#ifdef WITH_SPELLING
@@ -2636,7 +2636,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 	}
 	#endif
 
-	//lager en liste med ordene som ingikk i queryet til hiliting
+	//build a list of the words that were in the query, for highlighting
 	hiliteQuery[0] = '\0';
 
 
@@ -2650,7 +2650,7 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 
 			strcat(hiliteQuery,PagesResults.QueryData.queryParsed.query[i].s[j]);      	
 
-			//appender et komma, slik at vi får en komma separert liste med ord
+			//append a comma, so that we get a comma-separated list of words
 			strncat(hiliteQuery,",",sizeof(*hiliteQuery) -1);		
 			strcat(hiliteQuery,",");
 
@@ -2661,15 +2661,15 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
 		bblog(DEBUGINFO, "hiliteQuery END");
 	#endif
 
-	//det vil bli et komma for mye på slutten, fjerner det.
-	//ToDo: er det altid et komma for mye ?	
+	//there will be one comma too many at the end, remove it.
+	//ToDo: is there always one comma too many ?	
 	if (hiliteQuery[strlen(hiliteQuery) -1] == ',') {hiliteQuery[strlen(hiliteQuery) -1] = '\0';}
 
 
 	bblog(INFO, "<treff-info totalt=\"%i\" query=\"%s\" hilite=\"%s\" filtered=\"%i\" showabal=\"%i\"/>", (*SiderHeder).TotaltTreff,PagesResults.QueryData.query,hiliteQuery,(*SiderHeder).filtered,(*SiderHeder).showabal);
 	
 
-	//printer ut info om brukt tid
+	//print out info about the time used
 	bblog(INFO, "Time");
 	bblog(INFO, "\t%-40s %f", "AnchorSearch",(*SiderHeder).queryTime.AnchorSearch);
 	bblog(INFO, "\t%-40s %f", "MainSearch",(*SiderHeder).queryTime.MainSearch);
@@ -2760,12 +2760,12 @@ char search_user[],struct filtersFormat *filters,struct searchd_configFORMAT *se
                 gettimeofday(&start_time, NULL);
         #endif
 
-	// Frigjør minne:
+	// Free memory:
 	bblog(INFO, "free memory");
 
 	free(PagesResults.TeffArray);
 
-	// Slett innholdet i crc32maphash:
+	// Delete the contents of crc32maphash:
 	
 	struct hashtable_itr *itr = hashtable_iterator(PagesResults.crc32maphash);
 

@@ -31,7 +31,7 @@ int pi_switch(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *
                                         printf("pi_switch: DocID or url is the same for Url \"%s\" DocID %u == \"%s\" DocID %u\n",
                                                 Sider[i].DocumentIndex.Url,Sider[i].iindex.DocID,CurentSider->DocumentIndex.Url,CurentSider->iindex.DocID);
                                 #endif
-                                //bytter om slik at den beste blir pi side også, så vil vi filtrere ut denne vi har np
+                                //swap so the best one becomes the pi page too, then we will filter out the one we have now
                                 Sider[i].subname.config.isPaidInclusion = CurentSider->subname.config.isPaidInclusion;
 				Sider[i].cache_params = CurentSider->cache_params;
 
@@ -101,7 +101,7 @@ int filterTitle(char title[]) {
 int filterAdultWeight_bool(char AdultWeight, int noadultpages) {
 
 	if (noadultpages > 10) {
-		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult
+		//if we have enough pages, we don't show a page if it is adult
 		if (AdultWeight) {
 			return 1;
 		}
@@ -110,7 +110,7 @@ int filterAdultWeight_bool(char AdultWeight, int noadultpages) {
 		}
 	}
 	else {
-		//hvis vi har fårfå sider så filtrerer vi ikke
+		//if we have too few pages we don't filter
 		return 0;
 	}
 
@@ -119,7 +119,7 @@ int filterAdultWeight_bool(char AdultWeight, int noadultpages) {
 int filterAdultWeight_value(int AdultWeight, int noadultpages) {
 
 	if (noadultpages > 10) {
-		//hvis vi har mange nokk sider, viser vi ikke en side hvis den er adult
+		//if we have enough pages, we don't show a page if it is adult
 		if (AdultWeight >= AdultWeightForXXX) {
 			printf("filterAdultWeight_value: filtered %i\n",AdultWeight);
 			return 1;
@@ -129,7 +129,7 @@ int filterAdultWeight_value(int AdultWeight, int noadultpages) {
 		}
 	}
 	else {
-		//hvis vi har fårfå sider så filtrerer vi ikke
+		//if we have too few pages we don't filter
 		return 0;
 	}
 
@@ -138,8 +138,8 @@ int filterAdultWeight_value(int AdultWeight, int noadultpages) {
 
 int filterResponse(int responscode) {
 
-	//filtrerer hvis det ikke er lovlige responskoder
-	//runarb 25.10.2007: Jayde vil ha bare ok sider
+	//filter out anything that isn't a valid response code
+	//runarb 25.10.2007: Jayde only wants ok pages
 	//if ((responscode == 200) || (responscode == 301) || (responscode == 302) || (responscode == 0)) {
 	if ((responscode == 200) || (responscode == 203 )) {
 		return 0;
@@ -246,7 +246,7 @@ int filterResponseCode(struct SiderFormat *CurentSider) {
 	return 0;
 }
 
-//fjerner sider med samme IPadresse
+//remove pages with the same IP address
 int filterSameIp(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
 
 	int i;
@@ -268,7 +268,7 @@ int filterSameIp(int showabal,struct SiderFormat *CurentSider, struct SiderForma
 	}
 }
 
-//fjerner sider som har samme beskrivelse
+//remove pages that have the same description
 int filterDescription(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
 
         int i;
@@ -285,13 +285,13 @@ int filterDescription(int showabal,struct SiderFormat *CurentSider, struct Sider
 }
 
 
-//fjerner sider med samme domene
+//remove pages with the same domain
 int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderFormat *Sider) {
 
 	int i;
 	int count = 0;
 
-	//filtrerer ikke sider vi ikke har noe domne for. Typisk ppc anonser som peger til out.cfi side på samme domene
+	//don't filter pages we have no domain for. Typically ppc ads that point to an out.cfi page on the same domain
 	if ((*CurentSider).domain[0] == '\0') {
 		return 0;
 		#ifdef DEBUG
@@ -313,7 +313,7 @@ int filterSameDomain(int showabal,struct SiderFormat *CurentSider, struct SiderF
 				#endif
 				//printf("domain is the same. %s == %s\n",(*CurentSider).domain,Sider[i].domain);
 
-				//runarb: 14.11.2007: hva gjør linjen nedenfor???
+				//runarb: 14.11.2007: what does the line below do???
 				//(*CurentSider).posisjon = Sider[i].posisjon;
 			
 				++count;

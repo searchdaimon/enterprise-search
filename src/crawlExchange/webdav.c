@@ -128,7 +128,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		return NULL;
 	}
 
-	// for debuging: Tar med headeren i http bodien
+	// for debugging: include the header in the http body
 	//curl_easy_setopt(curl, CURLOPT_HEADER, 1);
 
 	#ifdef DEBUG
@@ -136,25 +136,25 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 	#endif
 
 	if (strstr(mailboxurl,"https://") != NULL) {
-    		//tilater bugy serfikater.
+    		//allow buggy certificates.
     		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 	}
 
-	//vi prøver førs å gjøre et vanlig kall til urlen for å se hva som skjer. 
+	//we first make a normal call to the url to see what happens. 
     	curl_easy_setopt(curl, CURLOPT_URL, mailboxurl);
 
 	result = curl_easy_perform(curl);
 	result = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 
 	#ifdef DEBUG
-		//curl skriver av og til ut data uten \n på slutten. 
+		//curl occasionally writes out data without a trailing \n. 
 		printf("\n");
 	#endif
 
 	bblog(DEBUGINFO, "code %i",code);
 
-	//hvis vi fikke en redirect finner vi ut til hvor
+	//if we got a redirect, find out where to
 	if (code == 302) {
     		result = curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL , &redirecttarget);
     		bblog(INFO, "res %d",result);
@@ -174,16 +174,16 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		snprintf(owaauthpath,sizeof(owaauthpath),"%s/exchweb/bin/auth/owaauth.dll",login->Exchangeurl);
 	    	curl_easy_setopt(curl, CURLOPT_URL, owaauthpath);
 
-	    	//bruke cookies
+	    	//use cookies
 	    	curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "-");
 
 	    	//curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION , 0);
 
-		//url enkoder destination feltet
+		//url-encode the destination field
 		destination = curl_easy_escape(curl, mailboxurl, 0);
 
-		//bygger port datane
-		// skal være av slik: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
+		//build the post data
+		// should look like this: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
 
 		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, login->username, login->password);
 
@@ -221,16 +221,16 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 		snprintf(owaauthpath,sizeof(owaauthpath),"%s/owa/auth/owaauth.dll",login->Exchangeurl);
 	    	curl_easy_setopt(curl, CURLOPT_URL, owaauthpath);
 
-	    	//bruke cookies
+	    	//use cookies
 	    	curl_easy_setopt(curl, CURLOPT_COOKIEJAR, "-");
 
 	    	//curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION , 0);
 
-		//url enkoder destination feltet
+		//url-encode the destination field
 		destination = curl_easy_escape(curl, mailboxurl, 0);
 
-		//bygger port datane
-		// skal være av slik: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
+		//build the post data
+		// should look like this: destination=https%3A%2F%2Fsbs.searchdaimon.com%2FExchange%2Feo&flags=0&username=eo&password=1234Asd&SubmitCreds=Log+On&trusted=0
 
 		asprintf(&postData,"destination=%s&flags=0&username=%s&password=%s&SubmitCreds=Log+On&trusted=0",destination, login->username, login->password);
 
@@ -271,10 +271,10 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 			return NULL;			
 		} 
 
-		//usikker om vi kan gjøre dette. Kan være at curl trenger datene siden.
+		//not sure we can do this. curl may need the data later on.
 		free_userpass(userpass);
 
-		//etter at vi har satt bruker/pass prøver vi å logge på.
+		//after setting the username/password, we try to log in.
     		curl_easy_setopt(curl, CURLOPT_URL, mailboxurl);
 	
 		result = curl_easy_perform(curl);
@@ -291,7 +291,7 @@ CURL *ex_logOn(const char *mailboxurl, struct loginInfoFormat *login, char **err
 
 		}
 		else if ( (code == 302) && (strstr(redirecttarget,"/owa/") != NULL) ) {
-			//vi blir redirektet til owa. Noe som ser ut til å være helt normalt i Exchnage 2007.
+			//we get redirected to owa. This appears to be completely normal in Exchange 2007.
 		}
 		else if (code == 302) {
                         asprintf(errorm,"Login 302 redirected to %s.",redirecttarget);
@@ -335,7 +335,7 @@ ex_getContent(const char *url, CURL **curl, struct loginInfoFormat *login)
 	long code;
 
 	#ifdef DEBUG
-		//warn: skriver ut passord i klartekst.
+		//warn: prints the password in cleartext.
 		bblog(DEBUGINFO, "ex_getContent(url=%s)",url);
 	#endif
 

@@ -31,7 +31,7 @@ FILE *POPINDEX;
 unsigned char *popMemArray[maxLots];
 
 unsigned int NrOfElementInPopIndex () {
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	unsigned int popMemorySize;
 
 	fstat(fileno(POPINDEX),&inode);
@@ -71,7 +71,7 @@ void popopenMemArray_oneLot(char subname[], int i) {
 	GetFilPathForLot(LotFile,i,subname);
 	strcat(LotFile,"Brank");
 
-	// prøver å opne
+	// try to open
 	if ( (FH = fopen(LotFile,"rb")) == NULL ) {
 		perror(LotFile);
 		popMemArray[i] = 0;
@@ -91,7 +91,7 @@ void popopenMemArray_oneLot(char subname[], int i) {
 
 		fread(popMemArray[i],branksize,1,FH);
 
-		//debug: viser alle rankene vi laster
+		// debug: show all the ranks we load
 		/*
 		int y;
 		for(y=0;y<NrofDocIDsInLot;y++) {
@@ -116,7 +116,7 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 	off_t totsize = 0;	
 	int locklimit;
 
-	//finner grensen på antal sider vi kan låse i minne
+	// find the limit on the number of pages we can lock in memory
 	struct rlimit rlim;
 	
         if (getrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
@@ -127,17 +127,17 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 		locklimit = rlim.rlim_cur;
 	}
 
-	//aloker minne for rank for de forskjelige lottene
+	// allocate memory for rank for the various lots
 	LocalLots=0;
 	for (i=0;i<maxLots;i++) {
-		//sjekekr om dette er en lokal lot
+		// check whether this is a local lot
 		
 		popMemArray[i] = 0;
 
 		GetFilPathForLot(LotFile,i,subname);
 		strcat(LotFile,rankfile);
 
-		// prøver å opne
+		// try to open
 		if ( (FH = fopen(LotFile,"rb")) == NULL ) {
 			#ifdef DEBUG
 				perror(LotFile);
@@ -165,7 +165,7 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 
 		#ifdef MMAP_POP
 
-			//vi må aligne dette med pagesize
+			// we must align this with pagesize
 			//branksize += branksize % getpagesize();
 
 			if (inode.st_size != branksize) {
@@ -182,14 +182,14 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 			}
 
 
-			//hvis vi kan låse uendelig med minne gjør vi det
+			// if we can lock unlimited memory we do it
 			if (locklimit == -1) {
-				//laster all rankerings dataen fra minne, slik ad det går fort å leste den inn siden
+				// load all the ranking data from memory, so that it is fast to read it in later
 				z = 0;
 				for(y=0;y<NrofDocIDsInLot;y++) {
 					z += popMemArray[i][y];	
 				}
-				//låser minne
+				// lock memory
 				if (mlock(popMemArray[i],branksize) != 0) {
 					perror("mlock");
 				}
@@ -208,7 +208,7 @@ void popopenMemArray2(char subname[], char rankfile[]) {
 
 		#endif
 
-		//debug: viser alle rankene vi laster
+		// debug: show all the ranks we load
 		/*
 		for(y=0;y<branksize;y++) {
 			printf("DocID %i, rank %i\n",y,popMemArray[i][y]);
@@ -241,10 +241,10 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 	lotlistLoad();
 	lotlistMarkLocals(servername);
 
-	//aloker minne for rank for de forskjelige lottene
+	// allocate memory for rank for the various lots
 	LocalLots=0;
 	for (i=0;i<maxLots;i++) {
-		//sjekekr om dette er en lokal lot
+		// check whether this is a local lot
 		
 
 		if (lotlistIsLocal(i)) {
@@ -252,7 +252,7 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 			GetFilPathForLot(LotFile,i,subname);
 			strcat(LotFile,rankfile);
 
-			// prøver å opne
+			// try to open
 			if ( (FH = fopen(LotFile,"rb")) == NULL ) {
                 		perror(LotFile);
 				popMemArray[i] = 0;
@@ -287,7 +287,7 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 
 				#endif
 
-				//debug: viser alle rankene vi laster
+				// debug: show all the ranks we load
 				/*
 				for(y=0;y<branksize;y++) {
 					printf("DocID %i, rank %i\n",y,popMemArray[i][y]);
@@ -314,7 +314,7 @@ void popopenMemArray(char servername[], char subname[], char rankfile[]) {
 int popRankForDocIDMemArray(unsigned int DocID) {
 	int LotNr,DocIDPlace;
 
-	//finner lot og offset
+	// find lot and offset
 	LotNr = rLotForDOCid(DocID);
 	DocIDPlace = (DocID - LotDocIDOfset(LotNr));
 
@@ -330,7 +330,7 @@ int popRankForDocIDMemArray(unsigned int DocID) {
 }
 
 /*
-//opner popindex
+// open popindex
 
 void *mmap3264(void *addr, off_t len, int prot, int flags,int fildes, off_t off) {
 	
@@ -366,7 +366,7 @@ void *mmap3264(void *addr, off_t len, int prot, int flags,int fildes, off_t off)
 */
 int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
-        struct stat inode;      // lager en struktur for fstat å returnere.
+        struct stat inode;      // create a struct for fstat to return into.
 	popmemmap->largesDocID = 0;
 
         if ((popmemmap->fd = open(filname, O_RDWR)) == -1) {
@@ -437,7 +437,7 @@ void popcloseMmap (struct popmemmapFormat *popmemmap) {
 }
 int popRankForDocIDMmap(struct popmemmapFormat *popmemmap,unsigned int DocID) {
 
-	//fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
+	// prevent us from asking for a docid that is larger than the memory area and segfaulting.
 	if ((DocID * sizeof(unsigned int)) < popmemmap->size) {
 		return popmemmap->ranks[DocID];
 	}
@@ -447,7 +447,7 @@ int popRankForDocIDMmap(struct popmemmapFormat *popmemmap,unsigned int DocID) {
 }
 int popRankForDocIDMmapSet(struct popmemmapFormat *popmemmap,unsigned int DocID,int increasement) {
 
-	//fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
+	// prevent us from asking for a docid that is larger than the memory area and segfaulting.
 
 	off_t size = (DocID * sizeof(unsigned int));
 
@@ -501,8 +501,8 @@ int popRankForDocID(struct popl *popha,int DocID) {
 
 	place = DocID * sizeof(int);
 
-	// prøver å søker og lese filen, hvis det ikke går er det nokk 
-	// for at vi ikke har noe rankk for denne filen enda, så vi retunerer 0
+	// try to seek and read the file, if that does not work it is probably 
+	// because we have no rank for this file yet, so we return 0
 	if (fseeko64((*popha).fh,place,SEEK_SET) != 0 ) {
 		return -2;
 	}
@@ -521,15 +521,15 @@ void popclose(struct popl *popha) {
 	fclose((*popha).fh);
 }
 
-//setter verdien
+// set the value
 void popset (struct popl *popha,int DocID,int pop) {
-	//skriver ny verdi
+	// write the new value
         fseeko((*popha).fh,DocID * sizeof(pop),SEEK_SET);
 
         fwrite(&pop,sizeof(pop),1,(*popha).fh);
 }
 
-//øker linkcounten med antall sider for en url
+// increase the link count by the number of pages for a url
 void popadd (struct popl *popha,int DocID,int increasement) {
 
 	int pop = 0;
@@ -537,7 +537,7 @@ void popadd (struct popl *popha,int DocID,int increasement) {
 
 	place = DocID * sizeof(pop);
 
-	//lser inn gammel verdi
+	// read in the old value
 	if (fseeko((*popha).fh,place,SEEK_SET) != 0) {
 		perror("popadd: fseek 1");
 		return;
@@ -547,10 +547,10 @@ void popadd (struct popl *popha,int DocID,int increasement) {
 		perror("popadd: read");
 	}
 
-	//kalkulerer ny verdi
+	// compute the new value
 	pop = pop + increasement;
 
-	//skriver ny verdi
+	// write the new value
 	if (fseeko((*popha).fh,place,SEEK_SET) != 0) {
 		perror("popadd: fseek 2");
 		return;		

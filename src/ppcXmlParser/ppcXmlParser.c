@@ -143,8 +143,8 @@ char bidNodeName[], char urlNodeName[]) {
 	
 	cur = cur->xmlChildrenNode;
 
-	//vi kan enten bare ha to løv i treet, eller tre. Hvis vi har tre må vi ha navnet i listningSubNodeName, 
-	//hvis ikke skal dette være NULL
+	// the tree can have either just two leaves, or three. If there are three we must have the name in listningSubNodeName,
+	// otherwise this should be NULL
 	if (listningSubNodeName == NULL) {
 		parsListnings(cur,ppcPages, nrOfPpcPages,rootNodeName, listningNodeName, titleNodeName, descriptionNodeName, uriNodeName, bidNodeName, urlNodeName);
 	}

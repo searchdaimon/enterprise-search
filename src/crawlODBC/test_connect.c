@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
 //    SQLSetConnectAttr(hdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER*)5, 0);
 
-    // FreeTDS krasjer på SQLDriverConnect! Derfor bruker vi SQLConnect istedet.
+    // FreeTDS crashes on SQLDriverConnect! That's why we use SQLConnect instead.
     ret = SQLConnect(hdbc, (SQLCHAR*) "adventure", SQL_NTS, (SQLCHAR*) "ax", SQL_NTS, (SQLCHAR*) "Ju13brz;", SQL_NTS);
 /*
     ret = SQLDriverConnect(hdbc, NULL, "DSN=adventure;UID=ax;PWD={Ju13brz;}", SQL_NTS,

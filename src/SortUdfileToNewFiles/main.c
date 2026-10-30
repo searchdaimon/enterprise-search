@@ -104,7 +104,7 @@ int main (int argc, char *argv[]) {
 
 		FileBuckets[bucket].count++;
 
-		//tester om filen er open, hvis ikke opner vi
+		//test if the file is open, if not we open it
 		if (!FileBuckets[bucket].OpenFile) {
 
 			sprintf(FileBuckets[bucket].Filename,"%s%i",prefix,bucket); 

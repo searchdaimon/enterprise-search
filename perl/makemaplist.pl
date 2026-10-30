@@ -1,7 +1,7 @@
 ###################################################################
 #
-# Dette programet lager en makemaplist.conf fil ut fra mapper 
-# den får inn. Vil prøve å spre dataene gjevnt over.
+# This program creates a makemaplist.conf file from the folders
+# it is given. It will try to spread the data evenly.
 #
 #
 ###################################################################
@@ -12,7 +12,7 @@ if ($#ARGV < 0) {
 
 for my $i (0 .. $#ARGV) {
 	#print "$ARGV[$i]\n";
-	#tar bort eventuelt / på slutten
+	#remove any trailing /
 	$ARGV[$i] =~ s/\/$//;
 }
 

@@ -25,6 +25,7 @@ void GetFilPathForLotFile(char *FilePath,char lotfile[],int LotNr,char subname[]
 void GetFilPathForLotByDocID(char *FilePath,int DocID,char subname[]);
 void GetFilePathForIindex (char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]);
 void GetFilePathForIDictionary(char *FilePath, char *FileName,int IndexNr,char Type[], char lang[],char subname[]);
+void GetFilePathForIindexCollection(char *FilePath, int IndexNr, char subname[]);
 void GetFilPathForThumbnaleByDocID(char *FileName,int DocID,char subname[]);
 FILE *lotOpenFile(unsigned int DocID,char resource[],char type[], char lock,char subname[]);
 FILE *lotOpenFileNoCasheByLotNr(int LotNr,char resource[],char type[], char lock,char subname[]);
@@ -46,7 +47,7 @@ int lotOpenFileNoCasheByLotNrl(int LotNr,char resource[],char type[], char lock,
 int GetDevIdForLot(int LotNr);
 void makeLotPath(int lotNr,char folder[],char subname[]);
 
-//rutiner for å lsite ut alle lokale subnames
+// routines to list all local subnames
 DIR *listAllColl_start();
 char *listAllColl_next(DIR * ll);
 void listAllColl_close(DIR * ll);

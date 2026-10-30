@@ -187,7 +187,7 @@ void cgi_fetch_full(struct QueryDataForamt *qdata) {
                         strlcpy(qdata->search_user, qdata->subname, sizeof(qdata->search_user));
                 }
 
-		//fjerner eventuelt -body
+		// strip any -body suffix
                 p = strrchr(qdata->search_user, '-');
                 if (p != NULL) {
                         if (strcmp(p, "-body") == 0)

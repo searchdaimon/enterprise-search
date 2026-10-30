@@ -1,13 +1,16 @@
 #include <mysql.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "key.h"
 #include "../common/strlcpy.h"
 
-/* MYSQL login information */
-#define MYSQL_HOST	"localhost"
+/* MYSQL login information. The host can be overridden at runtime via the
+ * BOITHO_MYSQL_HOST environment variable (used when the database runs in a
+ * separate container); it defaults to the local server otherwise. */
+#define MYSQL_HOST	(getenv("BOITHO_MYSQL_HOST") ? getenv("BOITHO_MYSQL_HOST") : "localhost")
 #define MYSQL_USER	"boitho"
 #define MYSQL_PASS	"G7J7v5L5Y7"
 #define MYSQL_DB	"boithobb"

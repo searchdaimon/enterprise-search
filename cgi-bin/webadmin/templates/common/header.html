@@ -4,6 +4,7 @@
 <head>
 	<title>[% title | html %] - Administration panel</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
         [% IF meta_refresh %]
             <meta http-equiv="refresh" 
                 content="[% meta_refresh.seconds %];url=[% meta_refresh.url %]" />
@@ -68,8 +69,11 @@
 
 	<p style="margin: 0; margin-bottom : 0.5em;"><a href="overview.cgi"><img src="file.cgi?i=logo_smaller&amp;size=other" 
 			alt="" style="border : 0px solid;" /></a></p>
+	<button type="button" id="menuToggle"
+		onclick="document.getElementById('main').classList.toggle('menu-open');"
+		aria-label="Toggle menu">&#9776; Menu</button>
 	<div style="position : relative;" id="main">
 		[% INCLUDE 'menu_left.html' %]
 		[%# ie_hack = 'height : 1%;' %]
-		<div style="position : absolute; left : 22%; width : 78%; [% ie_hack %]; top : 0.5em;">
+		<div id="content_main" style="position : absolute; left : 22%; width : 78%; [% ie_hack %]; top : 0.5em;">
 [% END %]

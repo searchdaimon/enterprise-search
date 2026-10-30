@@ -1,0 +1,34 @@
+# Keep the build context (and the cache key of `COPY .`) to what the image
+# actually needs. In particular .git: without this every commit invalidated the
+# source COPY layer and triggered a full rebuild even when no file changed.
+.git
+.gitignore
+.claude
+
+# Appliance installer media / VM images / docs: not used in the container.
+es/
+kickstart/
+virtualbox/
+vmware/
+torrents/
+doc/
+rpms/
+
+# Build outputs are produced inside the builder stage; never take them from
+# the host checkout (a stray host build would otherwise be copied in).
+bin/
+lib/
+setuid/
+src/**/*.o
+src/**/.libs/
+crawlers/*/*.so
+usersystems/*/*.so
+perlxs/*/blib/
+perlxs/*/Makefile
+perlxs/*/pm_to_blib
+
+# Local logs / scratch
+logs/*.log
+
+# Test build outputs (built inside the test stage)
+test/c/bin/

@@ -29,15 +29,15 @@ main (int argc, char *argv[]) {
 	printf("Opning lot at: %s\n",lotPath);
 
 
-	//loppergjenom alle
+	//loop through all
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,imagebuffer,&radress,0,0)) {
 
 		printf("DocId: %i url: %s\n",ReposetoryHeader.DocID,ReposetoryHeader.url);
 
 
-		//skriver datane til indeks
+		//write the data to the index
 
-		//sletter litt slik at vi ser om det blir noen feil i lesingen
+		//clear some so we can see if there are any errors in the reading
 		ReposetoryHeader.DocID = -1;
 
 	}

@@ -59,13 +59,13 @@ int main (int argc, char *argv[]) {
 			if (linkdbPost.DocID_to != lastDocID) {
 				//printf("\nnew\n");
 
-				//tar vare på ofsett // -sizeof(offset) da vi skal ha starten. Vi har jo allerede lest en
+				//keep the offset // -sizeof(offset) since we want the start. We have already read one
 				//offset = (ftello64(LINKDBFILE) - sizeof(linkdbPost));
 				offset = ftello64(LINKDBFILE);
 				//printf("offset %li\n",offset);
-				//søker oss til riktig plass
+				//seek to the right position
 				fseeko64(INDEXFILE,linkdbPost.DocID_to * sizeof(offset),SEEK_SET);
-				//for så å skrive dette til fil
+				//then write this to file
 				fwrite(&offset,sizeof(offset),1,INDEXFILE);
 
 			}

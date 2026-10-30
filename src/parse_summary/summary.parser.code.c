@@ -1,7 +1,7 @@
 
 #include "summary.parser.c"
 
-// --- fra flex:
+// --- from flex:
 typedef void* yyscan_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 YY_BUFFER_STATE summary_scan_bytes (const char *bytes,int len ,yyscan_t yyscanner );
@@ -241,7 +241,7 @@ void generate_summary( char text[], int text_size, char **output_title, char **o
 
 //    pE.rawbody.data[pE.rawbody.pos] = '\0';
 
-//    print_with_escapes( pE.rawbody.data, &(pE.body) );		// pr_w_esc kjører free automagisk!!
+//    print_with_escapes( pE.rawbody.data, &(pE.body) );		// pr_w_esc runs free automatically!!
 
     (*output_title) = buffer_exit( pE.title );
     (*output_body) = buffer_exit( pE.body );

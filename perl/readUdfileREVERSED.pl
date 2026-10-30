@@ -28,7 +28,7 @@ my $posisjon = UrlQueuePostLength;
 while (not $terminated) {
 
 	#print "Posisjon $posisjon\n";
-	#søker en posisjon opp
+	#seeks one position up
 	#seek(UDFILE, - UrlQueuePostLength,SEEK_CUR);
 	seek(UDFILE,0 - $posisjon,2);
 	$posisjon =  $posisjon + UrlQueuePostLength;
@@ -48,7 +48,7 @@ close(UDFILE);
 Boitho::DocumentIndex::popclose();
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {
         if (not $terminated) {

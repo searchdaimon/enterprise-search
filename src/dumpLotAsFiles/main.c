@@ -37,11 +37,11 @@ main (int argc, char *argv[]) {
         printf("Opning lot at: %s\n",lotPath);
 
 
-	//henter minne
+	//fetch memory
 	htmlncompressBuffer = (Bytef *)malloc(2097152);
 
 	
-        //loppergjenom alle
+        //loop through all
         while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,imagebuffer,&radress, 0, 0)) {
 
 	printf("imageSize %i, htmlSize %i\n",ReposetoryHeader.imageSize,ReposetoryHeader.htmlSize);
@@ -49,7 +49,7 @@ main (int argc, char *argv[]) {
 	if (ReposetoryHeader.response == 200) {
 
 		
-		//skriver bilde
+		//write image
 		sprintf(FileName,"%s%i.jpg",argv[2],ReposetoryHeader.DocID);
 
 		if ((IMAGEFILE = fopen(FileName,"wb")) == NULL) {
@@ -64,7 +64,7 @@ main (int argc, char *argv[]) {
 		fclose(IMAGEFILE);
 		
 
-		//skriver html fil
+		//write html file
 		sprintf(FileName,"%s%i.html",argv[2],ReposetoryHeader.DocID);
 
                 if ((HTMLFILE = fopen(FileName,"wb")) == NULL) {
@@ -73,8 +73,8 @@ main (int argc, char *argv[]) {
                         exit(1);
                 }
 
-		//dekomprimerer htmlen		
-		//burde ikke hardkode her
+		//decompress the html		
+		//should not hardcode here
 		htmlncompressBufferSize = 2097152;
 		//printf("htmlncompressBufferSize: %i, htmlSize: %i\n",htmlncompressBufferSize, ReposetoryHeader.htmlSize);		
 		if ((errornr = uncompress(htmlncompressBuffer,(uLongf *)&htmlncompressBufferSize,htmlbuffer,(uLong)ReposetoryHeader.htmlSize)) != 0) {
@@ -89,7 +89,7 @@ main (int argc, char *argv[]) {
 
                 printf("DocId: %i url: %s\n",ReposetoryHeader.DocID,ReposetoryHeader.url);
 
-                //sletter litt slik at vi ser om det blir noen feil i lesingen
+                //clear a bit so we can see if there are any errors in the reading
                 ReposetoryHeader.DocID = -1;
 
         }

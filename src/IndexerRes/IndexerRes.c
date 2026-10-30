@@ -27,7 +27,7 @@ void wordsInit(struct pagewordsFormat *pagewords) {
 	(*pagewords).outlinks = malloc(sizeof(struct outlinksFormat) * IndexerMaxLinks);	
 }	
 
-//kalles sist når man skal slutte og bruke en pagewords. Free'er det som er alokert
+//called last when you want to stop using a pagewords. Frees what was allocated
 void wordsEnd(struct pagewordsFormat *pagewords) {
 	free((*pagewords).outlinks);
 }
@@ -77,12 +77,12 @@ void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNe
 			if ((*pagewords).outlinks[i].good) {
 
 				len = (*pagewords).outlinks[i].linktextlen;
-				//fjerner space på slutten
+				//remove trailing space
 				if (len > 0) {
 					(*pagewords).outlinks[i].linktext[len -1] = '\0';
 				}	
 
-				//tømmer minne for å gjøre filene mer komprimeringsvendlige
+				//clear memory to make the files more compression-friendly
 				memset(updatePost.url,'\0',sizeof(updatePost.url));
 				memset(updatePost.linktext,'\0',sizeof(updatePost.linktext));
 
@@ -90,7 +90,7 @@ void linksWrite(struct pagewordsFormat *pagewords,struct addNewUrlhaFormat addNe
 				strscpy((char *)updatePost.linktext,(*pagewords).outlinks[i].linktext,sizeof( (*pagewords).outlinks[i].linktext ));
 				updatePost.DocID_from = (*pagewords).curentDocID;
 
-				//bruker sidens DocID til å velge hvilken fil. Usikker på om det er lurt, men det er lett og implementere for nå
+				//use the page's DocID to choose which file. Not sure it's smart, but it's easy to implement for now
 				addNewUrl(&addNewUrlha[(*pagewords).curentDocID % NEWURLFILES_NR],&updatePost);			
 
 			}
@@ -110,17 +110,17 @@ void linkwordadd(struct pagewordsFormat *pagewords, char word[]) {
 
 	convert_to_lowercase((unsigned char *)word);
 	
-	//-1 så vi ikke appender alt på slutten av siste linken hvis vi har mr en IndexerMaxLinks
+	//-1 so we don't append everything at the end of the last link if we have more than IndexerMaxLinks
 	if ((IndexerMaxLinks)> (*pagewords).nrOfOutLinks) {
 
 		if (!(*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].good) {
-			//dårlig link
+			//bad link
 		}
 		else if (((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen + wordlLength +2 ) > sizeof((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktext)) {
-			//har ikke mer plass til link tekst
+			//no more room for link text
 		}
 		else {
-			//må ha -1 her da det er den nåverende vi jobber på, ikke den neste
+			//must have -1 here since it's the current one we work on, not the next
 			strcpy((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktext + (*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen,word);
 			(*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen += wordlLength;
 			strcpy((*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktext + (*pagewords).outlinks[(*pagewords).nrOfOutLinks -1].linktextlen," ");
@@ -192,13 +192,13 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 
 		if (IndexerMaxLinks > (*pagewords).nrOfOutLinks) {
 
-			//inaliserer den til å våre dårlig
+			//initialize it to be bad
 			(*pagewords).outlinks[(*pagewords).nrOfOutLinks].good = 0;
 
 			url_normalization (url,sizeof(url));
 
 			if (!globalIndexerLotConfig.collectUrls) {
-				//skal ikke lagge til urler
+				//should not add urls
 			}
 			else if ((strchr(url,'?') != NULL) && ((*pagewords).curentUrlIsDynamic)) {
                 	        //printf("NO add, dynamic -> dunamic %s\n",(*pagewords).updatePost[i].url);
@@ -218,7 +218,7 @@ void linkadd(struct pagewordsFormat *pagewords, char word[]) {
 			}
 		}
 
-		//øker oversikten over antall utgående linker
+		//increase the count of outgoing links
 		++(*pagewords).nrOfOutLinks;
 
 }
@@ -268,7 +268,7 @@ void wordsAdd(struct pagewordsFormatPartFormat *wordsPart, char word[],enum pars
 
 				wordlLength = strlen(word);
 
-				//gjør om til små bokstaver
+				//convert to lowercase
 				convert_to_lowercase((unsigned char *)word);
 
 
@@ -283,7 +283,7 @@ void wordsAdd(struct pagewordsFormatPartFormat *wordsPart, char word[],enum pars
 				#endif
 
 				wordsPart->words[wordsPart->nr].position = (wordsPart->nextPosition + wordTypeadd);
-				// må ha en index posisjon her. Slik at vi kan finne ord før og etter. Posisjon er kodet
+				// must have an index position here. So that we can find words before and after. Position is encoded
 				wordsPart->words[wordsPart->nr].unsortetIndexPosition = wordsPart->nr;
 
 
@@ -327,9 +327,9 @@ void IndexerRes_fn( char* word, int __attribute__((unused))pos, enum parsed_unit
 
 		break;
             case pu_linkword: 
-			//på vep hånterer vi link tekst som ankertekst. På bb er det en del av dokumentet
-			//ToDo: Vi ser ut til å mangle håntering av link ord her???
-			//har det falt ut ??
+			//on web we handle link text as anchor text. On bb it's part of the document
+			//ToDo: We seem to be missing handling of link words here???
+			//did it get dropped ??
 			#ifdef BLACK_BOX
 				wordsAdd(&((struct pagewordsFormat *)pagewords)->normalWords,word,puf_none);
 			#else
@@ -399,12 +399,12 @@ int compare_elements_AdultFraserRecordFormat (const void *p1, const void *p2) {
 
 	n = strcmp(((struct AdultFraserRecordFormat *)p1)->word1,((struct AdultFraserRecordFormat *)p2)->word1);
 
-	//hvis ordene ikke er like kan vi bare returnere
+	//if the words aren't equal we can just return
 	if (n != 0) {
 		return n;
 	}
 	else {
-		//sorterer på ord 2
+		//sort by word 2
 		return (strcmp(((struct AdultFraserRecordFormat *)p1)->word2,((struct AdultFraserRecordFormat *)p2)->word2));
 	}
 
@@ -457,7 +457,7 @@ void aclsMakeRevIndex(struct IndexerRes_acls *acl) {
 		(*acl).acls_sorted[i] = (*acl).acls[i];
 	}
 
-	//sorter ordene
+	//sort the words
 	qsort(&(*acl).acls_sorted, (*acl).aclnr , sizeof(struct wordsFormat), compare_elements_words);
 
 	(*acl).aclIndexnr = 0;
@@ -499,7 +499,7 @@ void attribMakeRevIndex(struct IndexerRes_attrib *attrib) {
 		(*attrib).attrib_sorted[i] = (*attrib).attrib[i];
 	}
 
-	//sorter ordene
+	//sort the words
 	qsort(&(*attrib).attrib_sorted, (*attrib).attribnr , sizeof(struct wordsFormat), compare_elements_words);
 
 	(*attrib).attribIndexnr = 0;
@@ -532,7 +532,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 	unsigned int oldcrc32;
 	int oldRevIndexnr = 0;
 
-	//kopierer over til den word arrayn som skal være sortert
+	//copy over to the word array that is to be sorted
 	for(i=0;i<wordsPart->nr;i++) {
 
 		wordsPart->words_sorted[i] = wordsPart->words[i];
@@ -541,7 +541,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 		#endif
 	}
 
-	//sorter ordene
+	//sort the words
 	qsort(&wordsPart->words_sorted, wordsPart->nr , sizeof(struct wordsFormat), compare_elements_words);
 
 
@@ -553,7 +553,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 		
 
 		if ((wordsPart->words_sorted[i].WordID != oldcrc32) || (oldcrc32 == 0)) {
-			// nytt ord, skal lages nytt
+			// new word, a new one is to be created
 			#ifdef DEBUG_ADULT
 				//printf("new word. Word \"%s\"\n",wordsPart->words_sorted[i].word);
 			#endif
@@ -590,8 +590,8 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 			}
 			//printf("ll: adultpos %i < adultWordnr %i\n",adultpos,(*adult).adultWordnr);
 			if (adultpos == (*adult).adultWordnr) {
-				//nåd enden
-				//ToDo: vi får fortsat med siste ord her, ikke sant?
+				//reached the end
+				//ToDo: we still include the last word here, right?
 				//printf("adultpos %i, (*adult).adultWordnr %i\n",adultpos,(*adult).adultWordnr);
 			}
 			else if ((*adult).AdultWords[adultpos].crc32 == wordsPart->revIndex[wordsPart->revIndexnr].WordID) {
@@ -608,7 +608,7 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 			#endif
 
 			oldRevIndexnr = wordsPart->revIndexnr;
-			//har fåt et til ord i revindex
+			//got one more word in revindex
 			++wordsPart->revIndex[wordsPart->revIndexnr].nr;
 
 			//printf("b%i\n\n",wordsPart->revIndexnr);
@@ -622,8 +622,8 @@ void wordsMakeRevIndex_part(struct pagewordsFormatPartFormat *wordsPart,struct a
 			#ifdef PRESERVE_WORDS
 				++wordsPart->revIndex[oldRevIndexnr].wordnr;
 			#endif
-			// ord er set før, skal legges til det tidligere
-			// må passe på at vi ikke overskriver med flere hits en MaxsHits
+			// word has been seen before, is to be added to the earlier one
+			// must make sure we don't overwrite with more hits than MaxsHits
 			if (wordsPart->revIndex[oldRevIndexnr].nr < MaxsHitsInIndex) {
 				wordsPart->revIndex[oldRevIndexnr].hits[ wordsPart->revIndex[oldRevIndexnr].nr ].pos = wordsPart->words_sorted[i].position;
 				wordsPart->revIndex[oldRevIndexnr].hits[ wordsPart->revIndex[oldRevIndexnr].nr ].realpos = wordsPart->words_sorted[i].unsortetIndexPosition;
@@ -653,8 +653,8 @@ void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultForma
 
 	int i,y,z,adultFraserpos;
 
-	//går gjenom alle hitene og ser etter adult fraser
-	//toDo: denne er ikke helt optimal, da vi teller samme frase igjen og igjen. Så hvis vi har x z y x z, der "x z" er bannnet får vi nå to banninger, som gjør at verdien blir dobelt så stor.
+	//go through all the hits and look for adult phrases
+	//toDo: this is not quite optimal, since we count the same phrase again and again. So if we have x z y x z, where "x z" is banned we now get two bans, which makes the value twice as large.
 	adultFraserpos = 0;
 	for (i=0;i<wordsPart->revIndexnr;i++) {
 
@@ -673,14 +673,14 @@ void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultForma
 		if ((*adult).adultFraser[adultFraserpos].crc32 == wordsPart->revIndex[i].WordID) {
 
 			
-			//har hitt. Lopper gjenom word2'ene på jakt etter ord nr to
+			//got a hit. Loop through the word2's looking for word number two
 			#ifdef DEBUG_ADULT
 				printf("word is first in frase %s\n",(*adult).adultFraser[adultFraserpos].word);
 				printf("x words to try %i, pos %i\n",(*adult).adultFraser[adultFraserpos].adultWordCount,
 							adultFraserpos);
 			#endif
 
-			//nulstiller oversikten over de ordene vi allerede har lagt til
+			//reset the record of the words we have already added
 			for(z=0;z<(*adult).adultFraser[adultFraserpos].adultWordCount;z++) {
 				(*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady = 0;
 			}
@@ -692,7 +692,7 @@ void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultForma
 					if ((*adult).adultFraser[adultFraserpos].adultWord[z].crc32 
 						== wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].WordID) {
 						
-						//setter at vi allerede har sette dette ordet
+						//mark that we have already set this word
 						++(*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady;
 						
 						if ((*adult).adultFraser[adultFraserpos].adultWord[z].addedAllReady != 1) {
@@ -715,7 +715,7 @@ void adultPhrases(struct pagewordsFormatPartFormat *wordsPart, struct adultForma
 								wordsPart->words[ wordsPart->revIndex[i].hits[y].realpos +1 ].word,
 								(*adult).adultFraser[adultFraserpos].adultWord[z].weight);
 						#endif
-						//øker adult verdien med vekt
+						//increase the adult value by the weight
 						(*adultWeight) += (*adult).adultFraser[adultFraserpos].adultWord[z].weight;
 
 					}
@@ -743,7 +743,7 @@ void wordsMakeRevIndex(struct pagewordsFormat *pagewords, struct adultFormat *ad
 	wordsMakeRevIndex_part(&pagewords->normalWords,adult,adultWeight);
 
 
-	//finner språk
+	//detect language
 	char lang[4];
 	langdetectDetect(pagewords->normalWords.words_sorted,pagewords->normalWords.nr,lang);
 	*langnr = getLangNr(lang);
@@ -824,7 +824,7 @@ void adultLoad (struct adultFormat *adult) {
 
 	i=0;
 	while ((fgets(buff,sizeof(buff),FH) != NULL) && (i < maxAdultWords)) {
-		//fjerner \n en på slutteten
+		//remove the trailing \n
 		buff[strlen(buff) -1] = '\0';
 
 		if ((buff[0] == '#') || (buff[0] == '\0')) {
@@ -832,19 +832,19 @@ void adultLoad (struct adultFormat *adult) {
 			continue;
 		}
 
-		//gjør om til lite case
+		//convert to lowercase
 		for(x=0;x<strlen(buff);x++) {
 			buff[x] = btolower(buff[x]);
 		}
 
 
-		//finner space, som er det som skiller
+		//find the space, which is the separator
                 cpoint = strchr(buff,' ');
 		if (cpoint != NULL) {
 
 			strscpy((*adult).AdultWords[i].word,buff,cpoint - buff +1);
 
-			//vil ikke ha men spacen. Går et hakk vidre
+			//don't want the space. Move one step further
 			++cpoint;
 			(*adult).AdultWords[i].weight = atoi(cpoint);
 			
@@ -870,7 +870,7 @@ void adultLoad (struct adultFormat *adult) {
 
 	qsort((*adult).AdultWords, i , sizeof(struct adultWordFormat), compare_elements_adultWord);	
 
-//debug: vis alle ordene, sortert
+//debug: show all the words, sorted
 //	for(y=0;y<i;y++) {
 //		printf("%i: -%s- %u %i\n",y,(*adult).AdultWords[y].word,(*adult).AdultWords[y].crc32,(*adult).AdultWords[y].weight);
 //	}
@@ -900,7 +900,7 @@ void adultLoad (struct adultFormat *adult) {
 	struct AdultFraserRecordFormat AdultFraserRecords[maxAdultWords];
 
 	while ((fgets(buff,sizeof(buff) -1,FH) != NULL) && (y < maxAdultWords)) {
-                //gjør om til lite case
+                //convert to lowercase
                 for(x=0;x<strlen(buff);x++) {
                         buff[x] = btolower(buff[x]);
                 }
@@ -940,11 +940,11 @@ void adultLoad (struct adultFormat *adult) {
 				printf("adult frase: %i: %s, %s, %i\n",i,AdultFraserRecords[x].word1,AdultFraserRecords[x].word2,AdultFraserRecords[x].weight);
 			#endif	
 
-			//finner crc32 verdeien for første ord
+			//find the crc32 value for the first word
 			crc32tmp = crc32boitho(AdultFraserRecords[x].word1);
 
-			//hvsi dette er første så her vi ikke noen forige å legge den til i, så vi må opprette ny
-			//hvsi dette derimot har samme word1 som forige så legger vi det til
+			//if this is the first then we have no previous to add it to, so we must create a new one
+			//if this on the other hand has the same word1 as the previous then we add it
 			if ((i!=-1) && (crc32tmp == (*adult).adultFraser[i].crc32)) {
 				//printf("nr to\n");
 			}
@@ -1005,7 +1005,7 @@ void revindexFilesOpenNET(FILE *revindexFilesHa[]) {
 	}
 }
 /**************************************************************************************
-Sender revindex filene til en server som kjører boithold
+Sends the revindex files to a server running boithold
 ***************************************************************************************/
 void revindexFilesSendNET(FILE *revindexFilesHa[],int lotNr) {
 	int i;
@@ -1035,8 +1035,8 @@ void copyRepToDi(struct DocumentIndexFormat *DocumentIndexPost,struct Reposetory
 			(*DocumentIndexPost).ResourcePointer 	= 0;
 			(*DocumentIndexPost).ResourceSize 	= 0;
 #ifdef BLACK_BOX
-			//runarb: 31 mars 2008: gjør dette bare hvis vi ikke har en tid fra før. Hvis ikke risikerer 
-			//vi og tilbakedatere tiden, og dermed slettes den av garbage collection.
+			//runarb: 31 march 2008: only do this if we don't already have a time. Otherwise we risk 
+			//backdating the time, and thereby it gets deleted by garbage collection.
 			if (DocumentIndexPost->lastSeen == 0) {
 				DocumentIndexPost->lastSeen = ReposetoryHeader->storageTime;
 			}
@@ -1083,13 +1083,13 @@ void aclsMakeRevIndexBucket (struct IndexerRes_acls *acl,unsigned int DocID,unsi
 		(*acl).nrofAclBucketElements[i].bucketbuff = malloc((*acl).nrofAclBucketElements[i].bucketbuffsize);
 	}
 
-	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
+	//set the pointer to the beginning. Then we will move it as we get further out
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		(*acl).nrofAclBucketElements[i].p = (*acl).nrofAclBucketElements[i].bucketbuff;
 	}
 
-	//bruker en temperær p peker her som erstatning for (*acl).nrofaclBucketElements[(*acl).aclIndex[i].bucket].p, 
-	//så koden ikke blir så uoversiktelig
+	//use a temporary p pointer here as a replacement for (*acl).nrofaclBucketElements[(*acl).aclIndex[i].bucket].p, 
+	//so the code doesn't get so unreadable
 	void *p;
 	for(i=0;i<(*acl).aclIndexnr;i++) {
 		
@@ -1136,13 +1136,13 @@ void attribMakeRevIndexBucket (struct IndexerRes_attrib *attrib,unsigned int Doc
 		(*attrib).nrofAttribBucketElements[i].bucketbuff = malloc((*attrib).nrofAttribBucketElements[i].bucketbuffsize);
 	}
 
-	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
+	//set the pointer to the beginning. Then we will move it as we get further out
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		(*attrib).nrofAttribBucketElements[i].p = (*attrib).nrofAttribBucketElements[i].bucketbuff;
 	}
 
-	//bruker en temperær p peker her som erstatning for (*attrib).nrofattribBucketElements[(*attrib).attribIndex[i].bucket].p, 
-	//så koden ikke blir så uoversiktelig
+	//use a temporary p pointer here as a replacement for (*attrib).nrofattribBucketElements[(*attrib).attribIndex[i].bucket].p, 
+	//so the code doesn't get so unreadable
 	void *p;
 	for(i=0;i<(*attrib).attribIndexnr;i++) {
 		
@@ -1191,13 +1191,13 @@ void wordsMakeRevIndexBucket_part(struct pagewordsFormatPartFormat *wordsPart,un
 		}
 	}
 
-	//setter pekeren til begyndelsen. Siden vil vi jo flytte denne etter hvert som vi kommer lenger ut
+	//set the pointer to the beginning. Then we will move it as we get further out
 	for(i=0;i<NrOfDataDirectorys;i++) {
 		wordsPart->nrofBucketElements[i].p = wordsPart->nrofBucketElements[i].bucketbuff;
 	}
 
-	//bruker en temperær p peker her som erstatning for wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].p, 
-	//så koden ikke blir så uoversiktelig
+	//use a temporary p pointer here as a replacement for wordsPart->nrofBucketElements[wordsPart->revIndex[i].bucket].p, 
+	//so the code doesn't get so unreadable
 	void *p;
 	for(i=0;i<wordsPart->revIndexnr;i++) {
 
@@ -1256,7 +1256,7 @@ void dictionaryWordsWrite (struct pagewordsFormat *pagewords,FILE *FH, char *acl
 }
 
 /**************************************************************************************
-Skriver acl index til disk
+Writes the acl index to disk
 ***************************************************************************************/
 #ifdef BLACK_BOX
 void aclindexFilesAppendWords(struct IndexerRes_acls *acl,FILE *aclindexFilesHa[]) {
@@ -1298,7 +1298,7 @@ void attribindexFilesAppendWords(struct IndexerRes_attrib *attrib,FILE *attribin
 }
 #endif
 /**************************************************************************************
-Skriver reversert index til disk
+Writes the reversed index to disk
 ***************************************************************************************/
 void revindexFilesAppendWords_part(struct pagewordsFormatPartFormat *wordsPart,FILE *revindexFilesHa[]) {
 

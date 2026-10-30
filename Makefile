@@ -137,6 +137,7 @@ repomodwrap:
 	@echo ""
 	@echo "$@:"
 
+	mkdir -p setuid
 	$(CC) -Wall -o setuid/repomodwrap src/repomodsetuid/repomodwrap.c -O2
 
 setuidcaller:
@@ -1155,15 +1156,17 @@ boithoadClientLib: src/boithoadClientLib/boithoadClientLib.c
 
 
 InitServices: src/InitServices/initwrapper.c
+	mkdir -p setuid
 	(cd src/InitServices/ && make clean && make)
-
 	cp src/InitServices/initwrapper setuid/
 
 YumWrapper: src/YumWrapper/yumwrapper.c
+	mkdir -p setuid
 	(cd src/YumWrapper && make clean && make)
 	cp src/YumWrapper/yumwrapper setuid/
 
 NetConfig: src/NetConfig/configwrite.c
+	mkdir -p setuid
 	(cd src/NetConfig && make clean && make)
 	cp src/NetConfig/configwrite setuid/
 
@@ -1344,3 +1347,20 @@ webpublish:
 #clean :
 #	rm -f program *.png output-data
 
+
+# --- Tests -------------------------------------------------------------------
+# See test/README.md. `test` needs `make dep` first (it links against lib/*.a);
+# `smoke` needs the compose stack running and talks to the appliance container.
+# Like every target here this needs BOITHOHOME and config.mk; from a plain host
+# checkout use `make -C test smoke-compose` directly.
+test:
+	@echo ""
+	@echo "$@:"
+	$(MAKE) -C test check
+
+smoke:
+	@echo ""
+	@echo "$@:"
+	$(MAKE) -C test smoke-compose
+
+.PHONY: test smoke

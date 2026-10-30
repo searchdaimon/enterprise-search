@@ -301,7 +301,7 @@ traverse_dictionary(char *filename, DB *dbp)
 }
 
 #define dbCashe 4*314572800  //300 mb
-#define dbCasheBlokes 1         //hvor mange deler vi skal dele cashen opp i. Ofte kan man ikke alokere store blikker samenhengenede
+#define dbCasheBlokes 1         //how many parts we should split the cache into. Often you cannot allocate large blocks contiguously
 
 int
 main(int argc, char **argv)

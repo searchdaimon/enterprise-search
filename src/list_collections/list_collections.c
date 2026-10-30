@@ -13,9 +13,9 @@ int main(int argc, char *argv[]) {
 
 /*
 	Usage:
-		-c Vis antall dokumenter
-		-f Vi menesklig lesbart format
-		-m vi bare collections som inneholder argumentet.
+		-c Show number of documents
+		-f Human readable format
+		-m only collections that contain the argument.
 */
 
 	int optCount = 0;

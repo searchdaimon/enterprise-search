@@ -3,7 +3,7 @@
 #define _UTF_8_STRINGS_H_
 
 /**
- *	Bibliotek for å behandle strenger kodet med utf-8, med særskilt vekt på de europeiske tegnene.
+ *	Library for handling strings encoded in utf-8, with particular emphasis on the European characters.
  *
  *	(C) Copyright 2007-2008, SearchDaimon AS (Magnus Galåen)
  */
@@ -15,12 +15,12 @@
 typedef unsigned char	utf8_byte;
 
 
-// Konverterer en tekststreng til små bokstaver:
+// Converts a text string to lowercase:
 static inline void convert_to_lowercase_n( utf8_byte *str, int n )
 {
     if (str==NULL) return;
 
-	//toDo: runarb: 31.10.07: tar ikke hensyn til n overalt der vi har ++i. Dette kan fære til at vi går over hvis vi ar en feil i utf-8 stringen
+	// toDo: runarb: 31.10.07: does not account for n everywhere we have ++i. This can cause us to overrun if there is an error in the utf-8 string
 
     int         i;
 
@@ -36,7 +36,7 @@ static inline void convert_to_lowercase_n( utf8_byte *str, int n )
         }
 }
 
-// Konverterer en tekststreng til små bokstaver: (*DEPRECATED* bruk utf8_strtolower istedet)
+// Converts a text string to lowercase: (*DEPRECATED* use utf8_strtolower instead)
 static inline void convert_to_lowercase( utf8_byte *str )
 {
     if (str==NULL) return;
@@ -55,7 +55,7 @@ static inline void convert_to_lowercase( utf8_byte *str )
         }
 }
 
-// Konverterer en tekststreng til små bokstaver:
+// Converts a text string to lowercase:
 static inline void utf8_strtolower( utf8_byte *str )
 {
     if (str==NULL) return;
@@ -75,7 +75,7 @@ static inline void utf8_strtolower( utf8_byte *str )
 }
 
 
-// Detekterer om en string består av kun lowercase-bokstaver (altså ingen store bokstaver):
+// Detects whether a string consists only of lowercase letters (i.e. no uppercase letters):
 static inline int detect_no_uppercase( utf8_byte *str )
 {
     if (str==NULL) return 1;
@@ -93,7 +93,7 @@ static inline int detect_no_uppercase( utf8_byte *str )
     return 1;
 }
 
-// Detekterer om første tegn i strengen er uppercase:
+// Detects whether the first character in the string is uppercase:
 static inline int utf8_first_char_uppercase( utf8_byte *str )
 {
     if (str==NULL || str[0]=='\0') return 0;
@@ -105,7 +105,7 @@ static inline int utf8_first_char_uppercase( utf8_byte *str )
 }
 
 
-// Konverter latin-1 til utf8
+// Convert latin-1 to utf8
 static inline unsigned char* copy_latin1_to_utf8( utf8_byte *str )
 {
     int			str_len = strlen((const char*)str);
@@ -137,7 +137,7 @@ static inline unsigned char* copy_latin1_to_utf8( utf8_byte *str )
 }
 
 
-// Valid kun med 8859-1-kompatible tegn
+// Valid only with 8859-1-compatible characters
 static inline int utf8_strcasecmp( const utf8_byte *s1, const utf8_byte *s2 )
 {
     int		i;

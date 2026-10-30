@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-#leser
+#reads
 
 if ($ARGV[0] eq '') {
 	die("Spesifiser host\n\nekse: perl IndexerLot.pl localhost 2\n");
@@ -13,7 +13,7 @@ $LotNr = $ARGV[1];
 $HostName = $ARGV[0];
 
 ##################
-# Tester for om det er ledig disk kapasitet
+# Tests whether there is free disk capacity
 #my $out = `df -m /`;
 #
 #@outlines = split(/\n/,$out);
@@ -29,7 +29,7 @@ $HostName = $ARGV[0];
 #print "dont indexing $LotNr\n";
 #exit;
 
-#21 okt 2005: bytter fra 20 til 30 da enkelte ord faktisk er så lange :(
+#21 oct 2005: switching from 20 to 30 since some words really are that long :(
 use constant minimum_term_lengde => 2;
 use constant maksimum_term_lengde => 20;
 
@@ -47,7 +47,7 @@ use IR qw(lexer stoppord ResulveUrl adultFilter);
 use revindex qw(OpenForApendingNET StoreRevIndexNET ApendAray);
 use common qw(fin_domene gyldig_url);
 
-#inaliserer språkfinns systemet
+#initializes the language detection system
 our $LinguaIdent_var = inaliser_languages();
 use Digest::SHA1  qw(sha1);
 
@@ -58,7 +58,7 @@ use Digest::SHA1  qw(sha1);
 #$lotha->RepositoryOpen('');
 
 
-#documnet indeks med mere
+#document index and more
 #4:$lotha->LodeTables();
 
 #exit;
@@ -143,7 +143,7 @@ our $terminated = 0;
 
 $SIG{INT} = $SIG{TERM} = $SIG{HUP} = \&signal_handler;
 
-#finner når denne sist ble indeksert
+#finds when this was last indexed
 my $lastIndexTime = Boitho::Reposetory::GetLastIndexTimeForLotNET($HostName,$LotNr);
 
 
@@ -160,7 +160,7 @@ if ($lastIndexTime != 0) {
 my $PageCount = 0;
 while (( my($DocID, $url, $content_type, $IPAddressInNumber, $IPAddress ,$response, $userID, $clientVersion, $rhtmlSize, $rimageSize, $html, undef, $radress, $DownlodeTime) = Boitho::Reposetory::rGetNextNET($HostName,$LotNr, $lastIndexTime, 0)) && (not $terminated)) {
 
-#fører eval til at vi lekker minne, og går tregere (da den rekompilerer blokken hver gang ???)
+#does eval cause us to leak memory and run slower (since it recompiles the block every time ???)
 #eval {	
 
 	#print "$DocID\n";
@@ -180,7 +180,7 @@ elsif (($response >= 199) && ($response <= 299)) {
 	#print "html length " . length($html) . "\n" . substr($html,0,10 . "\n\n");
 
 	#print "$count\n";
-	#viser hvor lang vi har komet:
+	#shows how far we have come:
 	#my $prosent = (100 / $AntallForBehandling) * $count;
 	#if ($prosent =~ /^[+-]?\d+$/) {
 	#	print "$prosent %\n";
@@ -191,7 +191,7 @@ elsif (($response >= 199) && ($response <= 299)) {
 	my (%ParsetSide) = strip_html($html);
 	
 
-	#debug: viser all ordene	
+	#debug: shows all the words	
 	#foreach my $i (keys %ParsetSide) {
 	#	print "$i\n";
 	#}
@@ -208,14 +208,14 @@ elsif (($response >= 199) && ($response <= 299)) {
 	#print "Sprok: $sprok\n";
 	###
 	
-	# temp. Forhindrer at rarae språk kommer inn
+	# temp. Prevents rare languages from getting in
 	#if (not $gyldigSprok{$sprok}) {
-	#	#warn("ikke gyldig sptåk: $sprok");
+	#	#warn("not a valid language: $sprok");
 	#	$sprok = '';
 	#}
 	#/temp
 
-	#temp: skrur av språkdetektering
+	#temp: turns off language detection
 	#if ($sprok eq '') {
 	#	
 	#	$sprok = fin_sprok($ParsetSide{'innhold'} . $ParsetSide{'description'});
@@ -224,9 +224,9 @@ elsif (($response >= 199) && ($response <= 299)) {
 	#	print "$sprok\n";
 	#}
 	
-	# temp. Forhindrer at rarae språk kommer inn
+	# temp. Prevents rare languages from getting in
 	#if (not $gyldigSprok{$sprok}) {
-	#	#warn("ikke gyldig sptåk: $sprok");
+	#	#warn("not a valid language: $sprok");
 	#	$sprok = 'aa';
 	#}
 	#/temp
@@ -234,11 +234,11 @@ elsif (($response >= 199) && ($response <= 299)) {
 	
 	
 
-	my %termer = {};	#inaliserer
+	my %termer = {};	#initializes
 	%termer = lexer($ParsetSide{'innhold'},'Body',%termer);
 
 
-	#lar anchor indeksen hondtere urler	
+	#lets the anchor index handle URLs	
 	#my $domene = fin_domene($url);
 	#if (length($domene) < 30) {
 	#	%termer = lexer($domene,'Url',%termer);
@@ -246,22 +246,22 @@ elsif (($response >= 199) && ($response <= 299)) {
 	#}
 
 
-	#tar bare med title hvis den er kortere en 80 tegn, dette da det ellers typsik er spam.
+	#only includes the title if it is shorter than 80 chars, since otherwise it is typically spam.
 	if (length($ParsetSide{'title'}) < 80) {
 		%termer = lexer($ParsetSide{'title'},'Tittel',%termer);
 	}
 	%termer = lexer($ParsetSide{'headlines'},'Headline',%termer);
-	#adultnes kalkulasjon
+	#adultness calculation
 		my $AdultWeight = adultFilter(%termer);
-		#leger til ordene i spamen hvis vi har smapm
-		# + keywords og description fra htmlene da adult odr ofte forekomer der på sider som er vanskeilg å bestemme
-		my %TempSpam = {}; #lexer må ha en array inn, så vi makker en
+		#adds the words in the spam if we have spam
+		# + keywords and description from the html since adult words often appear there on pages that are hard to classify
+		my %TempSpam = {}; #lexer needs an array as input, so we make one
 		%TempSpam = lexer($ParsetSide{'spam'} . ' ' . $ParsetSide{'keywords'} . ' ' . $ParsetSide{'description'} . ' ' . $url,'spam',%TempSpam);
 		$AdultWeight += adultFilter(%TempSpam);
 		undef %TempSpam;
-	#/adultnes kalkulasjon
+	#/adultness calculation
 				
-	#skriver siden til Documnet index
+	#writes the page to the Document index
 	
 	Boitho::Reposetory::DIWriteNET($HostName, $url, $sprok, 0, $content_type, $DownlodeTime, 0, $AdultWeight, $radress, $rhtmlSize, $rimageSize, 0, 0, $IPAddressInNumber, $response, $DocID, $userID, $clientVersion);
 
@@ -270,7 +270,7 @@ elsif (($response >= 199) && ($response <= 299)) {
 	
 	%termer = stoppord($sprok,minimum_term_lengde,maksimum_term_lengde,%termer);
 	
-	#Debug: lister opp alle ordene og posisjonen
+	#Debug: lists all the words and their positions
 	#foreach my $i (keys %termer) {
 	#	print "$i: ";
 	#	foreach my $y (@{$termer{$i}}) {
@@ -286,32 +286,32 @@ elsif (($response >= 199) && ($response <= 299)) {
 
 	
 	#######
-	#fin fulle URLer
-	#sjekker om vi er på en dynamisk url, i såfal skal ikke dynamsike URLer være med
+	#find full URLs
+	#checks whether we are on a dynamic url, in which case dynamic URLs should not be included
 	my $DynamiskSide = 0;
-	if ($url =~ /\?/) {	#leter etter ? tegn
+	if ($url =~ /\?/) {	#looks for the ? char
 		$DynamiskSide = 1;
 	}
 
-	my %SettUrler = {};	#ingen vits i å teste en url bare forde den er flere plasser på en side
+	my %SettUrler = {};	#no point in testing a url just because it appears in several places on a page
 	foreach my $i (@{ $ParsetSide{urler} }) {
 		
 		if (not exists $SettUrler{$i->[0]}) {
-			$SettUrler{$i->[0]} = 1; #markerer at vi har testet denne
-			my $nyUlr = ResulveUrl($url,$i->[0]); #finner full url
+			$SettUrler{$i->[0]} = 1; #marks that we have tested this one
+			my $nyUlr = ResulveUrl($url,$i->[0]); #finds full url
 		
-			#legger til urler
+			#adds URLs
 			if (
-													#sjekker at vi enten ikke er på en dynamsik side
-					((not $DynamiskSide) || (($DynamiskSide) && ($nyUlr !~ /\?/)))	#eller hvis vi er så tar vi bare nyeurler som ikke er dynamiske
-				&&	($nyUlr ne $url)						#ikke den samme som den vi indserer nå
-				&&	(gyldig_url($nyUlr))						#er en gyldig url
+													#checks that we are either not on a dynamic page
+					((not $DynamiskSide) || (($DynamiskSide) && ($nyUlr !~ /\?/)))	#or if we are, we only take new URLs that are not dynamic
+				&&	($nyUlr ne $url)						#not the same as the one we are indexing now
+				&&	(gyldig_url($nyUlr))						#is a valid url
 			) {
 			
 					Boitho::Reposetory::addNewUrl($nyUlr,$i->[1],$DocID,"");				
 
 			}
-			#Debug: viser hvilkene URler vi forkaster
+			#Debug: shows which URLs we discard
 			#else {
 			#	print "forkastet $url -> $nyUlr\n";
 			#}
@@ -326,7 +326,7 @@ elsif (($response >= 199) && ($response <= 299)) {
 	#}
 }
 else {
-	#ikke 200 side
+	#not a 200 page
 	#Boitho::DocumentIndex::DIWrite($url, '', 0, $content_type, 0, $DownlodeTime, 0, $radress, $rhtmlSize, $rimageSize, 0, 0, $IPAddressInNumber, $response, $DocID, $userID, $clientVersion);	
 	Boitho::Reposetory::DIWriteNET($HostName,$url, '', 0, $content_type, 0, $DownlodeTime, 0, $radress, $rhtmlSize, $rimageSize, 0, 0, $IPAddressInNumber, $response, $DocID, $userID, $clientVersion);	
 
@@ -334,7 +334,7 @@ else {
 #}; warn $@ if $@; #eval 
 }
 
-#skriver når denne sist ble indeksert, men bare hvis vi ikke terminerte med ^c, ellers har vi ikke vert gjenom helle filen
+#writes when this was last indexed, but only if we did not terminate with ^c, otherwise we have not been through the whole file
 if (not $terminated) {
 	print "skriver indekstid til lot: $LotNr\n";
 	Boitho::Reposetory::setLastIndexTimeForLotNET($HostName,$LotNr);
@@ -364,7 +364,7 @@ my $tid =  Time::HiRes::time - $begynneTdi;
 print "Tokk tid: $tid\nIndekserte $PageCount sider\n\n";
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {	
 	if (not $terminated) {
@@ -378,13 +378,13 @@ sub signal_handler {
 }
 
 ############################################################################################################################
-# finner språk
+# finds language
 ############################################################################################################################
 sub fin_sprok {
 	my($text) = @_;
 	my($sprok) = '';
 	
-	#sender bare tilbake no for nå, skal lage denne siden
+	#just returns no for now, this part is still to be made
 	#$sprok = 'no';
 	if ($text eq '') {
 		warn("kalte fin_sprok uten en tekst for identifisering");
@@ -394,7 +394,7 @@ sub fin_sprok {
 		$sprok = $LinguaIdent_var->identify($text), "\n";
 	}
 	
-	#hvis vi ikke fant et ståk, setter vi det til aa
+	#if we did not find a language, we set it to aa
 	if ($sprok eq '') {
 		$sprok = 'aa';
 	}
@@ -402,7 +402,7 @@ sub fin_sprok {
 }
 
 ############################################################################################################################
-# laster språkfilene
+# loads the language files
 ############################################################################################################################
 sub inaliser_languages {
 	my(@languages) = ();
@@ -426,7 +426,7 @@ sub inaliser_languages {
 	}
 
 	use LinguaIdent;
- 	my $LinguaIdent_var  = new LinguaIdent(@languages); # blir den global for hele programet her ?
+ 	my $LinguaIdent_var  = new LinguaIdent(@languages); # does it become global for the whole program here ?
 	
 	return $LinguaIdent_var;
 }

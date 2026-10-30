@@ -1,7 +1,7 @@
 ####################################################################
-#settup
+#setup
 #####
-#MySQL settup
+#MySQL setup
 $user = "boitho";
 $Password = "G7J7v5L5Y7";
 #$server = "localhost";
@@ -24,7 +24,7 @@ my $orderby = 'order by rand()';
 
 use IR qw(ResulveUrl);
 
-use DBI; #bruker DBI databse interfase
+use DBI; #uses the DBI database interface
 use Compress::Zlib;
 use Boitho::Reposetory;
 use Boitho::Lot;
@@ -60,8 +60,8 @@ my $count = 0;
 my @reqs;
 #my $DocID;
 
-		# dette kjøres hver gang mymod.pm kalles
-		my $dbh = DBI->connect("DBI:mysql:database=$database;host=$server;port=3306",						#Kobler til databasen
+		# this runs every time mymod.pm is called
+		my $dbh = DBI->connect("DBI:mysql:database=$database;host=$server;port=3306",						#connects to the database
                              $user, $Password) or warn("Can`t connect: $DBI::errstr");	#
 							 
 		
@@ -79,7 +79,7 @@ my @reqs;
 		while (($DocID,$url,$id) = $sth->fetchrow_array) {
 
 
-			#bug: skal vi gjøre dette her, eller under innlegelsen?
+			#bug: should we do this here, or during insertion?
 			$url = ResulveUrl("http://www.boitho.com/addurl.html",$url);
 
 
@@ -127,10 +127,10 @@ my @reqs;
 
 		}
 
-		#og siste
+		#and the last one
 		crawlSomeUrls($rules,\@reqs);
 
-		#/laster inn urler
+		#/load in URLs
 
 
   print "done loading\n";
@@ -158,7 +158,7 @@ sub crawlSomeUrls {
        	$pua->delay    ( 0);  # in seconds
        	$pua->max_req  ( 1);  # max parallel requests per server
        	$pua->max_hosts(20);  # max parallel servers accessed
-       	$pua->redirect  (10);   #tilater ikke redirekts
+       	$pua->redirect  (10);   #do not allow redirects
 
 
   	# for our own print statements that follow below:
@@ -199,7 +199,7 @@ sub crawlSomeUrls {
 			#$res = $r; 
 			$url = $r->request->url;
 			$r = $r->previous; 
-			# usikker hva som er riktig her, etter at vi tokk bort "$res = $r;"
+			# unsure what is correct here, after we removed "$res = $r;"
 			push (@redirects, $res) if $r;
 			#push (@redirects, $r) if $r;
 
@@ -208,7 +208,7 @@ sub crawlSomeUrls {
     
 		print "url $url\n";
     
-		#ToDO: $res->request er av og til "undef", hvorfor ? (sjekker for det nå, men hvorfor skjer det)
+		#ToDO: $res->request is sometimes "undef", why? (we check for it now, but why does it happen)
 		if (defined $res->request) {
 			# summarize response. see "perldoc HTTP::Response"
     			print "Answer for ",$url," DcoID: ", $DocIDToUrlHash{$url}," was \t '",$res->code,"': ", $res->message, "\n";
@@ -235,7 +235,7 @@ sub crawlSomeUrls {
 			my $DocID = $DocIDToUrlHash{$url};
 			my $response = $res->code;
 
-			#hvis vi ikke har urlen i db sjekker vi om vi har url som er lik, men med en / . Kan ha blitt lagt på en /, uten at det er en redirect
+			#if we do not have the URL in the db we check whether we have a URL that is equal, but with a / . A / may have been added without it being a redirect
 			if ((!exists($DocIDToUrlHash{$url}) ) && ( exists($DocIDToUrlHash{$url . '/'}) ) ) {
 				$DocIDToUrlHash{$url} .= '/';
 			}

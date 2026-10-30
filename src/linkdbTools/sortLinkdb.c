@@ -20,7 +20,7 @@ int main (int argc, char *argv[]) {
 	FILE *NEWLINKDBFILE;
 
 
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 
 	struct linkdb_block linkdbPost;
 	struct linkdb_block *linkdbArray;
@@ -42,7 +42,7 @@ int main (int argc, char *argv[]) {
         }
 
 
-	//kontrolerer at vi ikke overskriver en fil
+	//make sure we are not overwriting an existing file
 	if ((NEWLINKDBFILE = fopen(argv[2],"rb")) != NULL) {
 		printf("New file exsist. It shud not!\n");
 		exit(1);

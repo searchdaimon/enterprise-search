@@ -4,17 +4,17 @@
 changelog:
 
 Ax: 9. feb 2006
-Konvertert fra YACC/Bison til Lemon. "summary.y" skal nå være reentrant.
+Converted from YACC/Bison to Lemon. "summary.y" should now be reentrant.
 
 Runarb 13. des 2005
-I steden for å bruke globale verider for title, body, metakeyw, metadesc og *current_buffer her jeg 
-laget en "struct bufferformat" med disse i. generate_summary oppreter nå en buffers av denne typen 
-og sender den med yyparse.
+Instead of using global variables for title, body, metakeyw, metadesc and *current_buffer I have
+created a "struct bufferformat" containing these. generate_summary now creates a buffers of this type
+and passes it to yyparse.
 
-Hva den heter i yyparse defineres med "#define YYPARSE_PARAM buffers"
+Its name in yyparse is defined with "#define YYPARSE_PARAM buffers"
 
-Dette får å gjøre honteringen av buffere threadsafe. Uten dette vil man ofte få segfeil i buffer_exit når man 
-"kjørerfree( b.data );"
+This is to make the handling of buffers threadsafe. Without it you often get a segfault in buffer_exit when you
+run "free( b.data );"
 
 *******************************************/
 
@@ -131,7 +131,7 @@ starttag ::= TAG_START ATTR(Name) attrlist(Attrlist) TAG_STOPP.
 		    pE->newspan = 1;
 		else if (pE->section==BODY && !strcasecmp("li", Name.str))
 		    pE->newspan = 1;
-		// Bør kanskje være med flere slike tagger?
+		// Should maybe include more tags like this?
 	    }
 
 endtag ::= ENDTAG_START ATTR(Name) ENDTAG_STOPP.

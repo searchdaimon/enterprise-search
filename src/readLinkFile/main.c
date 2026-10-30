@@ -11,7 +11,7 @@ int main (int argc, char *argv[]) {
 	FILE *UPDATEFILE;
 	struct anchorfileFormat anchorfileData;
 
-	//tester for at vi har fåt hvilken fil vi skal bruke
+	//test that we have figured out which file to use
 	if (argc < 2) {
 		printf("Usage: ./addanchors anchorfile\n\n\tanchorfile, fil med tekster på linker\n\n");
 		exit(1);

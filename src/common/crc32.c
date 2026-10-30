@@ -71,7 +71,7 @@ unsigned int crcTable[256] = {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //know length
-//ruteine der vi kjenner lengden
+//routine where we know the length
 unsigned int crc32boithonl(char *c, int len) {
 
     unsigned int crcinit = 0;
@@ -93,7 +93,7 @@ unsigned int crc32boitho(char *c) {
 }
 
 /*
-//You can test this module by uncoment this rutine, and compile.
+//You can test this module by uncommenting this routine, and compile.
 int main (int argc, char *argv[]) {
 	unsigned int crc;
 

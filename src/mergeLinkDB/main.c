@@ -188,7 +188,7 @@ int main (int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
     	}
 	
-	//skriver ut lit status slik at vi kan se progresjon hvis vi kjører dette fra et skript
+	//print a little status so we can see progress if we run this from a script
 	printf("merging %s < %s\n",argv[1],argv[2]);
 
 	if ((linkfile_a = open_db_file(argv[1])) == NULL) {
@@ -206,14 +206,14 @@ int main (int argc, char *argv[]) {
 
 
 
-	//lager en temperert navn
+	//create a temporary name
         if ((outfd = mkstemp(outfile)) == -1) {
                 perror("mkstemp");
 		exit(EXIT_FAILURE);
         }
 
 
-	//åpner filen med det temerere navnet
+	//open the file with the temporary name
         if ((outfh = fdopen(outfd,"w")) == NULL) {
                 perror("mkstemp");
 		exit(EXIT_FAILURE);
@@ -234,16 +234,16 @@ int main (int argc, char *argv[]) {
 
 	run_merge(linkfile_a, linkfile_b, outfh);
 
-	//må lokke før vi kopierer. Hvis ikke kan det være data i bufferen som ikke blir med.
+	//must close before we copy. Otherwise there may be data left in the buffer that won't be included.
 	fclose(outfh);
 	close(outfd);
 
-	//sletter den gamle filen
+	//delete the old file
 	if (unlink(argv[1]) != 0) {
 		perror(argv[1]);
 	}
 
-	//flytter den nye filen slik at den blir output filen
+	//move the new file so that it becomes the output file
 	sprintf(sysbuf,"mv %s %s",outfile,argv[1]);
 	printf("runing: \"%s\"\n",sysbuf);
 	system(sysbuf);

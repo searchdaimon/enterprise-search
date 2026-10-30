@@ -5,20 +5,20 @@ require Exporter;
 @htmlParser::EXPORT_OK = qw(strip_html);
 
 
-#annen mudul er denne, bør kasnje bytte navn ?
+#this is another module, maybe should change the name ?
 use HTML::Parser ();
 
 use constant MinLinjeLengde => 0;
 
 #####################################################################################################
-# stripper html
+# strips html
 #####################################################################################################
 sub strip_html {
 	my($text) = @_;
 	my($title_ferdig,$body_ferdig,$description_ferdig,$a_link);
 	
 	$text =~ s/<br>//g;
-	$text =~ s/(\n+| +)/ /g; #fjerner \n'er da da ikke har betyding, så vi får blank space problem og kan ikke beregne innhold | fjerner doble spacer
+	$text =~ s/(\n+| +)/ /g; #removes \n's since they have no meaning, otherwise we get blank space problems and cannot compute content | removes double spaces
 	
 #use strict;
 
@@ -46,25 +46,25 @@ $a_link = 0;
 @bgcolor = ();
 @spam = ();
 
-%ReturnVerdier = {};	#hashen som vi skal returnere
+%ReturnVerdier = {};	#the hash that we are going to return
 
 $TabellHeight = 0;
 $title_ferdig = '';
 $body_ferdig = '';
 $description_ferdig = '';
 $innhold_ferdig = '';
-$iSpam = 0;				#Er vi i spam eller ikke ?
-$iLitenFont = 0;		#er vi i et område med <= 1 font ?
-$iNoscript = 0;			#er vi i en <noscript> område ? Bare de uten script ser dette, og det er få så her jømmes det spam
-$iNoframe = 0;			#er vi i en <noframe> område ? Bare de uten fram suport ser dette, og det er få så her jømmes det spam
-$iTextArea = 0;			#skal ikke ha elementer fra tekst aerie form elemenet
-$harFrameset = 0;		#hvis vi har framset er all tekst spam
-$iUrl = 0;				#holder om vi er i en <a> tag.
-$iDivVisibilityHidden = 0; #holder om vi er i en <div> tag med "visibility:hidden" som atributt
+$iSpam = 0;				#Are we in spam or not ?
+$iLitenFont = 0;		#are we in an area with <= 1 font ?
+$iNoscript = 0;			#are we in a <noscript> area ? Only those without script see this, and they are few so spam is hidden here
+$iNoframe = 0;			#are we in a <noframe> area ? Only those without frame support see this, and they are few so spam is hidden here
+$iTextArea = 0;			#should not have elements from the textarea form element
+$harFrameset = 0;		#if we have a frameset then all text is spam
+$iUrl = 0;				#tracks whether we are in an <a> tag.
+$iDivVisibilityHidden = 0; #tracks whether we are in a <div> tag with "visibility:hidden" as an attribute
 $iBlackTextSpam = 0;
 $iDivSpanSmalFont = 0;
 
-$linjer_siden_innhold = 0; #oversikt over hvor mange linjer det er siden sist vi så noe inhold, slik at vi kan filtrere ut høyre meny støy
+$linjer_siden_innhold = 0; #count of how many lines since we last saw any content, so we can filter out right-hand menu noise
 
 %meta_hash = ();
 
@@ -83,26 +83,26 @@ $html->parse($text);
 $html->eof;
 
 
-#titel
+#title
 $title_ferdig = join(" ",@title);
-$title_ferdig =~ s/<[^>]+>//gi;		#fjerner eventuelle html tagger fra titelen
+$title_ferdig =~ s/<[^>]+>//gi;		#removes any html tags from the title
 $ReturnVerdier{'title'} = $title_ferdig;
 
 
 
-#finner innhold
+#finds content
 $innhold_ferdig = join(" \n",@innhold);
 
 my $title_ferdigtemp = $title_ferdig;
 $title_ferdigtemp =~ s/[^a-zA-Zøæå. ,!]//g;
 
-$innhold_ferdig =~ s/^$title_ferdigtemp//g;	#fjerner tittelen hvis den er en del av innholdet. Typisk på grunn av at de har brukt overskriften som tittel
+$innhold_ferdig =~ s/^$title_ferdigtemp//g;	#removes the title if it is part of the content. Typically because they have used the heading as the title
 $innhold_ferdig =~ s/ +/ /g;
 $ReturnVerdier{'innhold'} = $innhold_ferdig;
 
 #body
 $body_ferdig = join(" ",@body);
-#gjør flere spaser om til en, og \n om til spacer
+#turns multiple spaces into one, and \n into spaces
 $body_ferdig =~ s/( +|\n)/ /g;
 $ReturnVerdier{'body'} = $body_ferdig;
 
@@ -115,51 +115,51 @@ $ReturnVerdier{'bold'} = join(" ",@bold);
 #spam
 $ReturnVerdier{'spam'} = join(" ",@spam);
 
-#finner innhold, som er definert med linjer på mere en 30 tegn
+#finds content, which is defined as lines of more than 30 characters
 #foreach my $i	(@innhold) {
 #	if ((length($i) > 30) && (($i =~ tr/ //) > 10)) {
 #		print "$i\n";
 #		$innhold_ferdig .= $i . "\n";
 #	}
 #}
-#finner beskrivlesen
+#finds the description
 $ReturnVerdier{'description'} = $meta_hash{'description'};
 $ReturnVerdier{'keywords'} = $meta_hash{'keywords'};
 
 #print "innhold $innhold_ferdig\n";
-#I forbindelse med tagen <frameset> kan man legge inn uten bruk av <noframes></noframes> tagger. Dette er ikke korekt html kode, men vises som frames i IE.
-#Når vi har <frameset> tagger skal vi ikke ta noe body tekst fra siden.
+#With the <frameset> tag one can include content without using <noframes></noframes> tags. This is not correct html code, but is shown as frames in IE.
+#When we have <frameset> tags we should not take any body text from the page.
 if ($harFrameset) {
 	$ReturnVerdier{'spam'} .= 'Har framsett så all tekst er spam: ' . $ReturnVerdier{'innhold'} . "\n";
 	$ReturnVerdier{'innhold'} = '';
 }
 
-#Spam sjekk: sjekker om Bodyens bakrunsfarge og tekst farge er like. Hvis det er det skal All tekst på siden regnes som spam og blir ikke med i indeksen.
-if ((exists $body_attr{'bgcolor'}) && (exists  $body_attr{'text'})) {	#sjekker om disse tagene er satt, hvis begge mangler er de jo like, men det er ikke spam av det. Kan ikke ha noe av det.
+#Spam check: checks whether the body background color and text color are equal. If so, all text on the page is treated as spam and is not included in the index.
+if ((exists $body_attr{'bgcolor'}) && (exists  $body_attr{'text'})) {	#checks whether these tags are set; if both are missing they are equal, but that is not spam. Can have neither.
 	if ($body_attr{'bgcolor'} eq $body_attr{'text'}) {
 		$ReturnVerdier{'spam'} .= $ReturnVerdier{'innhold'};
 		$ReturnVerdier{'innhold'} = '';
 	}
 }
 
-#debug: viser alle meta teggane
+#debug: shows all the meta tags
 #foreach $i (keys %meta_hash) {
 #	print "$i = $meta_hash{$i}\n";
 #}
-#/debug: viser alle meta teggane
+#/debug: shows all the meta tags
 
 
 
 
 #print $title_ferdig;
 ###
-##fjerner html tagger
+##removes html tags
 #$description_ferdig =~ s/<[^>]+>//gi;
-##fjerner annet
+##removes other things
 #$description_ferdig =~ s/(<|>)//gi;
-##erstater hvit sapes med en enkelt sace
+##replaces whitespace with a single space
 #$description_ferdig =~ s/\s/ /gi;
-##erstater fels spacer med en
+##replaces multiple spaces with one
 #$description_ferdig =~ s/ +/ /g;
 ###
 
@@ -180,7 +180,7 @@ sub text{
 		#	push(@spam,$text);
 		#}
 		
-		# spam bekjembeles
+		# spam fighting
 		if ($iSpam) {
 			push(@spam,'Spam: ' . $text . "<br>\n");
 		}
@@ -206,11 +206,11 @@ sub text{
 			push(@spam,'TextArea: ' . $text . "<br>\n");
 		}
 		elsif ($iUrl) {
-			#print "Url tekst= $text\n";
+			#print "Url text= $text\n";
 			$urler[$#urler][1] .= $text;
 		}
-		#/spam bekjembeles
-		else {	#Hvis dette ikk er spam
+		#/spam fighting
+		else {	#If this is not spam
 			if (!$a_link) {
         		if($title){
                		push(@title,$text);
@@ -229,7 +229,7 @@ sub text{
 					&& 	(($text =~ tr/ //) > 10))
 					||	($headlines)
 	#			)
-	#			&& ($linjer_siden_innhold < 10) #bruker ikke dette, skaper mere problemer en det løser, da man ofte bare får litte grane av en side
+	#			&& ($linjer_siden_innhold < 10) #not using this, it creates more problems than it solves, since you often only get a tiny bit of a page
 		) {	
 			push(@innhold,$text);
 			$linjer_siden_innhold = 0;
@@ -292,7 +292,7 @@ sub open_tag{
 					#print "$key\n";
 					#push(@urler,$key);
 					$urler[$#urler +1][0] = $key;
-					$urler[$#urler][1] = ''; #inaliserer tilfele vi ikke finer noe test til denne urlen
+					$urler[$#urler][1] = ''; #initializes in case we do not find any text for this url
 					$iUrl = 1;
 				}
 			}
@@ -306,21 +306,21 @@ sub open_tag{
 		elsif ($tagname eq 'textarea') {
 			$iTextArea = 1;
 		}
-		#<div> og <span> deler denne. Men å slå av må gjøres separat da vi kan ha <span> i <div>
+		#<div> and <span> share this. But turning it off must be done separately since we can have <span> inside <div>
 		elsif (($tagname eq 'div') || ($tagname eq 'span')) {
-			#leter etter bruken av visibility:hidden; i styl i <div> tager, da det er spam
-			#print "er i div\n";
+			#looks for the use of visibility:hidden; in the style of <div> tags, since that is spam
+			#print "in div\n";
 			
 			while(my($key,$value) = each %{$attr}){
 				#print "\t$key = $value\n";
 				if ($key eq 'style') {
 				
-					#man kan bruke så mange spacer man vil her ser det ut til, så vi fjerner alle, slik at vi får samme splitt altid
+					#it seems you can use as many spaces as you like here, so we remove them all, so we always get the same split
 					$value =~ s/ //g;
-					#atribyttene likker som key:value separert med ";", slpiller derfor disse og tester
+					#the attributes are like key:value separated by ";", so we split on these and test
 					my @StyleAtributter = split(';',$value);
 					
-					#går gjenom alle atributtene
+					#goes through all the attributes
 					foreach my $i (@StyleAtributter) {
 						#print "\t$i\n";
 						my ($AtribKey,$AtribValue) =split(':',$i);
@@ -329,12 +329,12 @@ sub open_tag{
 							#print "fant visibility:hidden\n";
 							$iDivVisibilityHidden = 1;
 						}
-						#ser etter font-size en er satt for lite
+						#looks for whether font-size is set too small
 						if ($AtribKey eq 'font-size') {
-							#sjekker om størelsen er angitt i "pt"
+							#checks whether the size is given in "pt"
 							if ($AtribValue =~ /pt$/) {
 								$AtribValue =~ s/pt$//g;
-								#sjeker om den er mindre en 7
+								#checks whether it is less than 7
 								if ($AtribValue <= 7) {
 									$iDivSpanSmalFont = 1;
 								}
@@ -355,15 +355,15 @@ sub open_tag{
 		#}
 		
 		if (($tagname eq 'td') || ($tagname eq 'table')) {
-			$TabellHeight++; #øker tabel høyden
+			$TabellHeight++; #increases the table height
 		}
 		
 		#print keys(%{$attr}) . "\n";
-		#hvis vi ikke har noen atributter
+		#if we do not have any attributes
 		if (keys(%{$attr}) == 0) {
 		
 			#print "\nIngen attr\n";
-			#sjekker om bakrunsfargen er sort, og tekst fargen ikke er redefinert i <body>. Hvis den ikke er det er den sort som standar, så dette err spam
+			#checks whether the background color is black, and the text color is not redefined in <body>. If it is not, it is black by default, so this is spam
 			if (($bgcolor[$#bgcolor] eq '#000000') && (not exists $body_attr{'text'})) {
 				#print "spam!\n";
 				$iBlackTextSpam = 1;
@@ -372,7 +372,7 @@ sub open_tag{
 		else {
 			$iBlackTextSpam = 0;
 		}
-		#spam detektering
+		#spam detection
 		while(my($key,$value) = each %{$attr}){ 
 		
 		#print "$key : $value\n";
@@ -418,16 +418,16 @@ sub close_tag{
 
         push(@tags,"</$tagname>") if($body);
 		
-		#forhindrer spam
-		#tar bort et elemenet fra staken som har oversikt over plassene der man kan ha bakrun
+		#prevents spam
+		#removes an element from the stack that tracks the places where a background can occur
 		if (($tagname eq 'td') || ($tagname eq 'table')) {
 			
 			if ($#bgcolor == $TabellHeight) {
 				pop(@bgcolor);
 				#print "pop\n";
 			}
-			$TabellHeight--; #øker tabel høyden
-			$iSpam = 0;	#Vi er ute av område som kansje er spam.
+			$TabellHeight--; #decreases the table height
+			$iSpam = 0;	#We are out of the area that might be spam.
 		}
 		elsif ($tagname eq 'font') {
 			$iLitenFont = 0;

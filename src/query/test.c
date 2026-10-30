@@ -48,15 +48,15 @@ void test_expand( thesaurus *T, char *tekst )
     // Parse query:
     get_query( tekst, strlen(tekst), &qa);
 
-    // Kjør stemming på query:
+    // Run stemming on the query:
     thesaurus_expand_query(T, &qa);
 
-    // Print query med innebygd print-funksjon:
+    // Print query with the built-in print function:
     char	buf[1024];
     sprint_expanded_query(buf, 1023, &qa);
     printf("\nExpanded query: %s\n\n", buf);
 
-    // --- Eksempel på iterering av expanded query:
+    // --- Example of iterating over the expanded query:
 
     int		i, j, k;
 
@@ -64,7 +64,7 @@ void test_expand( thesaurus *T, char *tekst )
 	{
 	    printf(" %c:", qa.query[i].operand);
 
-	    // Brukerens query:
+	    // The user's query:
 	    if (qa.query[i].n > 1 || qa.query[i].operand == QUERY_PHRASE) printf("\"");
 
 	    for (j=0; j<qa.query[i].n; j++)
@@ -75,7 +75,7 @@ void test_expand( thesaurus *T, char *tekst )
 
 	    if (qa.query[i].n > 1 || qa.query[i].operand == QUERY_PHRASE) printf("\"");
 
-	    // Expanded query (fra stemming og synonymer):
+	    // Expanded query (from stemming and synonyms):
 	    if (qa.query[i].alt != NULL)
 		{
 		    printf("(");

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Hack for å løse utf-8-problemet ved Forskningsparken. Fortiden ikke i bruk:
+// Hack to work around the utf-8 problem at Forskningsparken. Currently not in use:
 /*
 static inline void utf8_hack( char *str )
 {
@@ -47,7 +47,7 @@ int cleanresourceWinToUnix(char resource[]) {
 
         char *cp;
 
-        //gjør om på formatet slik at \\ blir //
+        //rewrite the format so that \\ becomes //
         if (strchr(resource,'\\') != NULL) {
                 crawlWarn("collection \"%s\" contains \"\\\" characters. Correct format is //host/shares not \\\\host\\shares. Will convert \"\\\" to \"/\"",resource);
 
@@ -63,7 +63,7 @@ int cleanresourceUnixToWin(char resource[]) {
 
         char *cp;
 
-        //gjør om på formatet slik at 
+        //rewrite the format the other way
         if (strchr(resource,'/') != NULL) {
 
                 while((cp = strchr(resource,'/')) != NULL) {

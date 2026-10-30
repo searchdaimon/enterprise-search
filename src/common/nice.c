@@ -4,7 +4,7 @@
 
 #include "nice.h"
 
-// hvis vi ikke kjener SYS_ioprio_get har vi en gammel gcc/glibc (for eks bbh-001) gjømmer hele nice systemet
+// if we do not know SYS_ioprio_get we have an old gcc/glibc (e.g. bbh-001); hide the entire nice system
 #ifndef SYS_ioprio_get
 
 void ionice_benice(void)

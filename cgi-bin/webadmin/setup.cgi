@@ -104,9 +104,9 @@ sub process_integration_values {
  	# $tpl_file is undef if all is OK.
 
 	my $cfg = Sql::Config->new($dbh);
-	#setter at wixarden er gjort.
+	#mark that the wizard has been completed.
 	$cfg->insert_setting("setup_wizard_done", 1);
-	#oppdaterer key verdien, slik at vi får en unik nøkker. Dette må gjøres her, da vi på vmware ikke instalerer databasen på ny for hver gang. 
+	#update the key value, so that we get a unique key. This must be done here, since on vmware we do not reinstall the database every time. 
 	$cfg->update_setting("key", md5_hex(rand()) );
 
 	print CGI::redirect("overview.cgi?from_setup=1");

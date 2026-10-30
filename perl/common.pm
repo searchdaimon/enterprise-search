@@ -10,7 +10,7 @@ use POSIX;
 
 
 ############################################################################################################################
-# finner domene for en url
+# finds the domain for a url
 ############################################################################################################################
 sub fin_domene {
 	my($domene) = @_;
@@ -22,7 +22,7 @@ sub fin_domene {
 	return $domene;
 }
 ############################################################################################################################
-# finner domene for en url uten subname
+# finds the domain for a url without the subname
 ############################################################################################################################
 sub find_domain_no_subname {
         my($domene) = @_;
@@ -39,7 +39,7 @@ sub find_domain_no_subname {
 
 
 ############################################################################################################################
-# oppretter de nødvendige mappene
+# creates the necessary directories
 ############################################################################################################################
 sub MakePath {
 	my($path) = @_;
@@ -63,24 +63,24 @@ sub MakePath {
 }
 
 ############################################################################################################################
-# øker og misker tellere, retunerer det nye antallet. Bruk 0 som oppdatering for å få verdien uten å oppdatere
+# increments and decrements counters, returns the new count. Use 0 as the update to get the value without updating
 ############################################################################################################################
 sub count_handler {
 	my($counter,$verdi) = @_;
 	my($count) = 0;
 	
 		#print "$verdi \n";
-		#finner filen
+		#find the file
 		my $file = 'data/count/' . $counter;
 		
 		open(COUNTFILE,"+<$file") or open(COUNTFILE,">$file") or die("Can't open $file: $!");
 		flock(COUNTFILE,2);
 		binmode(COUNTFILE);
 	
-		#søker til begyndelsen
+		#seek to the beginning
 		seek(COUNTFILE,0,0) or die "Seeking: $!";
 		
-		#hvis filen har en verdif leser vi den, hvis ikke seter vi $count til 0
+		#if the file has a value we read it, otherwise we set $count to 0
 		if (not -z COUNTFILE) {
 			read(COUNTFILE,$count,-s COUNTFILE)
 		}
@@ -90,14 +90,14 @@ sub count_handler {
 		}
 		
 		
-		#hvis vi ikke bare ville ha verdien (0 som verdi), oppdateerer vi
+		#if we did not just want the value (0 as the value), we update it
 		if ($verdi != 0) {
-			#søker tilbake til begyndelsen
+			#seek back to the beginning
 			seek(COUNTFILE,0,0) or die "Seeking: $!";
 		
-			#legger sammen
+			#add together
 			$count = $count + $verdi;
-			#skriver tilabek til teller filen
+			#write back to the counter file
 			print COUNTFILE $count;
 		}
 		
@@ -112,7 +112,7 @@ sub count_handler {
 sub gyldig_url {
         my($url) = @_;
 
-	#finner domene
+	#find the domain
 	my $domain = $url;
 	$domain =~ s/http:\/\///;
         $domain =~ s/(\/.*)//g;
@@ -123,17 +123,17 @@ sub gyldig_url {
 	$lastSub =~ s/(\..*)//g;
 
 	my @domainElements = split(/\./,$domain);
-	#finner tld, altså ting som .com, .net (co.uk blir .uk). Sjekker dette for om 
-	#det inneholder tall lengere ned. Hvis det gjør det er det en ip adresse.
+	#find the tld, i.e. things like .com, .net (co.uk becomes .uk). Check this for whether
+	#it contains numbers further down. If it does, it is an ip address.
 	@domainElements = reverse(@domainElements);
 	my $tdl = $domainElements[0];
 	#print "tdl: $tdl - $url\n";
 
-        #finner dybden i denne URLen
+        #find the depth in this URL
         #my $url_for_testing = $url;
         #my $dybde = ($url_for_testing =~ tr/\///);
 
-        #teller antal forekomster av "http:/" (ikke http:// med to // da noen, som kvasier bruker / ikke // (utrolig nokk)) får å ungå urler som bare er vidresendig til andre
+        #count the number of occurrences of "http:/" (not http:// with two //, since some, like kvasier, use / not // (incredibly enough)) to avoid urls that are just redirects to others
         my $httpcount = 0;
         my $url_for_testing = $url;
         while ($url_for_testing =~ /http:\//g) { $httpcount++ }
@@ -147,30 +147,30 @@ sub gyldig_url {
 		return 0;
 	}
 	elsif($lastSub =~ /[0-9]/) {
-		#vil ikke ha med sider der vi har et tall i siste subdirektory. Da dette typisk 
-		#er server X av flere servere, Eks: www3.nrk.no, og www.nrk.no er det samme
+		#do not want to include pages with a number in the last subdirectory. This is typically
+		#server X of several servers, e.g. www3.nrk.no, and www.nrk.no is the same
 		#
-		#ToDo: fjerner dette også sider med tall i hoveddomenet ? 8.feb, Runarb: Ja, hvis vi bare her et domene, ikke somdomnene. Triger på 24so.com, men ikke på www.24so.com
+		#ToDo: does this also remove pages with a number in the main domain? 8 Feb, Runarb: Yes, if we only have a domain, not a subdomain. Triggers on 24so.com, but not on www.24so.com
 	
 		#print "Number i last sub: $url\n";
 		return 0;
 	}
         elsif (
-           (length($url) < 199) #ikke på mere en 199 tegn, setter av plass til \0 i den 200 tegn område vi bruker
-                && (length($url) > 10) #ikke på mindre en 10 tegn
-                && ($url !~ /\.\./) #ikke har .. i seg
-		&& ($url !~ /#/) #ikke har # i seg
-                && ($url =~ /(\?|\/$|.cfm$|.htm$|.html$|.shtml$|.shtm$|.php$|.jsp$|.asp$|.stm$|.ece$|.aspx$|.do$)/) #forhindrer at i får noe annet en liknker som slutter på /, .htm eller .html eller dynamsike
-                && ($url =~ /^http:\/\//) #må begynne på http://, ikke for eksempel ftp:// eller https://
+           (length($url) < 199) #no more than 199 characters, leaving room for \0 in the 200-character area we use
+                && (length($url) > 10) #no fewer than 10 characters
+                && ($url !~ /\.\./) #does not contain ..
+		&& ($url !~ /#/) #does not contain #
+                && ($url =~ /(\?|\/$|.cfm$|.htm$|.html$|.shtml$|.shtm$|.php$|.jsp$|.asp$|.stm$|.ece$|.aspx$|.do$)/) #prevents us from getting anything other than links ending in /, .htm or .html or dynamic ones
+                && ($url =~ /^http:\/\//) #must begin with http://, not for example ftp:// or https://
                 && ($httpcount == 1) #bare har 1 http:// i seg
-		&& ($url !~ /sid=/i) #ikke har noe shesiaon id i seg (dette tar sikkert ikke alt), case insensetiv
-		&& ($equalcount < 2) #ikke har flere en = i seg, dat er det en for komplisert dynamisk side
-		&& ($url !~ /[^a-zA-Z0-9\.\?=:\/\-_~&\+,]/) #ineholder andre tegn en a-z A-Z 0-9 . ? = : / - _ ~ &
-		&& ($tdl =~ /[a-z]/) #ikke er en ipadresse. Sjekker om tdl en inneholder noe anet en a-z
-		&& ($path !~ /index\./) #ikke inneholder index. , Kan være ting som index.html da
-		&& ($path !~ /default\./) # ikke ineholder default. som default.asp
-		&& ($#domainElements > 1) #domene bare er på 2 deler. Slik som vg.no, er typisk en www.vg.no også da
-	        #&& ($url =~ /\.no\//) #må være nosrsk (ha .no)
+		&& ($url !~ /sid=/i) #does not contain a session id (this surely does not catch everything), case insensitive
+		&& ($equalcount < 2) #does not contain more than one =, otherwise it is too complex a dynamic page
+		&& ($url !~ /[^a-zA-Z0-9\.\?=:\/\-_~&\+,]/) #contains characters other than a-z A-Z 0-9 . ? = : / - _ ~ &
+		&& ($tdl =~ /[a-z]/) #is not an ip address. Checks whether the tdl contains anything other than a-z
+		&& ($path !~ /index\./) #does not contain index. , could be things like index.html
+		&& ($path !~ /default\./) # does not contain default. such as default.asp
+		&& ($#domainElements > 1) #domain has only 2 parts. Like vg.no, which typically also has a www.vg.no
+	        #&& ($url =~ /\.no\//) #must be Norwegian (have .no)
         ) {
                 return 1;
         }
@@ -193,7 +193,7 @@ sub GetImageLocation {
 }
 
 ############################################################################################################################
-# oppretter de nødvendige mappene
+# creates the necessary directories
 ############################################################################################################################
 sub MAKE_PATH {
 	my($path) = @_;
@@ -214,7 +214,7 @@ sub MAKE_PATH {
 	}
 }
 ############################################################################################################################
-#retunerer pathen til alle lottene som fins i lottsystemet på denne serveren.
+#returns the path to all the lots that exist in the lot system on this server.
 ############################################################################################################################
 sub GetAllLotPaths {
 	my $resurs = shift;
@@ -240,7 +240,7 @@ sub GetAllLotPaths {
 		#print "$MainlotPath\n";
 	
 		if (-e $MainlotPath) {
-			#nå må en lot ha reposetory får å bli med. Er det riktig ?
+			#now a lot must have a repository to be included. Is that correct?
 			my $comand = "ls -1 -d $MainlotPath/*/$resurs";
 	
 			#print "comand: $comand\n";

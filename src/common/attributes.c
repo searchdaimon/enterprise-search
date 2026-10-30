@@ -45,7 +45,7 @@ next_attribute(char *attributes, char **offset, char *k, char *v, char *kv)
 
 	if (p-value < MAX_ATTRIB_LEN)
 	    {
-		int ending_slash = 0;	// Fjern slash på slutten for normalisering
+		int ending_slash = 0;	// Remove trailing slash for normalization
 		strncpy(v, value, p-value-ending_slash);// + (last ? 0 : -1));
 		v[p-value-ending_slash] = '\0';
 	    }

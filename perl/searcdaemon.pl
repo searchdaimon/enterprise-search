@@ -11,11 +11,11 @@ while (my $c = $d->accept) {
       my $r = $c->get_request;
       if ($r) {
           if ($r->method eq 'GET') {
-           		#logger	
+           		#log
 			  	print $r->url->query . "\n";
 			  
 			  	#$c->send_status_line(200);
-				# get dekoder kale med $FORM{navn}
+				# GET decoder, called with $FORM{name}
 				my %FORM = ();
 				my @pairs = split(/&/, $r->url->query);
 				foreach my $pair (@pairs) {
@@ -25,7 +25,7 @@ while (my $c = $d->accept) {
         			$value =~ s/<!--(.|\n)*-->//g;
         			$FORM{$name} = $value;
 				}
-				# /get dekoder
+				# /GET decoder
 				
 				#print "$FORM{'query'}\n";
 				my $xml = `./searchkernel $FORM{'query'} > /tmp/boithosearsc`;

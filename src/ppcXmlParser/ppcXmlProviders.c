@@ -42,7 +42,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 	strscpy(queryUrlEncoded,(*queryNodeHeder).query,sizeof(queryUrlEncoded));
 	strsandr(queryUrlEncoded," ","%20");
 
-	//inaliserer beskrivelse
+	//initialize description
 	for(i=0;i<10;i++) {
 		ppcPages[i].description[0] = '\0';
 	}
@@ -72,7 +72,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 			defultbid = 0.1;
 		}
 		else {
-			defultbid = 0; //sory. får ikke penger får egen anonser
+			defultbid = 0; //sorry. don't get money for own ads
 		}
 
 		sprintf(url,"http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&SubscriptionId=%s&AssociateTag=%s&Operation=ItemSearch&Keywords=%s&SearchIndex=Books&ResponseGroup=Medium",(*queryNodeHeder).AmazonSubscriptionId,(*queryNodeHeder).AmazonAssociateTag,queryUrlEncoded);
@@ -132,7 +132,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 			parsPpcAds(htmlstring,ppcPages,&nrOfPpcPages,"RESULTS","LISTING",NULL,"TITLE","DESCRIPTION","LINK","BID","DOMAIN");
 
 
-			//legger til brukernavn
+			//add username
 			for(i=0;i<nrOfPpcPages;i++) {
 				strcpy(ppcPages[i].user,"boitho_rpilot");
 				ppcPages[i].thumbnail[0] = '\0';
@@ -143,10 +143,10 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 				find_domain_no_www(ppcPages[i].url,ppcPages[i].domain,sizeof(ppcPages[i].domain));
 			}
 
-			//Får av og til sider som har 0.00 som verdi. Forkaster de
+			//sometimes we get pages with 0.00 as value. Discard them
 			y=0;
 			for(i=0;i<nrOfPpcPages;i++) {
-				//hvis det er større en 0 får det være med.
+				//if it is greater than 0 it can be included.
 				if (ppcPages[i].bid > 0) {
 					//printf("ok uri %s, size %i\n",ppcPages[i].uri,sizeof(ppcPages[y]));
 					memcpy(&ppcPages[y],&ppcPages[i],sizeof(ppcPages[y]));
@@ -180,7 +180,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
                         			|| (128 < (unsigned int)ppcPages[i].title[y])
 
                         		) {
-                        		        //gjø ingenting for nå
+                        		        //do nothing for now
                         		}
                         		else {
                                 		ppcPages[i].title[y] = ' ';
@@ -198,7 +198,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
         	                		|| (128 < (unsigned int)ppcPages[i].description[y])
 
         	                	) {
-        	                	        //gjø ingenting for nå
+        	                	        //do nothing for now
         	                	}
         	                	else {
         	                        	ppcPages[i].description[y] = ' ';
@@ -215,7 +215,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 			parsPpcAds(htmlstring,ppcPages,&nrOfPpcPages,"dsxout","listing","results","title","description","redirect","BID","url");
 
 
-			//legger til brukernavn
+			//add username
 			for(i=0;i<nrOfPpcPages;i++) {
 				strcpy(ppcPages[i].user,"boitho_hent");
 				ppcPages[i].thumbnail[0] = '\0';
@@ -225,7 +225,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 				find_domain_no_www(ppcPages[i].url,ppcPages[i].domain,sizeof(ppcPages[i].domain));
 			}
 
-			//hent sender også ut urler uten tracking redirekt. Filtrerer de ut.
+			//hent also sends out urls without a tracking redirect. Filter them out.
 			y=0;
 			for(i=0;i<nrOfPpcPages;i++) {
 				if (strstr(ppcPages[i].uri,"http://www.hent.no/hent/r.php?") != NULL) {
@@ -251,7 +251,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 
 
 
-			//legger til brukernavn
+			//add username
 			for(i=0;i<nrOfPpcPages;i++) {
 				strcpy(ppcPages[i].user,"boitho_sboss");
 				ppcPages[i].thumbnail[0] = '\0';
@@ -275,7 +275,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 
 
 		
-			//legger til brukernavn
+			//add username
                 	for(i=0;i<nrOfPpcPages;i++) {
 
 				strscpy(ppcPages[i].uri,ppcPages[i].url,sizeof(ppcPages[i].uri));
@@ -294,7 +294,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 
 			
 
-				//noen feed har html i fidene. Parser det ned
+				//some feeds have html in the fields. Parse it down
 				generate_summary( ppcPages[i].description, strlen(ppcPages[i].description), &titleaa, &body, &metakeyw, &metadesc );
 					strsandr(body,"<div>","");
 					strsandr(body,"</div>","");
@@ -316,7 +316,7 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 
         	free(htmlstring);
 
-		//writing cashe
+		//writing cache
 		if ((CACHE = bfopen(cashefile,"wb")) == NULL) {
 			perror(cashefile);
 		}
@@ -333,12 +333,12 @@ void getPpcAds(char provider[],struct ppcPagesFormat *ppcPages_gloabal, int *nrO
 
 
 
-	//hvis vi har flere en vi trnger skal vi ikke bry oss mer med de
+	//if we have more than we need we should not bother with them anymore
 	if (((*nrOfPpcPages_global) + nrOfPpcPages) > 10) {
 		nrOfPpcPages = 10 - (*nrOfPpcPages_global);
 	}
 
-	//kopierer inn sidene i den globale side arayen
+	//copy the pages into the global page array
 	for (i=0; i<nrOfPpcPages;i++) {
 		
 		memcpy(&ppcPages_gloabal[(*nrOfPpcPages_global) +i],&ppcPages[i],sizeof(struct ppcPagesFormat));

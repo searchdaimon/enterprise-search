@@ -6,9 +6,15 @@
 
 [% checkListHTML %]
 
+[% IF network_unavailable %]
+<p>This system has no appliance network configuration to edit (it is probably
+running in a container or on a plain server). Configure its network where the
+host is managed.</p>
+[% ELSE %]
 <form action="settings.cgi" method="post">
 [% PROCESS network_config %]
 <input type="submit" name="submit.network_conf" value="Apply changes" />
 </form>
+[% END %]
 
 [% INCLUDE 'footer.html' %]

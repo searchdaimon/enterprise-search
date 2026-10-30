@@ -48,7 +48,7 @@ int main (int argc, char *argv[]) {
 
 	char *newudfile = argv[1 +optind];
 
-	//tester at den ikke finnes. Viktig at vi ikke overskriver noe ved en feil
+	//test that it does not exist. Important that we do not overwrite anything by mistake
 	if ((newudfilefp = fopen(newudfile,"rb")) != NULL) {
        	        printf("newudfile exist. It shuldent. Delete it of you don't need it\n");
        	        exit(1);

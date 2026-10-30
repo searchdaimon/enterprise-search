@@ -75,7 +75,7 @@ sub new {
 #   lotspace - List with hashref containing data regarding lots.
 #
 # Available options:
-# 	show_lot_size - Fetch size for indiviudal lot.
+# 	show_lot_size - Fetch size for individual lot.
 sub lot_info {
 	my ($self, $options_ref) = @_;
 	%opt = %{$options_ref} if defined $options_ref;
@@ -242,7 +242,7 @@ sub _add_lot {
 ##
 # Find the mount path that a lot belongs to.
 #
-# NOTE: We asume that mount paths are sorted, longest path first. See <get_mount_paths>
+# NOTE: We assume that mount paths are sorted, longest path first. See <get_mount_paths>
 sub _match_mount {
 	my ($self, $mount_paths_ref, $lot_path) = @_;
 

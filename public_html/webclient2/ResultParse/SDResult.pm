@@ -4,6 +4,7 @@ use warnings;
 
 use XML::Simple qw(XMLin :strict);
 use Carp;
+use Readonly;
 Readonly::Hash my %VALID_SORT => map { $_ => 1 } qw(relv oldest newest);
 
 sub new {
@@ -94,7 +95,8 @@ sub sort_info {
 	my $new  = $s->filteradd($s->{query}, 'sort', 'sort', 'newest');
 	my $old  = $s->filteradd($s->{query}, 'sort', 'sort', 'oldest');
 
-	my $current_sort = lc $s->{filters}{'sort'}[0];
+	my $current_sort = $s->{filters}{'sort'}[0];
+	$current_sort = lc $current_sort if defined $current_sort;
 	$current_sort = "relv"
 		unless defined $current_sort && $VALID_SORT{$current_sort};
 

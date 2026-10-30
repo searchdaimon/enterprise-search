@@ -47,7 +47,7 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 	whisper_t whisper;
 
 
-	//åpner dokument indeks får å teste at vi har en, hvis ikke kan vi bare avslutte.
+	//open the document index to test that we have one, otherwise we can just exit.
         if ( (DOCINDEXFH = lotOpenFileNoCasheByLotNr(LotNr,"DocumentIndex","rb", 's',subname)) == NULL) {
 		#ifdef DEBUG
                 	printf("lot dont have a DocumentIndex file\n");
@@ -67,7 +67,7 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 
 	whisper = gcwhisper_read(subname);
 
-	//går gjenom alle på jakt etter de som kan slettes
+	//go through all of them looking for the ones that can be deleted
 	for (i=0;i<NrofDocIDsInLot;i++) {
 
 	
@@ -90,10 +90,10 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 		         (newest_document > (REN_DocumentIndex(re, i)->lastSeen + gcaopt->MaxAgeDiflastSeen))))) {
 
 
-			//sletter
+			//delete
 			DIS_delete(REN_DocumentIndex(re, i));
 
-			//sletter dokumentet i bb spesefike ting.
+			//delete the document from bb-specific things.
 			bbdocument_delete (REN_DocumentIndex(re, i)->Url, subname);
 
 			blog(gcaopt->log,2,"dokument \"%s\" can be deleted. Last seen: %s, DocID %u",REN_DocumentIndex(re, i)->Url,ctime_s(&REN_DocumentIndex(re, i)->lastSeen),LotDocIDOfset(LotNr) +i);
@@ -107,16 +107,16 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 	}
 
 
-	//markerer hva vi kan slette.
+	//mark what we can delete.
 	gc_reduce(re, LotNr, subname);
 
 	reclose(re);
 
-	//trunkerer reposetoryet.
+	//truncate the repository.
 	gcrepo(LotNr, subname);
 
 
-	//vasker iindex
+	//clean the iindex
         struct IndekserOptFormat IndekserOpt;
         IndekserOpt.optMustBeNewerThen = 0;
         IndekserOpt.optAllowDuplicates = 0;
@@ -137,7 +137,7 @@ gcdecide(int LotNr, char *subname, struct gcaoptFormat *gcaopt, time_t newest_do
 		Indekser(LotNr,"attributes",i,subname,&IndekserOpt);
 	}
 
-	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
+	//since we have now added all changes from the rev index we can now delete the gced file too
 	//Indekser_deleteGcedFile(LotNr, subname);
 	lotDeleteFile("gced", LotNr, subname);
 
@@ -151,7 +151,7 @@ FILE *lockcoll(char subname[]) {
 	char lockfile[512];
 	FILE *LOCK;
 
-        //oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
+        //create the var directory if it doesn't exist. This so we avoid doing it during installation
         bmkdir_p(bfile("var/"),0755);
 
         sprintf(lockfile,"var/boitho-collections-%s.lock",subname);
@@ -188,7 +188,7 @@ int isOkCrawled (char subname[], struct gcaoptFormat *gcaopt) {
 
         mysql_init(&demo_db);
 
-        //koble til mysql
+        //connect to mysql
         if(!mysql_real_connect(&demo_db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
                 blog(gcaopt->logSummary,1,"MySQL Error: \"%s\".",mysql_error(&demo_db));
@@ -292,11 +292,11 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 
 			
 			if((re = reopen(LotNr, sizeof(struct DocumentIndexFormat), "DocumentIndex", subname, RE_READ_ONLY|RE_HAVE_4_BYTES_VERSION_PREFIX|RE_STRETCH)) == NULL) {
-				//når vi ikke lengere kan åpne en DocumentIndex er det forde vi har kommet til siste lot.
+				//when we can no longer open a DocumentIndex it's because we have reached the last lot.
 				break;
 			}
 
-			//finner nyeste dokument 
+			//find the newest document 
 			for (i=0;i<NrofDocIDsInLot;i++) {
 
 				if ((REN_DocumentIndex(re, i)->lastSeen != 0) && (newest_document < REN_DocumentIndex(re, i)->lastSeen)) {
@@ -313,7 +313,7 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	#endif
 
 
-	//hack: setter datoen til i dag. Forutsetter at vi nettopp har kjørt crawling.
+	//hack: set the date to today. Assumes that we have just run crawling.
 	//printf("\n<######################## with runarb newest_document hack###################>\n");
 	//newest_document = time(NULL);
 	//printf("</######################## with runarb newest_document hack###################>\n\n");
@@ -328,8 +328,8 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 	}
 
 	/***************************/
-	//merger indexene
-        //skal lage for alle bøttene
+	//merge the indexes
+        //should build for all the buckets
 	printf("merging Main\n");
         for (i=0;i<NrOfDataDirectorys;i++) {
 		#ifdef DEBUG
@@ -361,7 +361,7 @@ void gc_coll(char subname[], struct gcaoptFormat *gcaopt) {
 		mergei(i,0,0,"attributes","aa",subname,&DocIDcount);
 	}
 
-	// legger subnavnet til listen og huper searchd slik at cashen blir frisket opp.
+	// add the subname to the list and HUP searchd so the cache gets refreshed.
 	printf("Huping searchd to recache \"%s\"\n",subname);
 	lot_recache_collection(subname);
 
@@ -385,7 +385,7 @@ main(int argc, char **argv)
 	char *subname;
 	struct gcaoptFormat gcaopt;
 
-	gcaopt.MaxAgeDiflastSeen  = (86400 * 5); //86400=1 dag
+	gcaopt.MaxAgeDiflastSeen  = (86400 * 5); //86400=1 day
 	gcaopt.log = NULL;
 	gcaopt.logSummary = NULL;
 	gcaopt.lastSeenHack = 0;

@@ -9,13 +9,13 @@ use DB_File;
 
 use RobotRules;
 
-# Rutine for å teste om vi kan laste ned en url. Retunerer 1 hvis vi kan, 0 hvis ikke
+# Routine to test whether we can download a url. Returns 1 if we can, 0 if not
 #
 #
-# $RobotName		Robotens navn, for eksempel Boitho.com-robot/1.0
-# $robotstxt		Robots.txt filen vi vil teste mot
+# $RobotName		The robot's name, for example Boitho.com-robot/1.0
+# $robotstxt		The robots.txt file we want to test against
 # $robotstxturl		the URL that was used to retrieve the /robots.txt file
-# $url				Urlen vi vil teste om vi kan crawle
+# $url				The url we want to test whether we can crawl
 #
 #
 sub is_RobotsAllowd {
@@ -40,14 +40,14 @@ sub is_RobotsAllowd {
 }
 #
 #
-# u = unknown (ukjent status, vi har ikke lastet ned robots.txt fil)
-# o = out (robots.txt fieln er sent ut til nedlasting)
-# n = no, domene har ingen robots.txt fil
-# y = yes, vi har robots.txt fil for domene
+# u = unknown (unknown status, we have not downloaded the robots.txt file)
+# o = out (the robots.txt file has been sent out for download)
+# n = no, the domain has no robots.txt file
+# y = yes, we have a robots.txt file for the domain
 sub New {
 	my($class) = @_;
 	#my $class = '';
-	my $self = {}; #allocate new hash for objekt
+	my $self = {}; #allocate new hash for object
 	bless($self, $class);
 	open($self->{'LOCK'},">../data/robottxt.lock") or die ("Cant open data/robottxt.lock: $!");
 	flock($self->{'LOCK'},2) or die ("Can't lock lock file: $!");
@@ -59,7 +59,7 @@ sub New {
 	
 	return $self;
 }
-#laster infor om en url, slik at vi siden kan begynne å teste hva vi vet om den
+#load info about a url, so that we can then start testing what we know about it
 sub LodeDomain {
 	my($self,$domain) = @_;
 	
@@ -69,7 +69,7 @@ sub LodeDomain {
 	
 	
 	if ($post ne '') {
-		#hvis ikke posten er tom splitter vi status og data
+		#if the entry is not empty we split status and data
 		($self->{'domaindata'}->{'status'},$self->{'domaindata'}->{'data'}) = split(':',$post);
 	}
 	else {
@@ -77,7 +77,7 @@ sub LodeDomain {
 	}
 	
 }
-#om vi har lastet ned urlen
+#whether we have downloaded the url
 sub TestetForRobotstxt {
 	my $self = shift;
 	
@@ -93,12 +93,12 @@ sub CanCrawl {
 	
 	
 	if ($self->{'domaindata'}->{'status'} eq 'n') {
-	#domene har ingen robots.txt fil, vi kn trykt crawle
+	#the domain has no robots.txt file, we can safely crawl
 		return 1;
 	}
 	
 	elsif ($self->{'domaindata'}->{'status'} eq 'y') {
-	#vi har robots.txt fil, så vi tester på den
+	#we have a robots.txt file, so we test against it
 		my $robotstxturl = "http://$self->{'domain'}/robots.txt";
 		
 		print "robots.txt: " . $self->{'domaindata'}->{'data'} . "\n";

@@ -1,6 +1,6 @@
 
 /**
- *	CHAANGELOG:	3. oktober 2007 - Magnus: Forandret UrlToDocID-database til å bruke den nye versjonen.
+ *	CHANGELOG:	3 October 2007 - Magnus: Changed the UrlToDocID database to use the new version.
  */
 
 #include <mysql.h>
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
 	char query[512];
 	char url[201];
-	//selecter fra db
+	//select from db
 	char mysql_query [2048];
         static MYSQL demo_db;
 	int i, pages;	
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
 
  	#ifdef WITH_THREAD
-                my_init();
+                mysql_library_init(0, NULL, NULL);
                 if (mysql_thread_safe() == 0) {
                         printf("The MYSQL client is'en compiled at thread safe! This will broboble crash.\n");
                 }

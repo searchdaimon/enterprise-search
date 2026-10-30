@@ -107,7 +107,7 @@ _C_QUEUE_TYPE queue_pop( queue *Q )
 {
     _C_QUEUE_TYPE	e;
 
-    assert(Q->size != 0);		// Dette vil kræsje programmet om køa allerede er tom.
+    assert(Q->size != 0);		// This will crash the program if the queue is already empty.
 
     e = Q->elem[Q->top];
     Q->top++;

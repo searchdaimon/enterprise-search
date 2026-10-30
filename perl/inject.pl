@@ -34,7 +34,7 @@ while (<LARGE>) {
 	$count++;
 }
 
-#skriver eventuel rest
+#write any remaining lines
 while (<SMAL>) {
 	print $_;
 }

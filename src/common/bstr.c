@@ -30,7 +30,7 @@ int btolower(int c) {
                 c = c+32;
         }
         else if (c >= 192 && (c <=221)) {
-                //øæå og andre utviede chars over 127
+                // accented and other extended chars above 127
                 c = c+32;
         }
 
@@ -46,7 +46,7 @@ void chomp(char string[]) {
 	i = strlen(string);
 	--i;
 
-        //ToDo: må teste for opperativsystem her:
+        // ToDo: must test for operating system here:
         /*
         //Windows:
         if (string[i] == '\n') {
@@ -65,7 +65,7 @@ void strsandr (char text[], char find[], char replace[]) {
 	char *cptr;
 	int rlen = strlen(replace);
 	int flen = strlen(find);
-	//blir problemer her for korte strenger med slange replasments. Slenger på +512 som er midlertidig fix
+	// problems here for short strings with long replacements. Tacking on +512 as a temporary fix
 	char *buff = malloc((strlen(text) * 2) +512);
 
 	char *bptr;
@@ -82,15 +82,15 @@ void strsandr (char text[], char find[], char replace[]) {
 
 		bptr = (bptr + (cptr - cprtold));
 
-		//går over treffet
+		// skip over the match
 		cptr = (cptr + flen);		
 
-		//kopierer inn replacmnt
+		// copy in the replacement
 		strcpy(bptr,replace);
 		bptr = (bptr + rlen);
 	
 
-		//kopierer inn resten
+		// copy in the rest
 		strcat(bptr,cptr);
 		
 		cprtold = cptr;
@@ -126,28 +126,28 @@ void ntobr (char textbuff[], int texbufftsize) {
 
 			bptr = (bptr + (cptr - cprtold));
 
-			//går over treffet
+			// skip over the match
 			cptr = (cptr + flen);		
 
-			//kopierer inn replacmnt
+			// copy in the replacement
 			strcpy(bptr,find);
 
 			bptr = (bptr + flen);
 		
-			//kopierer inn resten
+			// copy in the rest
 			strcat(bptr,cptr);
 		} 
 		else {
 			bptr = (bptr + (cptr - cprtold));
 
-			//går over treffet
+			// skip over the match
 			cptr = (cptr + flen);		
 
 			strcpy(bptr,replace);
 
 			bptr = (bptr + rlen);
 		
-			//kopierer inn resten
+			// copy in the rest
 			strcat(bptr,cptr);
 		}
 
@@ -179,14 +179,14 @@ void strcasesandr (char textbuff[], int texbufftsize,char find[], char replace[]
 
 		bptr = (bptr + (cptr - cprtold));
 
-		//går over treffet
+		// skip over the match
 		cptr = (cptr + flen);		
 
-		//kopierer inn replacmnt
+		// copy in the replacement
 		strcpy(bptr,replace);
 		bptr = (bptr + rlen);
 	
-		//kopierer inn resten
+		// copy in the rest
 		strcat(bptr,cptr);
 
 		cprtold = cptr;
@@ -212,8 +212,8 @@ void saafree(char **List) {
 
 }
 
-//string kopieringsrutine som sørger for at man aldri kopierer over størelsen til dest, og altid slutter på \0
-//dropp in replacsement for strncpy()
+// string copy routine that ensures one never copies past the size of dest, and always ends with \0
+// drop-in replacement for strncpy()
 void strscpy(char *dest, const char *src, size_t n) {
 
 	int i,srcstrlen;
@@ -237,7 +237,7 @@ void strscpy(char *dest, const char *src, size_t n) {
    - Modified to standalone module, Sept. 2000, Jeff Hay
 
    -from http://home.earthlink.net/~jrhay/src/split/split.c
-   -runarb: ingen lisens på siden.
+   -runarb: no license on the page.
 
    Emulate Perl's "split" function - returns an array of strings and the
    number of elements in the array (ie, number of columns in original string).

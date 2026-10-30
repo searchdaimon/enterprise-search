@@ -100,18 +100,18 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 			perror("dup2");
 		}
 
-		//ogaå fange stderr
+		// also capture stderr
 		if (alsostderr) {
 			if (dup2(pipefd[1],fileno(stderr)) == -1) {
 				perror("dup2");
 			}
 		}
 
-		// lukker alle andre åpne filer
+		// close all other open files
         	int         fi, fmax = getdtablesize();
 	        for (fi=3; fi<fmax; fi++) close(fi);
 
-		// skrur av core domping
+		// turn off core dumping
 		setrlimits();
 
 		if (execv(exeargv[0],exeargv) == -1) {
@@ -125,8 +125,8 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 		/*******************************************
 		BUGFIKS: runarb
 		Et eller annet skjer hvis vi kaller execv med
-		et program som ikke finnes. Vi får da segfeil i indeksereren
-		kaller derfor /bin/false for å dø på en verdig måte
+		a program that does not exist. We then get a segfault in the indexer
+		so we call /bin/false to die in a dignified way
 				
 		*******************************************/		
 		char *falesaar[] = {"/bin/false",'\0'}; 
@@ -251,8 +251,8 @@ int exeoc_stdselect(char *exeargv[],char documentfinishedbuf[],int *documentfini
 
 
 
-		//vi får ofte at vi fikk signal 40, men uten at noe var feil. Ignorerer det for nå.
-		//bdw: hardkoding av signalnavnet er ikke lurt.		
+		// we often get signal 40, but without anything being wrong. Ignore it for now.
+		// bdw: hardcoding the signal name is not smart.		
 
 		return 1;
 	}

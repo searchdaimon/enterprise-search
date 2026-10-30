@@ -15,7 +15,7 @@ int getLangNr(char testlang[]) {
 	
 		++i;
 	}
-	++i; //0 er ikke funnet, 1 er det vi skal retunere
+	++i; //0 is not found, 1 is what we should return
 	
 	#ifdef DEBUG
 		printf("getLangNr: i=%i, nrOfLanguage=%i, testlang=%s\n",i,nrOfLanguage,testlang);

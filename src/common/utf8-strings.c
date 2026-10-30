@@ -2,7 +2,7 @@
 #include "utf8-strings.h"
 
 /**
- *	Bibliotek for å behandle strenger kodet med utf-8, med særskilt vekt på de europeiske tegnene.
+ *	Library for handling strings encoded in utf-8, with particular emphasis on the European characters.
  *
  *	(C) Copyright 2007-2008, SearchDaimon AS (Magnus Galåen)
  */
@@ -82,7 +82,7 @@ int	unicodeletter[628][2] = {
 
 
 // Is 'f' defined as a letter in unicode?
-inline char U_isletter( int f )
+char U_isletter( int f )
 {
     int         o[2] = {-1,-1};
     int         max = 628;

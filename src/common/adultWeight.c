@@ -36,7 +36,7 @@ void adultWeightopenMemArray2(char subname[]) {
 
         int locklimit;
 
-        //finner grensen på antal sider vi kan låse i minne
+        // find the limit on the number of pages we can lock in memory
         struct rlimit rlim;
 
         if (getrlimit(RLIMIT_MEMLOCK, &rlim) < 0) {
@@ -48,10 +48,10 @@ void adultWeightopenMemArray2(char subname[]) {
         }
 
 
-        //aloker minne for rank for de forskjelige lottene
+        // allocate memory for rank for the various lots
         LocalLots=0;
         for (i=0;i<maxLots;i++) {
-                //sjekekr om dette er en lokal lot
+                // check whether this is a local lot
 
                         adultWeightMemArray[i] = 0;
 
@@ -59,7 +59,7 @@ void adultWeightopenMemArray2(char subname[]) {
                         GetFilPathForLot(LotFile,i,subname);
                         strcat(LotFile,"AdultWeight");
 
-                        // prøver å opne
+                        // try to open
                         if ( (FH = fopen(LotFile,"r+b")) == NULL ) {
 				continue;
                         }
@@ -114,14 +114,14 @@ void adultWeightopenMemArray2(char subname[]) {
                                	perror("mmap");
                        	}
 
-                        //hvis vi kan låse uendelig med minne gjør vi det
+                        // if we can lock unlimited memory we do it
                         if (locklimit == -1) {
-                        	//laster all rankerings dataen fra minne, slik ad det går fort å leste den inn siden
+                        	// load all the ranking data from memory, so that it is fast to read it in later
                                 z = 0;
                                 for(y=0;y<NrofDocIDsInLot;y++) {
                                 	z += adultWeightMemArray[i][y];
                                 }
-                                //låser minne
+                                // lock memory
                                 if (mlock(adultWeightMemArray[i],branksize) != 0) {
                                 	perror("mlock");
                                	}
@@ -139,7 +139,7 @@ void adultWeightopenMemArray2(char subname[]) {
 
 			#endif
 
-                        //debug: viser alle rankene vi laster
+                        // debug: show all the ranks we load
 			/*
                         for(y=0;y<branksize;y++) {
                               printf("DocID %i, rank %i\n",y,adultWeightMemArray[i][y]);
@@ -172,10 +172,10 @@ void adultWeightopenMemArray(char servername[],char subname[]) {
         lotlistLoad();
         lotlistMarkLocals(servername);
 
-        //aloker minne for rank for de forskjelige lottene
+        // allocate memory for rank for the various lots
         LocalLots=0;
         for (i=0;i<maxLots;i++) {
-                //sjekekr om dette er en lokal lot
+                // check whether this is a local lot
 
 
                 if (lotlistIsLocal(i)) {
@@ -183,7 +183,7 @@ void adultWeightopenMemArray(char servername[],char subname[]) {
                         GetFilPathForLot(LotFile,i,subname);
                         strcat(LotFile,"AdultWeight");
 
-                        // prøver å opne
+                        // try to open
                         if ( (FH = fopen(LotFile,"r+b")) == NULL ) {
                                 perror(LotFile);
                                 adultWeightMemArray[i] = 0;
@@ -244,7 +244,7 @@ void adultWeightopenMemArray(char servername[],char subname[]) {
 
 				#endif
 
-                                //debug: viser alle rankene vi laster
+                                // debug: show all the ranks we load
 				/*
                                 for(y=0;y<branksize;y++) {
                                       printf("DocID %i, rank %i\n",y,adultWeightMemArray[i][y]);
@@ -272,12 +272,12 @@ int adultWeightForDocIDMemArray(int DocID) {
         int LotNr,DocIDPlace;
 
 
-                //hvis vi har en negativ DocID så er noe galt
+                // if we have a negative DocID then something is wrong
                 if (DocID < 0) {
                         return -3;
                 }
 
-		//filler lot og offset
+		// fill lot and offset
                 LotNr = rLotForDOCid(DocID);
                 DocIDPlace = (DocID - LotDocIDOfset(LotNr));
 

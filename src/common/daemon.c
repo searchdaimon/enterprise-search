@@ -22,7 +22,7 @@ const int TIMEOUT = 15; /* or whatever... */
 
     /*
     ** server.c -- a stream socket server liabery
-    ** Mye av koden er hentet fra http://www.ecst.csuchico.edu/~beej/guide/net/html/
+    ** Much of the code is taken from http://www.ecst.csuchico.edu/~beej/guide/net/html/
     */
 
 
@@ -43,7 +43,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 	sendall(socketha,&nrofresponses, sizeof(int));
 
 	for (i=0;i<nrofresponses;i++) {
-		len = (strlen((*respons_list)[i]) +1); //+1 da vi sender \0 ogsaa
+		len = (strlen((*respons_list)[i]) +1); // +1 since we send \0 too
 
 		if (!sendall(socketha,&len,sizeof(len))) {
 			perror("sendall");
@@ -59,7 +59,7 @@ int socketsendsaa(int socketha,char **respons_list[],int nrofresponses) {
 	return 1;
 }
 
-//motar en enkel respons liste. Den begynner med en int som sier hov lang den er
+// receive a simple response list. It begins with an int that says how long it is
 int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 
 	fprintf(stderr, "daemon: socketgetsaa(socket=%i)\n", socketha);
@@ -78,7 +78,7 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
         (*nrofresponses) = 0;
 
         for (i=0;i<intresponse;i++) {
-		//laster ned hvor lang den er
+		// download how long it is
 		if (!recvall(socketha,&len,sizeof(len))) {
                 	return 0;
         	}
@@ -101,7 +101,7 @@ int socketgetsaa(int socketha,char **respons_list[],int *nrofresponses) {
 	return 1;
 }
 
-//rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
+// routine that binds to PORT and calls sh_pointer every time a new connection arrives
 int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 
         int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
@@ -154,10 +154,10 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 
 	
 	// http://groups.google.com/groups?hl=no&lr=&c2coff=1&rls=GGLD,GGLD:2004-19,GGLD:en&selm=87iuv0b7td.fsf%40erlenstar.demon.co.uk&rnum=2
-	// bare ignorerer signalet og lar barne d� hvis dette er ok. P� rare platformer kan vi f� problemer
-	// m� i s�falt gj�re om flagget
+	// just ignore the signal and let the child die if this is ok. On odd platforms we may get problems
+	// must in that case change the flag
 	#ifdef CANT_IGNORE_SIGCHLD
-		//sliter met at denne ikke fungerer. M� fikses om vi skal kj�re p� andre plattformer
+		// struggling with this not working. Must be fixed if we are to run on other platforms
 		printf("CANT_IGNORE_SIGCHLD: on\n");
 		sa.sa_handler = sigchld_handler; // reap all dead processes
 		sa.sa_flags = SA_RESTART;		
@@ -253,9 +253,9 @@ int sconnect (void (*sh_pointer) (int), int PORT, int noFork, int breakAfter) {
 #ifdef WITH_DAEMON_THREAD
 
 #ifndef WITH_THREAD
-	#error "Hvis man skal bruke WITH_DAEMON_THREAD, m� man ogs� definere WITH_THREAD. Definer WITH_THREAD"
+	#error "To use WITH_DAEMON_THREAD you must also define WITH_THREAD. Define WITH_THREAD"
 #endif
-//rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
+// routine that binds to PORT and calls sh_pointer every time a new connection arrives
 // Threaded
 int sconnect_thread(void (*sh_pointer)(int), int port) {
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
@@ -339,7 +339,7 @@ int sconnect_thread(void (*sh_pointer)(int), int port) {
 
 #endif
 
-//rutine som binder seg til PORT og kaller sh_pointer hver gang det kommer en ny tilkobling
+// routine that binds to PORT and calls sh_pointer every time a new connection arrives
 int sconnect_simple(void (*sh_pointer)(int), int port)
 {
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
@@ -535,8 +535,8 @@ int sendall(int s, const void *buf, int len) {
 
 /************************************************************************************
 
- Ruting som tar inn data som skal sende, pakker de i en minne blok, og sender de som en send. Dette _kan_ �ke socket 
- hastigheten hvis vi kj�rer med TCP_NODELAY
+ Routine that takes in data to be sent, packs it into a memory block, and sends it as one send. This _can_ increase socket 
+ speed if we run with TCP_NODELAY
 
  eks: 
 	sendallPack(socket, 4, &n, sizeof(n), collections, (maxSubnameLength+1)*n);
@@ -557,7 +557,7 @@ int sendallPack(int s, int numargs, ...) {
 	#endif
 
 	/***********************************************
-	 g�r gjenom dataene en gang for � finne total st�relse
+	 go through the data once to find the total size
 	***********************************************/
 
 	va_start( listPointer, numargs );
@@ -574,7 +574,7 @@ int sendallPack(int s, int numargs, ...) {
 
 
 	/***********************************************
-	 oppretter minne for � kopiere data inn i
+	 allocate memory to copy data into
 	***********************************************/
 
 
@@ -585,7 +585,7 @@ int sendallPack(int s, int numargs, ...) {
 	p = blockToSend;
 
 	/***********************************************
-	 g�r gjenom dataene en gang til for � kopiere de inn
+	 go through the data once more to copy it in
 	***********************************************/
 
 	va_start( listPointer, numargs );
@@ -606,7 +606,7 @@ int sendallPack(int s, int numargs, ...) {
 	va_end( listPointer );
 
 	/***********************************************
-	 N� n�r vi har lagget en pakke ut av det, gj�r vi det faktisk send kallet.
+	 Now that we have built a packet out of it, we actually make the send call.
 	***********************************************/
 
 	ret = sendall(s,blockToSend,size);
@@ -628,9 +628,9 @@ int recvall(int sockfd, void *buf, int len) {
 
 	while(total < len) {
 
-		//runarb: 17.07.2007
-		//hum, n�r vi bruker bloacking i/o s� skal det vel bare bli 0 hvis det uikke er mere data og lese? 
-		//read skal altid blokke til det er noe data og lese, uanset hvor lang tid det tar
+		// runarb: 17.07.2007
+		// hmm, when we use blocking i/o it should only become 0 if there is no more data to read? 
+		// read should always block until there is some data to read, regardless of how long it takes
 		//if ((n = read(sockfd, buf+total, bytesleft)) == -1) {
 		if ((n = read(sockfd, buf+total, bytesleft)) <= 0) {
 			return 0;
@@ -661,10 +661,10 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 		fprintf(stderr, "sendpacked(socket=%i, command=%d, version=%d, dataSize=%i, subname=%s)\n",socket,command,version,dataSize,subname);
 	#endif
 
-	//siden vi skal sende pakken over nettet er det like g�tt � nullstille all data. Da slipper vi at valgring klager ogs�.
+	// since we are sending the packet over the network we might as well zero out all data. That way we avoid valgrind complaining too.
 	memset(&packedHedder,0,sizeof(packedHedder));
 
-        //setter sammen hedder
+        // assemble the header
         packedHedder.size       = sizeof(struct packedHedderFormat) + dataSize;
         packedHedder.version    = version;
         packedHedder.command    = command;
@@ -688,7 +688,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 		goto end_error;
 	}
 
-	//setter at vi skal returnere 1, som er OK
+	// set that we should return 1, which is OK
 	forret =  1;
 
 	end_error:
@@ -700,7 +700,7 @@ int sendpacked(int socket,short command, short version, int dataSize, void *data
 		fprintf(stderr, "~sendpacked(ret=%i)\n",forret);
 	#endif
 
-	//dene returneres altid, ogs� hvs vi ikke gjort en gotoend_error
+	// this is always returned, also if we did not do a gotoend_error
 	return forret;
 
 }

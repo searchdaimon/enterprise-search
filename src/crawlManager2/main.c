@@ -238,7 +238,7 @@ int cm_collectionFetchUsers(struct collectionFormat *collection, MYSQL *db)
 
 	if (numUsers == 0) {
 		collection->users = NULL;
-		//returner lengder nede, så for vi også frigjort resursen
+		//return lengths below, so that we also free the resource
 	}
 	else {
 		bblog(DEBUGINFO, "nrofrows %i", numUsers);
@@ -338,7 +338,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
 	(*collection) = malloc(sizeof(struct collectionFormat) * (*nrofcollections));
 
-	//resetter minne
+	//reset memory
 	for (i=0;i<(*nrofcollections);i++) {
 		collectionReset (collection[i]);
 	}
@@ -347,7 +347,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
         while ((mysqlrow=mysql_fetch_row(mysqlres)) != NULL) { /* Get a row from the results */
         	bblog(DEBUGINFO, "  data resource: %s, connector: %s, collection_name: %s, lastCrawl: %s, userprefix: %s, auth_id: %s",mysqlrow[0],mysqlrow[1],mysqlrow[2],mysqlrow[3],mysqlrow[8],mysqlrow[6]);
 		
-		//lagger inn i info struct
+		//store into info struct
 		(*collection)[i].resource  		= strdup(mysqlrow[0]);	
 		(*collection)[i].connector		= strdup(mysqlrow[1]);	
 		(*collection)[i].collection_name 	= strdup(mysqlrow[2]);
@@ -374,7 +374,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		(*collection)[i].userprefix = strdupnul(mysqlrow[8]);
 		(*collection)[i].rate = strtoul(mysqlrow[9], (char **)NULL, 10);
 
-		//runarb: 19 jul 2012 usikker på om dette er riktig. Vi sjekker ikke noen plass om usersystem er -1.
+		//runarb: 19 jul 2012 unsure whether this is correct. We don't check anywhere whether usersystem is -1.
 		if (mysqlrow[10] == NULL) {
 			(*collection)[i].usersystem = -1;
 		}
@@ -396,7 +396,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		else {
 			(*collection)[i].pid = strtoul(mysqlrow[12], (char **)NULL, 10);
 		}
-		//normaliserer collection navn, ved å fjenre ting som space og - \ / etc
+		//normalize the collection name, by removing things like space and - \ / etc
 		collection_normalize_name((*collection)[i].collection_name,strlen((*collection)[i].collection_name));
 
 
@@ -405,7 +405,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 		cm_collectionFetchUsers(collection[i], db);
                 sql_fetch_params(db, &(*collection)[i].params, (*collection)[i].id);
 
-		//crawler ny
+		//crawl new
                 ++i;
         }
 
@@ -413,7 +413,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
         mysql_free_result(mysqlres);
 
 	/***********************************************************************/
-	// slår opp bruker id hvis vi har det, hvis ikke skal user og password være NULL	
+	// look up the user id if we have it, otherwise user and password shall be NULL	
 	for (i=0;i<(*nrofcollections);i++) {
 
 		sprintf(mysql_query,"select username,password from collectionAuth where id = %i",(*collection)[i].auth_id);
@@ -439,7 +439,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 
         mysql_free_result(mysqlres);
 
-	//inaliserer andre ting
+	//initialize other things
 	for (i=0;i<(*nrofcollections);i++) {
 		(*collection)[i].errormsg[0] = '\0';
 		(*collection)[i].docsRemaining = -1;
@@ -457,7 +457,7 @@ int cm_searchForCollection(MYSQL *db, char cvalue[],struct collectionFormat *col
 	
 }
 
-//rutine for å laste et crawler biblotek
+//routine for loading a crawler library
 int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 	bblog(DEBUGINFO, "cm_loadCrawlLib(name=%s)",name);
@@ -507,7 +507,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 			exit(1);
 		}
 
-		//sjekk at den ikke finnes i hashen fra før
+		//check that it doesn't already exist in the hash
 		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
 			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
 			return 1;
@@ -518,7 +518,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
                		exit(-1);
                	}
 
-		//alt ok. Legg det i en hash
+		//all ok. Put it in a hash
 
 	}		
 	else if (file_exist(perlpath)) {
@@ -527,7 +527,7 @@ int cm_loadCrawlLib(struct hashtable **h, char name[]) {
 
 		bblog(INFO, "loaded \"%s\"", (*crawlLibInfo).shortname);
 
-		//sjekk at den ikke finnes i hashen fra før
+		//check that it doesn't already exist in the hash
 		if (hashtable_search((*h),(*crawlLibInfo).shortname) != NULL) {
 			bblog(INFO, "all redy have module with shortname \"%s\"", (*crawlLibInfo).shortname);
 			return 1;
@@ -555,7 +555,7 @@ int cm_getCrawlLibInfo(struct hashtable *h,struct crawlLibInfoFormat **crawlLibI
 		return 1;
         }
 	else if ((cm_loadCrawlLib(&h, shortname)) && (((*crawlLibInfo) = (struct crawlLibInfoFormat *)hashtable_search(h,shortname)) != NULL)) {
-		//hvis vi ikke kunne finne det i hashen prøver vi å laset på ny
+		//if we couldn't find it in the hash we try to load it again
 		bblog(DEBUGINFO, "Hadde ikke %s fra før, men fikk til å laste den.",shortname);
 		return 1;
 	}
@@ -577,7 +577,7 @@ usersystem_t * get_usersystem(MYSQL *db, unsigned int _id, usersystem_data_t *da
 	usersystem_container_t *usc;
 	usersystem_t *us;
 
-	// if someone askes for system nr 0, we shal return the primary user system
+	// if someone asks for system nr 0, we shall return the primary user system
 	if (_id == 0) {
 		querylen = snprintf(query, sizeof(query), "SELECT is_primary, connector, id FROM system WHERE is_primary = 1");
 	}
@@ -669,7 +669,7 @@ int documentContinue(struct collectionFormat *collection) {
 	struct tm *t;
 	time_t now;
 
-        //sjekker om vi har nokk plass lokalt. Sjkker førte gang så hver hundrende gang.
+        //check whether we have enough space locally. Check the first time and then every hundredth time.
 	if ((collection->docsCount == 0) || ((collection->docsCount % 100) == 0)) {
 		if (!bbdn_HasSufficientSpace(collection->socketha, collection->collection_name)) {
 			snprintf(collection->errormsg, sizeof collection->errormsg,
@@ -678,7 +678,7 @@ int documentContinue(struct collectionFormat *collection) {
 		}
 	}
 
-	//hvis vi skal crawl oftere en hvert dågn bruker vi ikke schedule time, men tilater å crawl hele tiden.
+	//if we are to crawl more often than once a day we don't use the schedule time, but allow crawling all the time.
 	if ( (collection->rate != 0) && (collection->rate < 1440)) {
 		bblog(INFO, "documentContinue: Collection is set to be recrawled every %i min, ignoring schedule time", collection->rate);
 		return 1;
@@ -700,22 +700,22 @@ int documentContinue(struct collectionFormat *collection) {
 
 	bblog(DEBUGINFO, "now: %i,recrawl_schedule_start %i,recrawl_schedule_end %i",t->tm_hour,recrawl_schedule_start,recrawl_schedule_end);
 
-	//hvis vi ikke har noen begrensning så er det bare å crawler på
+	//if we have no restriction then we just keep crawling
 	if ((recrawl_schedule_start == 0) || (recrawl_schedule_end == 0)) {
 		bblog(DEBUGINFO, "We can crawl att all times.");
 		return 1;
 	}
 
-	//tar en avgjørelse om vi skal fortsette å crawle
-	//vi har to scenarioer, 
-	// 1: start er større en slutt tidspungete, og er dermed i fremtiden
+	//make a decision on whether we should keep crawling
+	//we have two scenarios, 
+	// 1: start is greater than the end time, and is thus in the future
 	// 	start 10, end 07
-	//	kl nå 14
-	//	kl nå 06
+	//	now at 14:00
+	//	now at 06:00
 	//
-	// 2: start og slutt tidspungtet er etter hverandre, og derfor innen samme dag
+	// 2: start and end time follow each other, and are therefore within the same day
 	//	start 10, end 12
-	//	kl nå 14
+	//	now at 14:00
 	//
 	int sched_cont = 1;
 	if ( recrawl_schedule_start > recrawl_schedule_end ) {
@@ -823,7 +823,7 @@ int documentAdd(struct collectionFormat *collection, struct crawldocumentAddForm
 
 		bblog(ERROR, "can't send document to document manager! Tried to send document \"%s\" Will sleep and then reconnect. Won't send the same document again.",(*crawldocumentAdd).documenturi);
 		
-		//ber om å lokke sokketen. Dette er ikke det samme som å steneg kollectionen.
+		//ask to close the socket. This is not the same as closing the collection.
 		bbdn_close((*collection).socketha);
 
 		sleep(10);
@@ -1078,7 +1078,7 @@ int cmr_crawlcanconect(struct hashtable *h, struct collectionFormat *collection)
 	bblog(DEBUGINFO, "wil crawl \"%s\"",(*collection).resource);
 
 	if (!(*(*crawlLibInfo).crawlcanconect)(collection,documentError)) {
-		//overfører error
+		//pass on the error
 		bblog(ERROR, "crawlcanconect rountine in cralwer returned 0.");
 		berror(documentErrorGetlast(collection));
 		return 0;
@@ -1108,7 +1108,7 @@ int cm_crawlfirst(struct hashtable *h,struct collectionFormat *collection) {
 
 	if (!(*(*crawlLibInfo).crawlfirst)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	bblog(INFO, "problems in crawlfirst_ld");
-		//overfører error
+		//pass on the error
                 berror( documentErrorGetlast(collection) );
 		bblog(ERROR, "Error: Problems in crawlfirst_ld.");
 
@@ -1144,7 +1144,7 @@ int cm_crawlupdate(struct hashtable *h,struct collectionFormat *collection) {
 
 	if (!(*(*crawlLibInfo).crawlupdate)(collection,documentExist,documentAdd,documentError,documentContinue)) {
         	
-		//overfører error
+		//pass on the error
                 berror( documentErrorGetlast(collection) );
 		bblog(ERROR, "Error: problems in crawlfirst_ld.");
 
@@ -1264,7 +1264,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	char *origuri;
 
 
-	struct collectionFormat *collections; // bare en "s" skiller collection og collections her. Ikke bra, bør finne på bedre navn
+	struct collectionFormat *collections; // only an "s" separates collection and collections here. Not good, should come up with a better name
 	int nrofcollections;
 	int forreturn;
 
@@ -1288,13 +1288,13 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 	bblog(DEBUGINFO, "cm_searchForCollection");
 	if (!cm_searchForCollection(db, collection,&collections,&nrofcollections)) {
 		bblog(INFO, "cant't find Collection \"%s\"in db at %s:%d", collection,__FILE__,__LINE__);
-		// desverre må vi bare returnere tilgang her, da vi ikke har en collection å mappe dette mot. Kan være på 24so hvor
-		// vi ikke har database entrees for alle collectionene.
+		// unfortunately we just have to return access here, since we have no collection to map this against. May be on 24so where
+		// we don't have database entries for all the collections.
 		return 1;
 	}
 
-	//skal returnere 1, og bare 1, hvis ikke har vi fått flere en 1, er det noe feil
-	// hvis vi fikk 0 treff, returnerte cm_searchForCollection() 0.
+	//should return 1, and only 1; if not we got more than 1, which means something is wrong
+	// if we got 0 hits, cm_searchForCollection() returned 0.
 	if (nrofcollections != 1) {
 		bblog(INFO, "error looking opp collection \"%s\"", collection);
 		return 0;
@@ -1349,7 +1349,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 #endif
 	else if (!(*(*crawlLibInfo).crawlpatAcces)(uri,username,password,documentError,&collections[0])) {
         	bblog(INFO, "Can't crawlLibInfo. Can be denyed or somthing else");
-		//overfører error
+		//pass on the error
                 berror("%s", documentErrorGetlast(&collections[0]));
 
 #ifdef WITH_PATHACCESS_CACHE
@@ -1396,7 +1396,7 @@ int pathAccess(MYSQL *db, struct hashtable *h, char collection[], char uri[], ch
 
 
 /************************************************************
-ToDo: dette er HØYST midlertidig. Bruker globale vvariabler her, og ingen free()'ing
+ToDo: this is HIGHLY temporary. Uses global variables here, and no free()'ing
 ************************************************************/
 
 static char *found_share[32];
@@ -1695,8 +1695,8 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	if (nrofcollections == 1) {
 		
 		#ifndef DEBUG
-			//funger ikke når vi kompilerer debug. Må også compilere crawlManager debug
-			//make a conectina for add to use
+			//doesn't work when we compile debug. Must also compile crawlManager debug
+			//make a connection for add to use
 			if (!bbdn_conect(&collections[0].socketha,"",global_bbdnport)) {
 				berror("can't conect to bbdn (boitho backend document server)\n");
 				bblog(ERROR, "can't conect to bbdn (boitho backend document server)");
@@ -1707,7 +1707,7 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 				return 0;
 			}
 
-			//ber bbdn om å lukke
+			//ask bbdn to close
 			bblog(INFO, "closeing bbdn conn");
 			bbdn_close(collections[0].socketha);
 		#endif
@@ -1722,7 +1722,7 @@ int cm_handle_crawlcanconect(MYSQL *db, char cvalue[]) {
 	return 1;
 }
 
-//crawler_success  skal være 0 hvis vi feilet, og 1 hvis vi ikke feilet
+//crawler_success  shall be 0 if we failed, and 1 if we didn't fail
 void sql_set_crawler_message(MYSQL *db, int crawler_success  , char mrg[], unsigned int id) {
 
         char mysql_query [2048];
@@ -1809,10 +1809,10 @@ struct collection_lockFormat {
 	FILE *ELEMENTLOCK;
 };
 
-//dette bør nokk på litt sikt flyttes ut i dokument manageren
+//this should probably in time be moved out into the document manager
 int crawl_lock(struct collection_lockFormat *collection_lock, char collection[]) {
 
-	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
+	//create the var directory if it doesn't exist. This so we don't have to do this during installation
 	bmkdir_p(bfile("var/"),0755);
 
 	sprintf((*collection_lock).lockfile,"var/boitho-collections-%s.lock",collection);
@@ -1824,7 +1824,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 		return 0;
 	}
 
-	//trying to get a lock. If we can we vil keep it as long we are crawling to rewnet dublicat crawling
+	//trying to get a lock. If we can we will keep it as long as we are crawling to prevent duplicate crawling
 	if (flock(fileno((*collection_lock).LOCK),LOCK_EX | LOCK_NB) != 0) {
 		fclose((*collection_lock).LOCK);
 		return 0;
@@ -1838,7 +1838,7 @@ int crawl_lock(struct collection_lockFormat *collection_lock, char collection[])
 
 int crawl_element_lock(struct collection_lockFormat *collection_lock, char connector[]) {
 
-	//oppretter var mappen hvis den ikke finnes. Dette slik at vi slipper og gjøre dette under instalsjonen
+	//create the var directory if it doesn't exist. This so we don't have to do this during installation
 	bmkdir_p(bfile("var/"),0755);
 
 	sprintf((*collection_lock).elementlockfile,"var/boitho-element-%s.lock",connector);
@@ -1850,7 +1850,7 @@ int crawl_element_lock(struct collection_lockFormat *collection_lock, char conne
 		return 0;
 	}
 
-	//trying to get a lock. If we can we vil keep it as long we are crawling to rewnet dublicat crawling
+	//trying to get a lock. If we can we will keep it as long as we are crawling to prevent duplicate crawling
 	if (flock(fileno((*collection_lock).ELEMENTLOCK),LOCK_EX | LOCK_NB) != 0) {
 		fclose((*collection_lock).ELEMENTLOCK);
 		return 0;
@@ -1958,8 +1958,8 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 			output_redirected = 1;
 		}
 
-		//sletter collection. Gjør dette uavhenging om vi har lock eller ikke, slik at vi altid får slettet, så kan vi gjøre
-		// ny crawl etterpå hvis vi ikke hadde lock
+		//delete the collection. Do this regardless of whether we have a lock or not, so that we always get it deleted, then we can do
+		// a new crawl afterwards if we didn't have a lock
 		if (flag == crawl_recrawl) {
 			bblog(DEBUGINFO, "crawl_recrawl");
 
@@ -1972,22 +1972,22 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 			set_crawl_state(CRAWL_NOLAST, collection[i].id, NULL);
 
 
-			//nullsetter lastCrawl, som er den verdien som viser siste crawl. 
-			//Tror ikke crawlfirst skal ta hensysn til den, men gjør det for sikkerhets skyld
+			//zero out lastCrawl, which is the value showing the last crawl. 
+			//Don't think crawlfirst should take it into account, but do it just to be safe
 			(*collection).lastCrawl = 0;
 
-			//beordrer en sletting. Burde kansje vært gjort vi bbdn, ikke direkte, men skit au
+			//order a deletion. Should maybe have been done via bbdn, not directly, but oh well
 			bbdocument_deletecoll(collection[i].collection_name);
 		}
 
-		//tester at vi ikke allerede holder på å crawle denne fra før
+		//check that we aren't already crawling this one
 		if (!crawl_lock(&collection_lock,collection[i].collection_name)) {
 			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling it.",collection[i].collection_name);
 			continue;
 		}
 
-		//tester at vi ikke driver å crawler med den crawleren fra før. Her burde vi kansje 
-		//heller satset på å begrense på server. Slik at for eks to smb servere kan crawles samtidig
+		//check that we aren't already crawling with that crawler. Here we should maybe 
+		//rather aim to limit per server. So that for example two smb servers can be crawled at the same time
 		if (!crawl_element_lock(&collection_lock,collection[i].connector)) {
 			bblog(ERROR, "Error: Can't crawl collection \"%s\". We are already crawling this type/server.",collection[i].collection_name);
 			set_crawl_state(CRAWL_ERROR, collection[i].id,
@@ -1996,10 +1996,10 @@ void crawl(struct collectionFormat *collection,int nrofcollections, int flag, in
 			continue;
 		}
 		
-		//setter at vi har begynt og cralwe
+		//set that we have started crawling
 		set_crawl_state(CRAWL_CRAWLING, collection[i].id, NULL);
 	
-		//make a conectina to bbdn for add to use
+		//make a connection to bbdn for add to use
 		if (!bbdn_conect(&collection[i].socketha,"",global_bbdnport)) {
 			berror("can't connect to bbdn (boitho backend document server)");
 			set_crawl_state(CRAWL_ERROR, collection[i].id, bstrerror());
@@ -2199,9 +2199,9 @@ void connectHandler(int socket) {
 			mysql_close(&db);
 
 
-			//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
-			//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
-			//at ting er på gang
+			//nothing very useful actually happens here. Just forces the client to 
+			//wait here, so that we can set some status messages in the database about 
+			//that things are in progress
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
@@ -2243,9 +2243,9 @@ void connectHandler(int socket) {
 			mysql_close(&db);
 
 
-			//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
-			//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
-			//at ting er på gang
+			//nothing very useful actually happens here. Just forces the client to 
+			//wait here, so that we can set some status messages in the database about 
+			//that things are in progress
 			intresponse=1;
 			sendall(socket,&intresponse, sizeof(int));
 
@@ -2263,8 +2263,8 @@ void connectHandler(int socket) {
 
 			struct collection_lockFormat collection_lock;
 
-			//Tester om noen har en lås på collectionen. Hvis de har de må vi la være i slette den, 
-			//hvis ikke vil bbdn opprette den på ny
+			//Test whether someone has a lock on the collection. If they do we must refrain from deleting it, 
+			//otherwise bbdn will recreate it
 			if (!crawl_lock(&collection_lock,collection)) {
 				intresponse=0;
 				sendall(socket,&intresponse, sizeof(int));
@@ -2279,9 +2279,9 @@ void connectHandler(int socket) {
 			}
 			else {
 
-				//ikke mye nyttig som skjer her egentlig. Tvinger klienten bare til 
-				//å vente her, slik at vi får satt noen statusmeldinger i databasen om 
-				//at ting er på gang
+				//nothing very useful actually happens here. Just forces the client to 
+				//wait here, so that we can set some status messages in the database about 
+				//that things are in progress
 				intresponse=1;
 				sendall(socket,&intresponse, sizeof(int));
 
@@ -2505,7 +2505,7 @@ void connectHandler(int socket) {
 
 			if (output_redirected)
 			    {
-				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
+				// Unfortunately it is not possible to redirect std* back to the console.
 				fclose(stderr); 
 				fclose(stdout);
 		    	    }
@@ -2571,7 +2571,7 @@ void connectHandler(int socket) {
 #endif
 			if (output_redirected)
 			    {
-				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
+				// Unfortunately it is not possible to redirect std* back to the console.
 				fclose(stderr);
 				fclose(stdout);
 	    		    }
@@ -2679,7 +2679,7 @@ void connectHandler(int socket) {
 
 			if (output_redirected)
 			    {
-				// Det er dessverre ikke mulig å redirecte std* tilbake til console.
+				// Unfortunately it is not possible to redirect std* back to the console.
 				fclose(stderr); 
 				fclose(stdout);
 		    	    }

@@ -51,7 +51,7 @@ sub add_share {
     }
 
 
-    $attr{active} = defined $share{active}; # HTML form sets it to "on"
+    $attr{active} = defined $share{active} ? 1 : 0; # HTML form sets it to "on", false must be 0 not "" for strict SQL
 
     my $coll = Data::Collection->new($s->{dbh}, \%attr);
     if ((!$attr{auth_id} || $attr{auth_id} eq 'new_values') && ($share{username} && $share{password})) { 

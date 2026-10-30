@@ -33,7 +33,7 @@
 	char hostName[] = "bbs-001.boitho.com";
 	struct SiderFormat Sider[MaxsHits];
         struct SiderHederFormat SiderHeder;
-	char buff[64]; //generell buffer
+	char buff[64]; //general buffer
 	struct in_addr ipaddr;
         struct QueryDataForamt QueryData;
 
@@ -43,7 +43,7 @@
 
 
 
-        //hvis vi har argumeneter er det første et query
+        //if we have arguments, the first one is a query
         if (getenv("QUERY_STRING") == NULL) {
                 if (argc < 2 ) {
                         printf("Error ingen query spesifisert.\n\nEksempel på bruk for å søke på boitho:\n\tsearchkernel boitho\n\n\n");
@@ -82,7 +82,7 @@
                 exit(1);
         }
 
-        //gjør om til liten case
+        //convert to lower case
         for(i=0;i<strlen(QueryData.query);i++) {
                 QueryData.query[i] = tolower(QueryData.query[i]);
         }
@@ -110,13 +110,13 @@
         }
 	struct queryNodeHederFormat queryNodeHeder;
 
-	//kopierer inn query	
+	//copy in the query	
 	strncpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
 	
-	//sender forespørsel
+	//send the request
 	sendall(sockfd,queryNodeHeder.query,sizeof(queryNodeHeder));
 
-	//motter hedderen for svaret
+	//receive the header for the response
 	if ((i=recv(sockfd, &SiderHeder, sizeof(SiderHeder),MSG_WAITALL)) == -1) {
                 perror("recv");
         }
@@ -136,7 +136,7 @@
 
 
         y=0;
-        //fjerner tegn som er eskapet med \, eks \" blir til &quot;
+        //strip characters escaped with \, e.g. \" becomes &quot;
         for(i=0;i<strlen(QueryData.query);i++) {
                 if (QueryData.query[i] == '\\') {
 
@@ -172,7 +172,7 @@
 
 		if (!Sider[i].deletet) {
 
-                //filtrerer ut tegn som ikke er lov i xml
+                //filter out characters that are not allowed in xml
                 while ((strpointer = strchr(Sider[i].DocumentIndex.Url,'&')) != NULL) {
                         (*strpointer) = 'a';
                 }
@@ -194,7 +194,7 @@
                 printf("\t<Title>%s</Title>\n",Sider[i].title);
                 printf("\t<AdultWeight>%hu</AdultWeight>\n",Sider[i].DocumentIndex.AdultWeight);
                 printf("\t<Sprok>%s</Sprok>\n",Sider[i].DocumentIndex.Sprok);
-                //temp: blir rare tegn her              
+                //temp: garbled characters appear here              
 		printf("\t<Dokumenttype>%s</Dokumenttype>\n",Sider[i].DocumentIndex.Dokumenttype);
 
                 printf("\t<RepositorySize>%u</RepositorySize>\n",Sider[i].DocumentIndex.htmlSize);
@@ -223,7 +223,7 @@
 
                 printf("\t<NrOfHits>%i</NrOfHits>\n",Sider[i].iindex.TermAntall);
 
-                //printer ut hits (hvor i dokumenetet orde befinner seg ).
+                //print out hits (where in the document the word is located).
                 printf("\t<hits>");
                 for (y=0; (y < Sider[i].iindex.TermAntall) && (y < MaxTermHit); y++) {
                         printf("%hu ",Sider[i].iindex.hits[y]);
@@ -237,7 +237,7 @@
 
 	printf("</search>\n");
 
-	//ToDo: må ha låsing her
+	//ToDo: must add locking here
 	if ((LOGFILE = fopen("/home/boitho/config/query.log","a")) == NULL) {
 		perror("logfile");
 	}

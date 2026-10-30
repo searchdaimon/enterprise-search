@@ -24,19 +24,19 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int exeocbuflenret;
 	char exeocbuf[exeocbuflen];
 	int ret;
 
 
 
-	//runarb: 28 aug 2008: Jeg Tror at å legge på [0] skal gjøre det slik at vi bare får første
-	//del hvis en bilde er på flere sider(!). Forstår ikke hvordan det kan skje. Men det gjør det.
-	//se også http://studio.imagemagick.org/pipermail/magick-users/2002-May/002616.html
-	//men her jobber vi ikke med pdf... Kan det være gif som lager problemer?
+	//runarb: 28 aug 2008: I think that adding [0] should make it so we only get the first
+	//part if an image spans several pages(!). I don't understand how that can happen. But it does.
+	//see also http://studio.imagemagick.org/pipermail/magick-users/2002-May/002616.html
+	//but here we are not working with pdf... Could it be gif causing problems?
 	//
-	//runarb: litt senere: men dette fungerte ikke :(, men gjør så hvis man kjører det fra komandolinjen...
+	//runarb: a bit later: but this did not work :(, but do so if you run it from the command line...
 	snprintf(documentfile,sizeof(documentfile),"%s-doc-%u.%s",converttemptemplate,(unsigned int)getpid(),type);
 	snprintf(imagefile,sizeof(imagefile),"%s-image-%u.png",converttemptemplate,(unsigned int)getpid());
 	
@@ -95,12 +95,12 @@ char *generate_thumbnail_by_convert(const void *document, const size_t size, siz
 
 
 	generate_thumbnail_by_convert_error:	
-		//hånterer feil
-		//stenger først ned eventuelt åpen fil
+		//handle errors
+		//first close any open file
 		if (fp != NULL) {
 			fclose(fp);
 		}
-		//så sletter vi eventuelt filer som ble opprettet
+		//then delete any files that were created
 		unlink(documentfile);
 		unlink(imagefile);
 
@@ -116,7 +116,7 @@ char *generate_pdf_thumbnail_by_convert( const void *document, const size_t size
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	int exeocbuflenret;
 	char exeocbuf[exeocbuflen];
 	int ret;

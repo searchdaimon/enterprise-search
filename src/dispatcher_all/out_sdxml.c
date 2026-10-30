@@ -50,7 +50,7 @@ void disp_out_sd_v2_0(
     	    }
 
     	    printf("<SEARCH>\n");   
-	    //får rare svar fra hilite. Dropper å bruke den får nå
+	    //getting strange answers from hilite. Skipping its use for now
 	    FinalSiderHeder.hiliteQuery[0] = '\0';
 	    #ifdef WITH_SPELLING
 	    strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
@@ -82,7 +82,7 @@ void disp_out_sd_v2_0(
 		return;
 	    }
 	
-	    //viser info om dispatcher_all
+	    //show info about dispatcher_all
 	    printf("<DISPATCHER_INFO>\n");
 	    printf("\t<FILTERTRAPP>\n");
 	    {
@@ -105,7 +105,7 @@ void disp_out_sd_v2_0(
 
 	    if (!hascashe) {
 
-		//viser info om serverne som svarte
+		//show info about the servers that responded
 		//printf("<SEARCHNODES_INFO NROFSEARCHNODES=\"%i\" />\n",nrRespondedServers);
 
 		for (i=0;i< num_servers;i++) {
@@ -188,7 +188,7 @@ void disp_out_sd_v2_0(
 		printf("</SEARCHNODES>\n");
 	    }
 
-	    //cashe eller ingen cashe. Adserverene skal vises
+	    //cache or no cache. The adservers should be shown
 	    for (i=0;i<nrOfAddServers;i++) {
        	        if (addsockfd[i] != 0) {
 			printf("<SEARCHNODES>\n");
@@ -201,7 +201,7 @@ void disp_out_sd_v2_0(
 	    }
 
 
-	    //hvis vi har noen feil viser vi de
+	    //if we have any errors, show them
 	    for (i=0;i<errorha.nr;i++) {
 		printf("<ERROR>\n");
 		printf("  <ERRORCODE>%i</ERRORCODE>\n",errorha.errorcode[i]);
@@ -245,7 +245,7 @@ void disp_out_sd_v2_0(
 	    }		
 
 	    #ifdef ATTRIBUTES
-	    // Vi definerer <navigation> i searchdbb da vi vil ha med query. Hvis noe gikk feil må vi derfor definere den her også 
+	    // We define <navigation> in searchdbb since we want the query included. If something went wrong we must therefore define it here too 
 	    if (SiderHeder[0].navigation_xml[0] != '\0') {
 	    	printf("%s\n", SiderHeder[0].navigation_xml);
 	    }
@@ -283,7 +283,7 @@ void disp_out_sd_v2_0(
 					"last year",
 					"two years plus"};
 
-	    // Bør gjøres sammen med attributter?
+	    // Should this be done together with attributes?
 	    query_array	qa;
 	    get_query(QueryData.query, strlen(QueryData.query), &qa);
 	    container	*remove = set_container( int_container() );
@@ -448,11 +448,11 @@ void disp_out_sd_v2_0(
 				}
 				#endif
 
-				//gjør om språk fra tall til code
+				//convert language from number to code
 				char documentlangcode[4];
 				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
 
-				//finner vid
+				//find vid
 				char vidbuf[64];
         			vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
 				printf("\t<VID>%s</VID>\n",vidbuf);
@@ -501,7 +501,7 @@ void disp_out_sd_v2_0(
 					char timebuf[64];
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<TIME_UNIX>%u</TIME_UNIX>\n",Sider[i].DocumentIndex.CrawleDato);
-						// Konverterer til locale:
+						// Convert to locale:
 						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
 				        		setlocale(LC_TIME, "no_NO.utf8");
 						}
@@ -515,8 +515,8 @@ void disp_out_sd_v2_0(
 						timebuf[64] = '\0';
 						printf("\t<TIME_ISO>%s</TIME_ISO>\n",timebuf);
 					}
-					// Sender med cache link hvis 
-					// collection er konfigurert til aa vise cache.
+					// Include cache link if 
+					// the collection is configured to show cache.
 					if ((int) Sider[i].subname.config.cache_link)
 	                			printf("\t<CACHE document=\"%u\" time=\"%lld\" signature=\"%u\" collection=\"%s\" host=\"%s\"></CACHE>\n", 
 							Sider[i].cache_params.doc_id, (long long)Sider[i].cache_params.time, 
@@ -533,7 +533,7 @@ void disp_out_sd_v2_0(
 	                		printf("\t<DOMAIN>%s</DOMAIN>\n",Sider[i].domain);
 	                		printf("\t<DOMAIN_ID>%hu</DOMAIN_ID>\n",Sider[i].DomainID);
 
-					//finer om forige treff hadde samme domene
+					//check whether the previous hit had the same domain
 					if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
 		                		printf("\t<DOMAIN_GROUPED>TRUE</DOMAIN_GROUPED>\n");
 					}
@@ -541,8 +541,8 @@ void disp_out_sd_v2_0(
 		                		printf("\t<DOMAIN_GROUPED>FALSE</DOMAIN_GROUPED>\n");
 
 					}
-					// ikke 100% riktig dette, da vi vil få problemer med at ppc reklame får samme side kan 
-					// være siste, og da blir treff 1 rykket inn
+					// not 100% correct, since we get problems where ppc ads can end up on the same page 
+					// being last, which then pushes hit 1 inward
 					lastdomain = Sider[i].domain;
 
 					printf("\t<SERVERNAME>%s</SERVERNAME>\n",Sider[i].servername);
@@ -587,7 +587,7 @@ void disp_out_sd_v2_0(
                 
 			#endif
 
-			//teller bare normale sider
+			//only count normal pages
 			if (Sider[i].type == siderType_normal) {
 				++x;
 			}
@@ -631,7 +631,7 @@ void disp_out_sd_v2_1(
     	    }
 
     	    printf("<search>\n");
-	    //får rare svar fra hilite. Dropper å bruke den får nå
+	    //getting strange answers from hilite. Skipping its use for now
 	    FinalSiderHeder.hiliteQuery[0] = '\0';
 	    #ifdef WITH_SPELLING
 	    strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
@@ -662,7 +662,7 @@ void disp_out_sd_v2_1(
 		return;
 	    }
 
-	    //viser info om dispatcher_all
+	    //show info about dispatcher_all
 	    printf("<dispatcher_info>\n");
 	    printf("\t<filters>\n");
 	    {
@@ -685,7 +685,7 @@ void disp_out_sd_v2_1(
 
 	    if (!hascashe) {
 
-		//viser info om serverne som svarte
+		//show info about the servers that responded
 
 		for (i=0;i< num_servers ;i++) {
 			if (sockfd[i] != 0) {
@@ -761,7 +761,7 @@ void disp_out_sd_v2_1(
 		printf("</searchnode>\n");
 	    }
 
-	    //cashe eller ingen cashe. Adserverene skal vises
+	    //cache or no cache. The adservers should be shown
 	    for (i=0;i<nrOfAddServers;i++) {
        	        if (addsockfd[i] != 0) {
 			printf("<searchnode>\n");
@@ -774,7 +774,7 @@ void disp_out_sd_v2_1(
 	    }
 
 
-	    //hvis vi har noen feil viser vi dem
+	    //if we have any errors, show them
 	    for (i=0;i<errorha.nr;i++) {
 		printf("<error>\n");
 		printf("  <errorcode>%i</errorcode>\n",errorha.errorcode[i]);
@@ -818,7 +818,7 @@ void disp_out_sd_v2_1(
 	    }		
 
 	    #ifdef ATTRIBUTES
-	    // Vi definerer <navigation> i searchdbb da vi vil ha med query. Hvis noe gikk feil må vi derfor definere den her også 
+	    // We define <navigation> in searchdbb since we want the query included. If something went wrong we must therefore define it here too 
 	    if (SiderHeder[0].navigation_xml[0] != '\0') {
 	    	printf("%s\n", SiderHeder[0].navigation_xml);
 	    }
@@ -857,7 +857,7 @@ void disp_out_sd_v2_1(
 					"last year",
 					"two years plus"};
 
-	    // Bør gjøres sammen med attributter?
+	    // Should this be done together with attributes?
 	    query_array	qa;
 	    get_query(QueryData.query, strlen(QueryData.query), &qa);
 	    container	*remove = set_container( int_container() );
@@ -1030,11 +1030,11 @@ void disp_out_sd_v2_1(
 				}
 				#endif
 
-				//gjør om språk fra tall til code
+				//convert language from number to code
 				char documentlangcode[4];
 				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
 
-				//finner vid
+				//find vid
 				char vidbuf[64];
         			vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
 				printf("\t<vid>%s</vid>\n",vidbuf);
@@ -1078,7 +1078,7 @@ void disp_out_sd_v2_1(
 					char timebuf[64];
 					if (Sider[i].DocumentIndex.CrawleDato != 0) {
 						printf("\t<time_unix>%u</time_unix>\n",Sider[i].DocumentIndex.CrawleDato);
-						// Konverterer til locale:
+						// Convert to locale:
 						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
 				        		setlocale(LC_TIME, "no_NO.utf8");
 						}
@@ -1092,8 +1092,8 @@ void disp_out_sd_v2_1(
 						timebuf[64] = '\0';
 						printf("\t<time_iso>%s</time_iso>\n",timebuf);
 					}
-					// Sender med cache link hvis 
-					// collection er konfigurert til aa vise cache.
+					// Include cache link if 
+					// the collection is configured to show cache.
 					if ((int) Sider[i].subname.config.cache_link)
 	                			printf("\t<cache document=\"%u\" time=\"%lld\" signature=\"%u\" collection=\"%s\" host=\"%s\" />\n", 
 							Sider[i].cache_params.doc_id, (long long)Sider[i].cache_params.time, 
@@ -1109,7 +1109,7 @@ void disp_out_sd_v2_1(
 	                		printf("\t<domain>%s</domain>\n",Sider[i].domain);
 	                		printf("\t<domain_id>%hu</domain_id>\n",Sider[i].DomainID);
 
-					//finer om forige treff hadde samme domene
+					//check whether the previous hit had the same domain
 					if (i>0 && (lastdomain != NULL) && (strcmp(Sider[i].domain,lastdomain) == 0)) {			
 		                		printf("\t<domain_grouped>true</domain_grouped>\n");
 					}
@@ -1117,8 +1117,8 @@ void disp_out_sd_v2_1(
 		                		printf("\t<domain_grouped>false</domain_grouped>\n");
 
 					}
-					// ikke 100% riktig dette, da vi vil få problemer med at ppc reklame får samme side kan 
-					// være siste, og da blir treff 1 rykket inn
+					// not 100% correct, since we get problems where ppc ads can end up on the same page 
+					// being last, which then pushes hit 1 inward
 					lastdomain = Sider[i].domain;
 
 					printf("\t<servername>%s</servername>\n",Sider[i].servername);
@@ -1168,7 +1168,7 @@ void disp_out_sd_v2_1(
                 
 			#endif
 
-			//teller bare normale sider
+			//only count normal pages
 			if (Sider[i].type == siderType_normal) {
 				++x;
 			}

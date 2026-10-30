@@ -26,7 +26,7 @@ $CONFIG{tpl_tmp} = $ENV{BOITHOHOME} . "/var/webadmin_tmp";
 $CONFIG{'config_path'} = $ENV{'BOITHOHOME'} . '/config/setup.txt';
 
 # Get server spesific setup data
-#henter server spesifik data fra fil
+#fetches server-specific data from file
 open(INF,$CONFIG{'config_path'}) or die("Can't open setup.txt: $!");
 while (<INF>) {
 	chomp;  # avoid \n on last field

@@ -2,7 +2,7 @@
 #define _ATTRIBUTES_H_
 
 /**
- *	Input: Kommaseparert liste med attributtpar.
+ *	Input: Comma-separated list of attribute pairs.
  *	k <- key
  *	v <- value
  *	kv <- key=value

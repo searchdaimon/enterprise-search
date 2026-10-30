@@ -4,7 +4,7 @@ package Perlcrawl;
 use SD::Crawl;
 use Data::Dumper;
 
-use DBI; #bruker DBI databse interfase
+use DBI; # uses the DBI database interface
 
 
 sub crawlupdate {
@@ -21,7 +21,7 @@ sub crawlupdate {
 	print "inc: \n", join(", ", @INC), "\n";
 
 	####################################################################
-	# Settup
+	# Setup
 	####################################################################
 	my $user = $opt->{"user"};
 	my $Password = $opt->{"password"};
@@ -31,20 +31,20 @@ sub crawlupdate {
 	my $forumurl = "http://www.sirdf.com/forum";
 	####################################################################
 
-   	#Kobler til databasen
+   	# Connect to the database
 	my $dbh = DBI->connect("DBI:mysql:database=$database;host=$server;port=3306", 
                        $user, $Password) or die("Can`t connect: $DBI::errstr");
 
 
-	#gjør klar sql spøring
+	# Prepare the SQL query
 	my $sth = $dbh->prepare("select topic_id,pid,post,title,author_name from forum_posts,forum_topics where forum_posts.topic_id = forum_topics.tid") or dienice("Can`t prepare statment: ", $dbh->errstr);
 	my $rv = $sth->execute;
 
-	#laster ned sql resultater
+	# Download the SQL results
 	while ((SD::Crawl::pdocumentContinue($pointer)) && (my ($topic_id, $pid, $post, $title, $author_name ) = $sth->fetchrow_array)) {
 		print "topic_id: $topic_id, $title\n";
 
-		#lager de elementene vi vil sende til søkesystemet.
+		# Build the items we want to send to the search system.
 		my $sd_url 		= "$forumurl/viewtopic.php?t=$topic_id#$pid";
 		my $sd_size 		= length($post);
 		my $sd_acl_allow 	= "Everyone";
@@ -55,9 +55,9 @@ sub crawlupdate {
 
 		if (not SD::Crawl::pdocumentExist($pointer, $sd_url, 0, $sd_size )) {
 
-			#dokumentet finnes ikke, så vi legger det til
-			# pdocumentAdd() har format:
-			# pdocumentAdd( x, url, lastmodified, dokument_size, document, title, acl_allow, acl_denied )
+			# the document does not exist, so we add it
+			# pdocumentAdd() has the format:
+			# pdocumentAdd( x, url, lastmodified, document_size, document, title, acl_allow, acl_denied )
 			SD::Crawl::pdocumentAdd($pointer, $sd_url, 0 ,$sd_size, $sd_doc, $sd_title, $sd_type, $sd_acl_allow, $sd_acl_denied, "");		
 
 		}

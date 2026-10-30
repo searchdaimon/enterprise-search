@@ -13,7 +13,7 @@ my $dbh;
 ## Takes DBI object as a parameter.
 sub new {
 	my $class = shift;
-	$dbh = self;
+	$dbh = shift;
 	my $self = {};
 	bless $self, $class;
 	return $self;
@@ -27,8 +27,8 @@ sub get_name_for_connector {
 	my $query = "SELECT name FROM $table
 			WHERE connectorsId = ?";
 
-	$sth = $dbh->prepare($query);
-	$dbh->execute($id);
+	my $sth = $dbh->prepare($query);
+	$sth->execute($id);
 	
 	my $name = $sth->fetchrow_array;
 	return $name;

@@ -1,0 +1,8 @@
+# Perl sources that 00-syntax.t should not compile-check, one repo-relative
+# path per line. Keep this list short and explain every entry.
+
+# Needs SD::Lot::XS, an XS module that exists nowhere in the tree; dead code.
+Modules/SD/Lot.pm
+# Legacy result parser; imports %CFG etc. that the current webclient2 config.pm
+# no longer exports. SD_v2_1.pm is the live parser.
+public_html/webclient2/ResultParse/SDOld.pm

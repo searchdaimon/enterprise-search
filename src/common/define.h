@@ -21,10 +21,10 @@
 	#define NrofDocIDsInLot 500000
 #endif
 
-//maks sider vi leser fra indeksen. Er denne på 20k og vi har 30k treff får vi bare returnert 20k
+// max pages we read from the index. If this is 20k and we have 30k hits we only get 20k returned
 #define maxIndexElements 1500000
 
-//totalt maks lotter vi kan ha.
+// total max number of lots we can have.
 #define maxLots 10000
 
 #define MAXFILTYPES 100
@@ -43,10 +43,10 @@
 
 
 
-#define maxSubnameLength 512 //512 fra 6 nov
-#define BLDPORT 3490 //lot deamon
+#define maxSubnameLength 512 // 512 since 6 Nov
+#define BLDPORT 3490 // lot daemon
 
-//flyttet til boithoad.h
+// moved to boithoad.h
 #define MAX_LDAP_ATTR_LEN 512
 
 #define searchd_responstype_error		10
@@ -56,7 +56,7 @@
 
 #define nrOfHttpResponsCodes 700
 
-//maxs hits i et dokument som skal lagres, ikke som skal vises i søk
+// max hits in a document to be stored, not to be shown in search
 #define MaxsHitsInIndex 20
 
 
@@ -82,14 +82,14 @@
 #define SHORTPOPFILE "/home/boitho/config/shortRank"
 #define IPDBPATH "/home/boitho/config/ipdb"
 
-//maks hit vi kan ha i en side
-//skal erstatets av MaxsHitsInIndex
+// max hits we can have in a page
+// should be replaced by MaxsHitsInIndex
 #define MaxTermHit 20 
 
 
 #define AntallBarrals 64
 
-//komandoer
+// commands
 #define C_rGetNext 			1
 #define C_rLotData 			2
 #define C_DIWrite			3
@@ -149,7 +149,7 @@ struct cm_listusers_h {
 	char error[512];
 };
 
-//verdier av forskjelige term posisjoner
+// values of the various term positions
 #define poengForBody 			1	
 #define poengForHeadline 		4
 #define poengForTittel 			15
@@ -210,7 +210,7 @@ typedef enum {
 
 
 struct subnamesFiltypesFormat {
-	char name[5]; //4 for navn og \0
+	char name[5]; // 4 for name and \0
 	int nrof;
 };
 
@@ -224,7 +224,7 @@ struct filteronFormat {
 
 
 struct subnamesConfigFormat {
-	char summary; // 23.07.2008 - summary til char (fra const char *), dj
+	char summary; // 23.07.2008 - summary to char (from const char *), dj
 	char filterSameUrl;
 	char filterSameDomain;
 	char filterTLDs;
@@ -252,7 +252,7 @@ struct subnamesConfigFormat {
 
 	char isPaidInclusion; //bool
 
-	//sql query som vil bli utført hver gang vi ser en side i denne subnamet
+	// sql query that will be executed every time we see a page in this subname
 	char sqlImpressionsLogQuery[252];
 
 	char cache_link; // 30.09.2008 - show cache link, dj
@@ -263,7 +263,7 @@ struct subnamesConfigFormat {
 
 
 struct subnamesFormat {
-	char subname[maxSubnameLength]; // 23.07.08 - fra 64 til maxSubnameLength
+	char subname[maxSubnameLength]; // 23.07.08 - from 64 to maxSubnameLength
 	int hits;
 	struct subnamesConfigFormat config;
 };
@@ -282,7 +282,7 @@ struct brankPageElementsFormat {
 };
 
 
-//formatet på dokumenet indeks posten
+// the format of the document index record
 struct DocumentIndexFormat {
 	char Url[201];
 	char Sprok[4];
@@ -308,7 +308,7 @@ struct DocumentIndexFormat {
 	#ifdef BLACK_BOX
 		time_t lastSeen;
 		unsigned int htmlSize2;
-		char reservedSpace[56]; //18 okt 2012
+		char reservedSpace[56]; // 18 Oct 2012
 	#else 
 		unsigned int htmlSize2;
 	#endif
@@ -318,7 +318,7 @@ struct DocumentIndexFormat {
 struct ReposetoryHeaderFormat {
 	unsigned int DocID;
 	#ifdef BLACK_BOX
-		//Runerb: denne kan settes til deprecated slik når vi skal fase den ut:
+		// Runerb: this can be set to deprecated like so when we want to phase it out:
 		//char url[200] __attribute__((deprecated));
 		char url[200];
 	#else
@@ -357,7 +357,7 @@ struct StorageDirectorysFormat {
 };
 
 
-//formater på filene som ineholder ordbokene
+// format of the files that contain the dictionaries
 struct DictionaryFormat {
 	unsigned int WordID;
 	unsigned int Adress;
@@ -366,15 +366,15 @@ struct DictionaryFormat {
 
 
 struct indexFilteredFormat {
-	char is_filtered; // alle for en
-	char filename; //bool
+	char is_filtered; // all for one
+	char filename; // bool
 	char date;
 	char subname;
 	char duplicate;
 	char duplicate_in_collection;
-	char duplicate_to_show; // Den duplikaten som ikke filtreres bort.
+	char duplicate_to_show; // The duplicate that is not filtered away.
 	char attribute;
-	char attrib[MAX_ATTRIBUTES_IN_QUERY]; // en for hver attributt
+	char attrib[MAX_ATTRIBUTES_IN_QUERY]; // one for each attribute
 };
 
 
@@ -416,7 +416,7 @@ struct hitsFormat {
 };
 
 
-// Formatett på treff i indeksen
+// Format of a hit in the index
 struct iindexMainElements {
 	int DocID;
 	int TermAntall;
@@ -441,7 +441,7 @@ struct iindexMainElements {
 
 	unsigned int originalPosition;
 
-	// Trenger unik nøkkel for duplikater, bruker crc32 checksum.
+	// Need a unique key for duplicates, use crc32 checksum.
 	unsigned int crc32;
 };
 
@@ -466,7 +466,7 @@ struct cache_params {
 };
 
 
-// formatet for dataene for sidene skal være
+// the format the data for the pages should have
 struct SiderFormat {
 	struct DocumentIndexFormat DocumentIndex;
 	struct iindexMainElements iindex;
@@ -511,7 +511,7 @@ struct SiderFormat {
 	} *urls;
 	char *attributes;
 	unsigned short attributelen;
-	//buffering som gjør at vi kan lagre den på fil, og fortsatt bruke gammel data
+	// buffering that lets us store it to file and still use old data
 	char reserved[26];
 };
 
@@ -569,7 +569,7 @@ struct filtersTrapedFormat {
 
 
 struct filtypesFormat {
-	char name[5]; //4 for navn og \0
+	char name[5]; // 4 for name and \0
 	int nrof;
 };
 
@@ -623,7 +623,7 @@ struct SiderHederFormat {
 };
 
 
-//formatet på anchor filer
+// the format of anchor files
 struct anchorfileFormat {
 	unsigned int DocID;
 	char text[50];
@@ -690,7 +690,7 @@ struct queryNodeHederFormat {
 };
 
 
-// formater for de forskjelige delene i et query
+// formats for the various parts of a query
 struct QueryDataForamt {
         char query[MaxQueryLen];
 	query_array queryParsed;
@@ -717,7 +717,7 @@ struct QueryDataForamt {
 	char tkey[33]; // 32 bytes key +1 for \0
 	char rankUrl[256];
 	query_array search_user_as_query;
-	char navmenucfg[NAVMENUCFG_SIZE]; // jun 16 09
+	char navmenucfg[NAVMENUCFG_SIZE]; // Jun 16 09
 	int lang;
 	char nocache;
 	char nolog;

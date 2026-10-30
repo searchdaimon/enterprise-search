@@ -4,7 +4,7 @@
 
 #include "../common/poprank.h"
 
-//var 10 her
+//var 10 here
 #define Rank_intern_max 0
 #define Rank_noc_max 0
 

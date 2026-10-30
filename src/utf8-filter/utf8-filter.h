@@ -3,7 +3,7 @@
 #define _UTF8_FILTER_H_
 
 
-// Returnerer en ny versjon av str hvor alle tegn som ikke er kompatibel med utf8 har blitt fjernet:
+// Returns a new version of str with all characters that are not utf8-compatible removed:
 char* utf8_filter( char *str );
 
 

@@ -13,7 +13,7 @@
 
 int crawlpatAcces   (char resource[], char username[], char password[], int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...) , struct collectionFormat *collection) 
 {
-        //tester om vi kan koble til
+        //test whether we can connect
 	char        *prefix;
 	char	*resourcereal;
 	int status;
@@ -23,14 +23,14 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 
 	resourcereal = resource;
 
-	//fjerner file: i begyndelsen
+	//remove the leading "file:"
 	if (strncmp("file:",resourcereal,strlen("file:")) == 0) {
 		resourcereal += strlen("file:");
 	}
 
 	cleanresourceWinToUnix(resourcereal);
 
-        bblog(INFO, "crawlSMB: resourcereal: \"%s\" user \"%s\" Password \"%s\"", resourcereal,username,password);
+        bblog(INFO, "crawlSMB: resourcereal: \"%s\" user \"%s\" Password \"***\"", resourcereal,username);
 
 
 	prefix = smb_mkprefix( username, password );
@@ -51,14 +51,14 @@ int crawlpatAcces   (char resource[], char username[], char password[], int (*do
 
 int crawlcanconect( struct collectionFormat *collection,int (*documentError)(struct collectionFormat *collection, int level, const char *fmt, ...)) 
 {
-        //tester om vi kan koble til
+        //test whether we can connect
 	char        *prefix;
 	int status;
 	int no_auth = 0;
 
 	cleanresourceWinToUnix((*collection).resource);
 
-        bblog(INFO, "crawlSMB: resource: \"%s\" user \"%s\" Password \"%s\"",(*collection).resource,(*collection).user,(*collection).password);
+        bblog(INFO, "crawlSMB: resource: \"%s\" user \"%s\" Password \"***\"",(*collection).resource,(*collection).user);
 
 	if ((*collection).user == NULL) {
 		no_auth = 1;
@@ -96,7 +96,7 @@ int crawlfirst(struct collectionFormat *collection,
 	}
 
 
-        bblog(INFO, "crawlSMB: resource: \"%s\" user \"%s\" Password \"%s\"",(*collection).resource,(*collection).user,(*collection).password);
+        bblog(INFO, "crawlSMB: resource: \"%s\" user \"%s\" Password \"***\"",(*collection).resource,(*collection).user);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
     	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue, no_auth);
@@ -133,7 +133,7 @@ int crawlupdate(struct collectionFormat *collection,
 
 	bblog(INFO, "crawlupdate: start");
 
-        bblog(INFO, "crawlSMB: \"%s\" user \"%s\" Password \"%s\"",(*collection).resource,(*collection).user,(*collection).password);
+        bblog(INFO, "crawlSMB: \"%s\" user \"%s\" Password \"***\"",(*collection).resource,(*collection).user);
     	prefix = smb_mkprefix( (*collection).user, (*collection).password );
 
     	result = smb_recursive_get(  prefix, (*collection).resource, collection, documentExist,documentAdd, documentError, documentContinue,no_auth);

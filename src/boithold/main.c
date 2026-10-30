@@ -56,7 +56,7 @@ void connectHandler(int socket) {
 	unsigned int FilterTime;
 	int filnamelen;
 	FILE *FH;
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 	off_t filesize;
 	char c;
 
@@ -78,23 +78,23 @@ void connectHandler(int socket) {
 	while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 
 		//printf("command: %i\n",packedHedder.command);
-		//printf("i er %i\n",i);
+		//printf("i is %i\n",i);
 		printf("size is: %i\nversion: %i\ncommand: %i\n",packedHedder.size,packedHedder.version,packedHedder.command);
 		//printf("subname: %s\n",packedHedder.subname);
-		//lar size reflektere hva som er igjen av pakken
+		//make size reflect what is left of the packet
 		packedHedder.size = packedHedder.size - sizeof(packedHedder);
 
 		if (packedHedder.command == C_rmkdir) {
 		
 			printf("C_rmkdir\n");
 
-			//leser data. Det skal væren en int som sier hvilken lot vi vil ha
+			//read data. It should be an int that says which lot we want
 			if ((i=recv(socket, &LotNr, sizeof(LotNr),MSG_WAITALL)) == -1) {
 				perror("Cant read lotnr");
 				exit(1);
 			}
 
-			//leser destinasjonelengden
+			//read the destination length
 			if ((i=recv(socket, &destLeng, sizeof(destLeng),MSG_WAITALL)) == -1) {
 				perror("Cant read destLeng");
 				exit(1);
@@ -105,7 +105,7 @@ void connectHandler(int socket) {
 				exit(1);
 			}
 
-			//leser destinasjonene
+			//read the destination
 			if ((i=recv(socket, &dest, destLeng,MSG_WAITALL)) == -1) {
 				perror("Cant read dest");
 				exit(1);
@@ -126,13 +126,13 @@ void connectHandler(int socket) {
 		else if (packedHedder.command == C_rComand) {
 
 
-			//leser data. Det skal væren en int som sier hvilken lot vi vil ha
+			//read data. It should be an int that says which lot we want
 			if ((i=recv(socket, &LotNr, sizeof(LotNr),MSG_WAITALL)) == -1) {
 				perror("Cant read lotnr");
 				exit(1);
 			}
 
-			//leser destinasjonelengden
+			//read the destination length
 			if ((i=recv(socket, &destLeng, sizeof(destLeng),MSG_WAITALL)) == -1) {
 				perror("Cant read destLeng");
 				exit(1);
@@ -143,7 +143,7 @@ void connectHandler(int socket) {
 				exit(1);
 			}
 
-			//leser destinasjonene
+			//read the destination
 			if ((i=recv(socket, &dest, destLeng,MSG_WAITALL)) == -1) {
 				perror("Cant read dest");
 				exit(1);
@@ -203,7 +203,7 @@ void connectHandler(int socket) {
 			printf("fikk C_rGetSize\n");
 
 
-			//leser data. Det skal væren en int som sier hvilken lot vi vil ha
+			//read data. It should be an int that says which lot we want
 			if ((i=read(socket, &LotNr, sizeof(LotNr))) == -1) {
 				perror("Cant read lotnr");
 				exit(1);
@@ -227,14 +227,14 @@ void connectHandler(int socket) {
 
 			if ((FH = lotOpenFileNoCasheByLotNr(LotNr,buf,"rb",'s',packedHedder.subname)) == NULL) {
 				perror(buf);
-				//sending that he fil is emty
+				//sending that the file is empty
 				fileBloks = 0;
 
 				sendall(socket,&fileBloks, sizeof(fileBloks));
 
 			}
 			else {
-				//finner og sender il størelse
+				//find and send file size
 				fstat(fileno(FH),&inode);
 				//filesize = inode.st_size;
 				//sendall(socket,&filesize, sizeof(filesize));
@@ -252,7 +252,7 @@ void connectHandler(int socket) {
 			printf("fikk C_rGetFile\n");
 
 
-			//leser data. Det skal væren en int som sier hvilken lot vi vil ha
+			//read data. It should be an int that says which lot we want
 			if ((i=read(socket, &LotNr, sizeof(LotNr))) == -1) {
 				perror("Cant read lotnr");
 				exit(1);
@@ -276,7 +276,7 @@ void connectHandler(int socket) {
 
 			if ((FH = lotOpenFileNoCasheByLotNr(LotNr,buf,"rb",'s',packedHedder.subname)) == NULL) {
 				perror(buf);
-				//sending that the fil is emty
+				//sending that the file is empty
 				fileBloks = 0;
 				filerest = 0;
 
@@ -285,7 +285,7 @@ void connectHandler(int socket) {
 
 			}
 			else {
-				//finner og sender fil størelse
+				//find and send file size
 				fstat(fileno(FH),&inode);
 				//filesize = inode.st_size;
 				//sendall(socket,&filesize, sizeof(filesize));
@@ -345,14 +345,14 @@ void connectHandler(int socket) {
 	printf("støttes ikke lengere");
 	exit(1);
 	/*
-			//leser data. Det skal væren en unigned int som sier hvilken lot vi vil ha
-			//har deklarert den som int her ???
+			//read data. It should be an unsigned int that says which lot we want
+			//declared it as int here ???
 			if ((i=read(socket, &LotNr, sizeof(LotNr))) == -1) {
 				perror("Cant read lotnr");
 				exit(1);
 			}
 			printf("leser FilterTime\n");
-			//leser filtertime
+			//read filtertime
 			if ((i=read(socket, &FilterTime, sizeof(FilterTime))) == -1) {
 				perror("Cant read lotnr");
 				exit(1);
@@ -360,21 +360,21 @@ void connectHandler(int socket) {
 
 			printf("lotnr %i FilterTime %u\n",LotNr,FilterTime);
 
-			//henter inn data om den lotten
+			//fetch data about that lot
 			if (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,NULL,&radress,FilterTime,0)) {
 
 				//printf("DocId: %i url: %s\n",ReposetoryHeader.DocID,ReposetoryHeader.url);
 
-				//sender pakke hedder
+				//send packet header
 				sendpacked(socket,C_rLotData,PROTOCOLVERSION, ReposetoryHeader.htmlSize + sizeof(ReposetoryHeader) +sizeof(radress), NULL,packedHedder.subname);	
 
-				//sennder ReposetoryHeader'en
+				//send the ReposetoryHeader
 				sendall(socket,&ReposetoryHeader, sizeof(ReposetoryHeader));
 
-				//sender htmlen
+				//send the html
 				sendall(socket,&htmlbuffer, ReposetoryHeader.htmlSize);
 
-				//sender adressen
+				//send the address
 				sendall(socket,&radress,sizeof(radress));
 				//printf("data sent\n");
 
@@ -418,7 +418,7 @@ void connectHandler(int socket) {
 			}
 			//printf("DocID %i\n",DocID);
 
-			//leser inn datan
+			//read in the data
 			//int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID);
 			DIRead(&DocumentIndexPost,DocID,packedHedder.subname);
 
@@ -450,7 +450,7 @@ void connectHandler(int socket) {
 
 		}
 		else if (packedHedder.command == C_rSendFile) {
-			//skal mota en fil for lagring i reposetoryet
+			//should receive a file for storage in the repository
 			//char FilePath[156];
 			FILE *FILEHANDLER;
 			char c;
@@ -466,7 +466,7 @@ void connectHandler(int socket) {
 			printf("lotNr %i\n",LotNr);
 
 
-			//leser destinasjonelengden
+			//read the destination length
 			if ((i=recv(socket, &destLeng, sizeof(destLeng),MSG_WAITALL)) == -1) {
 				perror("Cant recv destLeng");
 				exit(1);
@@ -477,7 +477,7 @@ void connectHandler(int socket) {
 				exit(1);
 			}
 
-			//leser destinasjonene
+			//read the destination
 			if ((i=recv(socket, &dest, destLeng,MSG_WAITALL)) == -1) {
 				perror("Cant recv dest");
 				exit(1);
@@ -494,10 +494,10 @@ void connectHandler(int socket) {
 
 			//GetFilPathForLot(FilePath,LotNr,packedHedder.subname);
 
-			//legger til filnavnet
+			//append the filename
 			//strncat(FilePath,dest,sizeof(FilePath));
 
-			//leser inn filstørelsen
+			//read in the file size
 			if ((i=recv(socket, &fileBloks, sizeof(fileBloks),MSG_WAITALL)) == -1) {
 				perror("Cant recv fileBloks");
 				exit(1);
@@ -510,7 +510,7 @@ void connectHandler(int socket) {
 
 			printf("fileBloks: %" PRId64 ", filerest: %" PRId64 "\n",fileBloks,filerest);
 
-			//åpner filen
+			//open the file
 			if ((FILEHANDLER = lotOpenFileNoCasheByLotNr(LotNr,dest,opentype,'e',packedHedder.subname)) == NULL) {
 				perror(dest);
 			}
@@ -672,7 +672,7 @@ void connectHandler(int socket) {
 			*/
 		}
 		/*
-		runarb: 06 des 2007: vi har gåt bort fra denne metoden for nå, og bruker heller index over smb. Men tar vare på den da vi kan trenge den siden
+		runarb: 06 dec 2007: we have moved away from this method for now, and use index over smb instead. But keep it around since we might need it later
 
 		else if (packedHedder.command == C_urltodocid) {
 			char cmd;

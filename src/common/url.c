@@ -13,7 +13,7 @@
 #include "strlcat.h"
 #include "utf8-strings.h"
 
-//domener som har Country code second-level domain ccSLD domenesystem, slik som co.uk i name.co.uk
+// domains that have a Country code second-level domain (ccSLD) domain system, such as co.uk in name.co.uk
 char *SecondLevelDomain[] = {"uk","au","nz",NULL};
 
 int strchrcount(char s[], char c) {
@@ -51,14 +51,14 @@ int urlMayBeRecursive(const char url[]) {
 
 	p = url;
 	
-	//søker os til protokoll
+	// seek to the protocol
 	if ((p = strstr(p,"//")) == NULL) {
 		printf("urlMayBeRecursive: bad formated url \"%s\".\n",url);
 		return 1;
 	}
 	++p;++p;
 
-	//søker oss til slutten av domene
+	// seek to the end of the domain
 	if ((p = strchr(p,'/')) == NULL) {
 		printf("urlMayBeRecursive: bad formated url \"%s\".\n",url);
 		return 1;
@@ -91,9 +91,9 @@ int urlMayBeRecursive(const char url[]) {
 		#ifdef DEBUG
 			printf("urlMayBeRecursive: dirs \"%s\"\n",directories[y]);
 		#endif
-		//samenligner med alle andre
+		// compare with all the others
 		for (z=0;z<i;z++) {
-			//samenligner ikke med seg selv
+			// do not compare with itself
 			if (y != z) {
 				if (strcmp(directories[y],directories[z]) == 0) {
 					printf("urlMayBeRecursive: url \"%s\" have recursive folder \"%s\", nr %i == \"%s\", nr %i\n",url,directories[y],y,directories[z],z);
@@ -118,7 +118,7 @@ int url_depth(char url[]) {
 
 	len = strchrcount(url +7, '/');
 
-	//teller ikke med den siste /. slik at  http://www.boitho.com/div/file.html og http://www.boitho.com/div/mappe/ blir det samme
+	// do not count the trailing /, so that http://www.boitho.com/div/file.html and http://www.boitho.com/div/mappe/ become the same
 	if (url[strlen(url) -1] == '/') {
 		#ifdef DEBUG
 		printf("url_depth: Url \"%s\" har / as last char\n",url);
@@ -136,7 +136,7 @@ int find_domain_path_len (char url[]) {
 
         char *cpnt;
 
-        //søker oss til / og kapper
+        // seek to / and cut
         if ((cpnt = strchr(url + 7,'/')) == NULL) {
 		#ifdef DEBUG
 			printf("bad url\n");
@@ -168,9 +168,9 @@ int isWikiUrl(char url[]) {
 
 }
 
-//div intresange teknikker er listet på http://en.wikipedia.org/wiki/URL_normalization
+// various interesting techniques are listed at http://en.wikipedia.org/wiki/URL_normalization
 //
-// det finnes et program src/urltest/ som unit tester dette
+// there is a program src/urltest/ that unit tests this
 int url_normalization (char url[], int urlsize) {
 
 	char domain[urlsize];
@@ -190,7 +190,7 @@ int url_normalization (char url[], int urlsize) {
 	}
 
 	/*
-		Tar bort # og alt etter i urlen. Eks http://www.boitho.com/side.html#august blir til http://www.boitho.com/side.html
+		Removes # and everything after it in the url. E.g. http://www.boitho.com/side.html#august becomes http://www.boitho.com/side.html
 	*/
         if ( (cpnt = strchr((url +7),'#')) != NULL) {
 		cpnt[0] = '\0';
@@ -217,9 +217,9 @@ int url_normalization (char url[], int urlsize) {
 	Example: 
 	http://www.example.com . http://www.example.com/ 
 	*/
-        //søker oss til / , hvis vi ikke har har vi nokk en domene skrevet som www.boitho.com.
-	//vi ønsker da og legge på / for og få www.boitho.com/
-	// kan også være www.boitho.com?query=chat. Så hvis det er ? i den kan vi ikke bare apende en /
+        // seek to / , if we do not have one we probably have a domain written as www.boitho.com.
+	// we then want to add / to get www.boitho.com/
+	// can also be www.boitho.com?query=chat. So if there is a ? in it we cannot just append a /
         if ( ((cpnt = strchr((url +7),'/')) == NULL) && ((cpnt = strchr((url +7),'?')) == NULL)) {
 		#ifdef DEBUG
 			printf("no trailing slash. Url \"%s\"\n",url);
@@ -233,8 +233,8 @@ int url_normalization (char url[], int urlsize) {
         }
 
 	/*
-	//har ikke /, men har ?, så det må være http://www.boitho.com?a=b
-	13% av redirect urlene har http://www.boitho.com?a=b type url, alstå uten / etter .com 
+	// has no /, but has ?, so it must be http://www.boitho.com?a=b
+	13% of redirect urls have a http://www.boitho.com?a=b type url, i.e. without / after .com 
 	*/
 
         if ( ((cpnt = strchr((url +7),'/')) == NULL) && ((cpnt = strchr((url +7),'?')) != NULL)) {
@@ -243,17 +243,17 @@ int url_normalization (char url[], int urlsize) {
 		
         }
 
-	//nå når vi har et fungerende domene kan vi prøve å finne domene
+	// now that we have a working domain we can try to find the domain
 	if (!find_domain(url,domain,urlsize) ) {
 		debug("gyldig_url: can't find domain. Url \"%s\"\n",url);
 		return 0;
 	}
 
-	//teller subdomener
+	// count subdomains
 	subdomains = strchrcount(domain,'.');
 
 	/*
-	legger til www. foran en url. Dette da vi kan være rimelig sikker på at http://boitho.com og http://www.boitho.com
+	add www. in front of a url. This since we can be reasonably sure that http://boitho.com and http://www.boitho.com
 	er samme side
 	*/
 	/*
@@ -331,14 +331,14 @@ int legalUrl(char word[]) {
 			return 0;
 		}
 
-		//teller subdomener
+		// count subdomains
 		subdomains = strchrcount(domain,'.');
 		
 
 		domainNrOfLines = strchrcount(domain,'-');
 
 		
-                //finner siste bokstav
+                // find the last letter
                 if (word[lengt -1] == '/') {
                         filetype = &word[lengt -1];
                 }
@@ -348,14 +348,14 @@ int legalUrl(char word[]) {
                         }
                 }
 
-		//finner lengde på query. Altså det som er etter ?
+		// find the length of the query. That is, what comes after ?
 		querylength = 0;
 		if ((cpnt = strstr(word,"?")) != NULL) {
-			querylength = strlen(cpnt +1); //+1 da vi ikke skal ha med ?
+			querylength = strlen(cpnt +1); // +1 since we should not include the ?
 		}
 
 
-                //temp: for nå tar vi bare korte urler
+                // temp: for now we only take short urls
                 if (lengt > 150) {
 			debug("To long. Was %i bytes",lengt);
 			return 0;
@@ -401,7 +401,7 @@ int legalUrl(char word[]) {
 			|| isWikiUrl(word)
                         )
                 ) {
-                        //tar bar de filendelsene vi vil ha
+                        // only take the file extensions we want
                         debug("bad ending \"%s\"",filetype);
 			return 0;
                 }
@@ -430,7 +430,7 @@ int legalUrl(char word[]) {
 			return 0;
 		}
 		else if (strstr((word + 7),"http:/") != NULL) {
-			//for å hindre http://go.kvasir.sol.no/fs/http:/www.nettfinn.no/
+			// to prevent http://go.kvasir.sol.no/fs/http:/www.nettfinn.no/
 			debug("hav http:/");
 			return 0;
 		}
@@ -544,7 +544,7 @@ int isOkTttl(char word[]) {
 		|| (strstr((word + 7),".eu/") != NULL)
 		|| (strstr((word + 7),".au/") != NULL)
 		|| (strstr((word + 7),".nz/") != NULL)
-		|| (strstr((word + 7),".fm/") != NULL)  // brukes av mange netradioer, som di.fm
+		|| (strstr((word + 7),".fm/") != NULL)  // used by many net radios, such as di.fm
 		) {
         	return 1;
         }
@@ -728,9 +728,9 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 
 }
 /*
-//fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
+// also removes www. at the beginning of a url, so that it is easier to compare www.vg.no == vg.no
 int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
-//ToDo har lagt til sizeofdomain, for å ungå buffer owerflow
+// ToDo added sizeofdomain to avoid buffer overflow
 
 	#define maxsubdomains 10
 
@@ -738,13 +738,13 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
         char buff[64];
         char darray[10][64];
         int i,y;
-        //kutter av http:// (de 7 første tegnene)
+        // cut off http:// (the first 7 characters)
         strscpy(domain,url + 7,sizeofdomain -1);
 
 
 
 
-        //søker oss til / og kapper
+        // seek to / and cut
         if ((cpnt = strchr(domain,'/')) == NULL) {
                 printf("bad url. Dont have any / after protokoll, or domain (or subdomain) is to long Url \"%s\"\n",url);
                 return 0;
@@ -770,19 +770,19 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
                                 strcpy(domain,domain +3);
                         }
 
-                        //fjerner . på begyndelsen
+                        // remove . at the beginning
                         strcpy(domain,domain +1);
                 }
                 else {
-                        //returnerer domanet slik vi fant det lengere opp
+                        // return the domain as we found it further up
                         if (strncmp(domain,"www.",4) == 0) {
                                 strscpy(domain,domain +4,sizeofdomain);
                         }
 
                 }
 
-		//18 mai 2007. Forsikrer os at vi altid slutter på \0
-		//underlig at det er nædvendig. Men ser ut til at det kan oppstå feil som gir oss domene uten \0
+		// 18 May 2007. Ensure that we always end with \0
+		// strange that it is necessary. But it looks like errors can occur that give us a domain without \0
 		domain[sizeofdomain] = '\0';
 
                 return 1;
@@ -791,20 +791,20 @@ int find_domain_no_subname (const char url[],char domain[], int sizeofdomain) {
 */
 
 
-//fjerner også www. i begyndelsen av en url, slik at det blir lettere å samenligne www.vg.no == vg.no
+// also removes www. at the beginning of a url, so that it is easier to compare www.vg.no == vg.no
 int find_domain_no_www (const char url[],char domain[], int sizeofdomain) {
 
         char *cpnt;
 
 
-        //kutter av http:// (de 7 første tegnene)
+        // cut off http:// (the first 7 characters)
         strscpy(domain,url + 7,sizeofdomain);
 
 	if (strncmp(domain,"www.",4) == 0) {
 		strscpy(domain,domain +4,sizeofdomain);
 	}
 
-        //søker oss til / og kapper
+        // seek to / and cut
         if ((cpnt = strchr(domain,'/')) == NULL) {
 		#ifdef DEBUG
 			printf("bad url\n");
@@ -827,7 +827,7 @@ int find_TLD(char domain[], char TLD[],int TLDsize) {
                 printf("bad domain\n");
                 return 0;
         }
-      //h<E5>pper over . i domene. Skal ha "com", ikke ".com"
+      // skip over . in the domain. Should have "com", not ".com"
       ++cpoint;
 
       strscpy(TLD,cpoint,TLDsize);
@@ -841,10 +841,10 @@ int find_domain (const char url[],char domain[],const int domainsize) {
         char *cpnt;
 
 
-        //kutter av http:// (de 7 første tegnene)
+        // cut off http:// (the first 7 characters)
         strscpy(domain,url + 7,domainsize);
 
-        //søker oss til / og kapper
+        // seek to / and cut
         if ((cpnt = strchr(domain,'/')) == NULL) {
 		#ifdef DEBUG
 			printf("bad url\n");
@@ -867,15 +867,15 @@ int url_nrOfSubDomains(char url[]) {
 		return -1;
 	}
 
-	//hvis vi ikke har noen subdomene
+	// if we have no subdomain
 	if (domain[0] == '\0') {
 		return 0;
 	}
 
-	//teller subdomener
+	// count subdomains
 	subdomains = strchrcount(domain,'.');
 
-	//test.ntnu er 2, ikke 1
+	// test.ntnu is 2, not 1
 	++subdomains;
 
 	return subdomains;

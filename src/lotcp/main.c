@@ -66,7 +66,7 @@ main (int argc, char *argv[]) {
 	}
 	else if ((argc -optind) == 4) {
 		strcpy(file,argv[3 +optind]);
-		//hvis vi er en mappe må vi slutte på /. Hvis vi ikke her det legger vi til en /
+		//if it's a directory we must end with a /. If it doesn't have one we add a /
 		if((strchr(file,'/') != NULL) && (file[strlen(file) -1] != '/')) {
 			printf("adding a / to \"%s\"\n",file);
 			strcat(file,"/");
@@ -134,7 +134,7 @@ void recursiveDir (char lotpath[],char lotinternpath[],unsigned int lotNr,char s
 			printf("dir (nextdirname %s)\n",nextdirname);
 			rmkdir(nextdirname,lotNr,subname);
 
-			//kaller seg selv rekurift
+			//calls itself recursively
 			recursiveDir(lotpath,nextdirname,lotNr,subname,server);
 		}
 		else if (dp->d_type == DT_REG) {

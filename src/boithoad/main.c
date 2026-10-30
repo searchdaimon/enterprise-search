@@ -52,7 +52,7 @@ number of 500 entries, no more than 500 entries are returned even when sizelimit
 - http://docs.sun.com/app/docs/doc/816-5170/ldap-search-ext-3ldap?a=view
 */
 #define ldap_sizelimit 0
-//timout for ldap kall, i sekkunder
+//timeout for ldap calls, in seconds
 #define ldap_timeout 60
 
 cache_t *cache;
@@ -95,7 +95,7 @@ user_enabled(char *user, const char *licensekey)
 	if (!mysql_real_connect(db, MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB, 3306, NULL, 0))
 		errx(1, "Mysql connect error: '%s'. Exiting.", mysql_error(db));
 
-	//fiiner hvormange brukere vi har tilgjengelig.
+	//find how many users we have available.
 	if (mysql_real_query(db, query_enabled_users, strlen(query_enabled_users)))
 		errx(1, "Unable to get active users: %s", mysql_error(db));
 
@@ -130,7 +130,7 @@ user_enabled(char *user, const char *licensekey)
 		errx(1, "mysql_store_result: %s", mysql_error(db));
 
 	if (maxusers == 0) {
-		n = 1; // Hav unlimeted. No need to lock it up
+		n = 1; // Have unlimited. No need to lock it up
 	}
 	else {
 		n = mysql_num_rows(res);
@@ -145,7 +145,7 @@ user_enabled(char *user, const char *licensekey)
 	}
 
 
-	return 1; //har tilgang
+	return 1; //has access
 }
 
 
@@ -166,7 +166,7 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    (*ld) = NULL;
 
    #ifdef DEBUG
-   //setter at ldap også skal vise debug info
+   //tell ldap to show debug info as well
    int debug = 1;
    if( ber_set_option( NULL, LBER_OPT_DEBUG_LEVEL, &debug ) != LBER_OPT_SUCCESS ) {
                 fprintf( stderr, "Could not set LBER_OPT_DEBUG_LEVEL %d\n", debug );
@@ -202,7 +202,7 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    }
    printf("~ldap_set_option\n");
 
-   //hvis vi vil bruke sasl tilkobling. Tror det er en type secure layer tilkobling, men er ikke sikker.
+   //if we want to use a sasl connection. I think it is a kind of secure layer connection, but I'm not sure.
    #if 0
 	   struct berval cred;
 	   cred.bv_val = password;
@@ -225,7 +225,7 @@ int ldap_connect(LDAP **ld, const char ldap_host[] , int ldap_port,const char ba
    printf("~ldap_bind_s\n");
 
    printf("~/ldap_connect\n");
-   //alt er vel. Ingen ting her feilet
+   //all is well. Nothing here failed
    return RETURN_SUCCESS;
 
 }
@@ -246,7 +246,7 @@ int ldap_close(LDAP **ld) {
    printf("ldap_close: end\n");
 }
 
-//	Finner base name
+//	Find base name
 int ldap_genBaseName(char ldap_base[],const char ldap_domain[]) {
 
   char **Data;
@@ -264,7 +264,7 @@ int ldap_genBaseName(char ldap_base[],const char ldap_domain[]) {
 	strcat(ldap_base,buff);
 	++Count;
   }
-  //fjerner , på slutten
+  //remove the trailing ,
   ldap_base[strlen(ldap_base) -1] = '\0';
   printf("\n");
   printf("base %s\n",ldap_base);
@@ -473,8 +473,8 @@ int ldap_simple_search_count(LDAP **ld,char filter[],char vantattrs[],char **res
 							counter = 0;
 
 							printf("rbrb: got %i values\n",ldap_count_values(vals));
-							//det ser ut som om ad sender verdiene i fårskjelige rekkefølge
-							//sorterer de derfor
+							//it looks like ad sends the values in different order
+							//so we sort them
 							qsort(vals,ldap_count_values(vals),sizeof(char *),compare_ldap_vals);
 							
 
@@ -665,7 +665,7 @@ int ldap_authenticat (LDAP **ld,char user_username[],char user_password[],const 
 		printf("canr look up cn\n");
 		return RETURN_FAILURE;
 	}
-   	//vi har en fungerende cn. Prøver og koble til
+   	//we have a working cn. Trying to connect
 	#ifdef DEBUG
 	printf("userid \"%s\", user_password \"%s\"\n",cn,user_password);
 	#endif
@@ -682,9 +682,9 @@ int ldap_authenticat (LDAP **ld,char user_username[],char user_password[],const 
    	return RETURN_SUCCESS;
 }
 /**********************************************************************
-  Henter ut gruppe fra en ldap distinguishedName "objectClass: group"
-  Er på formatet "CN=Domain Admins,CN=Users,DC=bbtest,DC=searchdaimon,DC=com"
-  der Domain Admins er verdien vi vil ha
+  Extract group from an ldap distinguishedName "objectClass: group"
+  It is in the format "CN=Domain Admins,CN=Users,DC=bbtest,DC=searchdaimon,DC=com"
+  where Domain Admins is the value we want
 ***********************************************************************/
 int getGroupFromDnGroup (char cn[],char groupname[], int sizeofgroupname) {
 	char **Data;
@@ -738,9 +738,9 @@ int getGroupFromDnGroup (char cn[],char groupname[], int sizeofgroupname) {
 }
 
 /**********************************************************************
-  Henter ut primær gruppe fra en cn. Den er på formatet
+  Extract primary group from a cn. It is in the format
   CN=Runar Buvik,CN=Users,DC=bbtest,DC=searchdaimon,DC=com
-  der "Runar Buvik" er brukeren og "Users" er primær gruppe.
+  where "Runar Buvik" is the user and "Users" is the primary group.
 ***********************************************************************/
 int getPrimaryGroupFromDnUsername (char cn[],char username[], int sizeofusername) {
 
@@ -1018,8 +1018,8 @@ int userIsLogedIn (char *user_username, const char *user_password, int time_out)
 int
 do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
-//her driver vi og kaller return, men da blir ikke alt, som loggene, stenkt ned riktig. 
-//Må heller bruke goto eller continue
+//here we keep calling return, but then not everything, like the logs, gets shut down properly. 
+//Should use goto or continue instead
 	struct packedHedderFormat packedHedder;
 	int intresponse;
 	char user_username[64];
@@ -1030,7 +1030,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 	printf("got new connection\n");
 
-	//temp: ser ikke ut til at Apache lukker sin ende riktig
+	//temp: looks like Apache does not close its end properly
 	//while ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) 
 	if ((i=recv(socket, &packedHedder, sizeof(struct packedHedderFormat),MSG_WAITALL)) > 0) {
 		#ifdef DEBUG
@@ -1045,7 +1045,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 		const char *authenticatmetod = bconfig_getentrystr("authenticatmetod");
 
-		//henter timeout. Hvis den er 0 så skal vi ikke cache.
+		//fetch timeout. If it is 0 we should not cache.
 		if (bconfig_getentryuint("authentication_timeout", &authentication_timeout) == 0) {
 			authentication_timeout = 0;
 		}
@@ -1060,15 +1060,15 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			char **respons;
 			char filter[128];
 
-			//nulstiller mine, slik at valgrind ikke klager når vi sender det.
+			//zero out the memory, so valgrind does not complain when we send it.
 			memset(&ldaprecord,'\0',MAX_LDAP_ATTR_LEN);
 
-			//henter konfig verdier
+			//fetch config values
 			const char *admin_username 	= bconfig_getentrystr("user");
 			const char *admin_password 	= bconfig_getentrystr("password");
 			const char *ldap_host 		= bconfig_getentrystr("ip");
 			const char *ldap_domain 	= bconfig_getentrystr("domain");
-			const int   ldap_port = 0; // runarb: 12 des 2007: er 0 riktig initalisering??
+			const int   ldap_port = 0; // runarb: 12 dec 2007: is 0 the right initialization??
 			const char *msad_ldapstring 	= bconfig_getentrystr("ldapstring");
 			const char *msad_ldapgroupstring = bconfig_getentrystr("ldapgroupstring");
 			const char *msad_ldapbase 	= bconfig_getentrystr("ldapbase");
@@ -1094,7 +1094,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
                                         strscpy(ldap_base,msad_ldapbase,sizeof(ldap_base));
                                 }
                                 if ((msad_ldapstring == NULL) || (msad_ldapstring[0] == '\0')) {
-                                        //bruker brukernavn på formen user@domain.ttl
+                                        //use username in the form user@domain.ttl
                                         sprintf(adminsdistinguishedName,"%s@%s",admin_username,ldap_domain);
                                 }
                                 else {
@@ -1121,7 +1121,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 				intresponse = ad_userauthenticated_ERROR;
 
-				//lser brukernavn og passord
+				//read username and password
 				recvall(socket,user_username,sizeof(user_username));
 				recvall(socket,user_password,sizeof(user_password));
 
@@ -1141,14 +1141,14 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					intresponse = ad_userauthenticated_OK;
 				}
 				
-				//hvis vi her en ok respons allerede så trenger vi ikke å gjøre noe mer
+				//if we already have an ok response then we don't need to do anything more
 				if (intresponse == ad_userauthenticated_OK) {
 					sendall(socket,&intresponse, sizeof(intresponse));
 					return 1;
 				}
 				else {
 
-					//vi må spørre ldap. Kobler til
+					//we must query ldap. Connecting
 					if (!bad_ldap_connect()) {
 						blog(LOGERROR,1,"can't connect to ldap server.");
 						intresponse = ad_userauthenticated_ERROR;
@@ -1176,7 +1176,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 					sendall(socket,&intresponse, sizeof(intresponse));
 
-					//leger brukeren til i logged inn oversikten
+					//add the user to the logged-in overview
 					if (firstOkLogin == 1) {
 						k = strdup(user_username);
 						userobjekt = malloc(sizeof(struct AuthenticatedUserFormat));
@@ -1186,13 +1186,13 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 
 						printf("adding user \"%s\" to user hash\n",k);
 						pthread_mutex_lock(&global_user_lock);
-							//fjerner eventuelt gammelt brukerobjekt.
+							//remove any old user object.
 							struct AuthenticatedUserFormat *v;
 							v = hashtable_remove(gloabal_user_h, k);
 							if (v != NULL)
 								free(v);
 	
-							//setter inn nyt btukerobjekt
+							//insert new user object
 							if (!hashtable_insert(gloabal_user_h,k,userobjekt)) {    
 								pthread_mutex_unlock(&global_user_lock);
 								printf("can't isert user in userobjekt\n"); 
@@ -1201,7 +1201,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 						pthread_mutex_unlock(&global_user_lock);
 					}
 
-					//finner brukerens grupper, og cacher disse
+					//find the user's groups, and cache them
 					if ((firstOkLogin == 1) && (authentication_timeout != 0)) {
 						
 						if (!getAllGroupsForUser(&grouphash, ld, user_username, msad_ldapgroupstring, ldap_domain, ldap_base)) {
@@ -1226,7 +1226,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				}
 				else {
 
-					//sender antal
+					//send count
 					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
 
 					printf("found %i gruups\n",nrOfSearcResults);
@@ -1253,7 +1253,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 					//return;
 				}
 				else {
-					//sender antal
+					//send count
 					sendall(socket,&nrOfSearcResults, sizeof(nrOfSearcResults));
 
 					printf("found %i gruups\n",nrOfSearcResults);
@@ -1270,11 +1270,11 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 			else if (packedHedder.command == bad_listMailUsers) {
 
 				/*
-					Lister mail brukere.
+					List mail users.
 					Runarb: 22 aug 2008.
-					Desverre her dette blitt ganske hårete. Vi må hente ut både proxyAddresses og objectSid 
-					med det kan være mer en en proxyAddresses. Nå kommer objectSid som elemenrt 1, så 
-					proxyAddresses som nr 2.
+					Unfortunately this has gotten quite hairy. We must fetch both proxyAddresses and objectSid 
+					and there can be more than one proxyAddresses. Now objectSid comes as element 1, then 
+					proxyAddresses as number 2.
 				*/
 				sprintf(filter,"(&(objectClass=user)(mailNickname=*))");			
 				if (!ldap_simple_search_count(&ld,filter,"proxyAddresses,objectSid",&respons,&nrOfSearcResults,ldap_base, 1, "SMTP:", LS_WANT_OBJECTSID)) {
@@ -1285,7 +1285,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				}
 				else {
 					intresponse = nrOfSearcResults / 2;
-					//sender antall
+					//send count
 					sendall(socket,&intresponse, sizeof(intresponse));
 
 					printf("found %i mail users\n",nrOfSearcResults);
@@ -1336,7 +1336,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				else {
 					strscpy(user_username, *respons, sizeof(user_username));
 
-					//sender antal
+					//send count
 					intresponse = 1;
 					sendall(socket,&intresponse, sizeof(intresponse));
 					sendall(socket,user_username, sizeof(user_username));
@@ -1364,7 +1364,7 @@ do_request(int socket,FILE *LOGACCESS, FILE *LOGERROR) {
 				else {
 					strscpy(user_username, *respons, sizeof(user_username));
 
-					//sender antal
+					//send count
 					intresponse = 1;
 					sendall(socket,&intresponse, sizeof(intresponse));
 					sendall(socket,user_username, sizeof(user_username));
@@ -1571,7 +1571,7 @@ main(int argc, char **argv)
 
    	bconfig_flush(CONFIG_NO_CACHE);
 
-	//henter timeout. Hvis den er 0 så skal vi ikke cache.
+	//fetch timeout. If it is 0 we should not cache.
 	if (bconfig_getentryuint("authentication_timeout", &authentication_timeout) == 0) {
 		authentication_timeout = 0;
 	}

@@ -1,5 +1,5 @@
 ## 
-# Class for communaction with SD license server.
+# Class for communication with SD license server.
 package SD::License::ClientCommunication;
 use strict;
 use warnings;

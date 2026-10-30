@@ -1,7 +1,7 @@
 #ifndef BLACK_BOX
-	// runarb, 14 mai 2008:
+	// runarb, 14 May 2008:
 	// for posix_fadvise()
-	// dette kan skape problemer i andre header filer!!!!!
+	// this can cause problems in other header files!!!!!
 	#define _XOPEN_SOURCE 600
 #endif
 
@@ -70,7 +70,7 @@
 /* function prototypes and global variables */
 void do_chld(void *);
 int	service_count;
-//global variabel for å holde servernavn
+//global variable to hold the server name
 char servername[MAX_SERVERNAME_LEN];
 struct config_t cfg;
 
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 
 	bblog(CLEAN, "Servername: %s", servername);
 
-	//ToDo: må ha låsing her
+	//ToDo: need locking here
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 bblog_errno(ERROR, "%s", bfile("config/query.log"));
         }
@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
 
 
 	#ifdef BLACK_BOX
-		// Initialiser thesaurus med ouput-filene fra 'build_thesaurus_*':
+		// Initialize thesaurus with the output files from 'build_thesaurus_*':
 		searchd_config.thesaurus_all = NULL;
 		#ifndef WITHOUT_THESAURUS
 			bblog(INFO, "init thesaurus");
@@ -391,15 +391,15 @@ int main(int argc, char *argv[])
 
 	#else
 
-		//starter opp
+		//starting up
 		bblog(INFO, "Loading domain-ids...");
 		iintegerLoadMemArray2(&global_DomainIDs,"domainid",sizeof(unsigned short), "www");
 
-        	//laster inn alle poprankene
+        	//load all the popranks
         	bblog(INFO, "Loading pop MemArray...");
-        	popopenMemArray2("www",searchd_config.optrankfile); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
+        	popopenMemArray2("www",searchd_config.optrankfile); // ToDo: hardcoding the subname here, since we don't know it yet because we don't get one passed in here
 		bblog(INFO, "Loading adultWeight MemArray...");
-		adultWeightopenMemArray2("www"); // ToDo: hardkoder subname her, da vi ikke vet siden vi ikke her får et inn enda
+		adultWeightopenMemArray2("www"); // ToDo: hardcoding the subname here, since we don't know it yet because we don't get one passed in here
 	#endif
 
 
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(searchd_config.searchport);
 	bblog(INFO, "Will bind to port %i",searchd_config.searchport);
-	//seter at sokket kan rebrukes
+	//set that the socket can be reused
         int yes=1;
         if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
 		bblog_errno(ERROR, "setsockopt()");
@@ -440,10 +440,10 @@ int main(int argc, char *argv[])
 		signal(SIGCLD, SIG_IGN);  /* now I don't have to wait() for forked children! */
 	#else
 		{
-			// runarb 28 juni 2009: 
-			// Hvis vi har verbose output så skal vi wait()e for våre barn, og vise prity print når de dør.
-			// desverre har det vært mye kød, der hovedprosessen blir hengene i sigchild_handler() og ikke kan
-			// fork'e flere barn. For å ungå dtte venter vi ikke på våre barn til vanlig.
+			// runarb 28 June 2009:
+			// If we have verbose output we want to wait() for our children, and show pretty print when they die.
+			// unfortunately there has been a lot of trouble where the main process gets stuck in sigchild_handler() and can't
+			// fork more children. To avoid this we normally don't wait for our children.
 			if (globalOptVerbose) {
 				struct sigaction sa;
 				int ret;
@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
 	if (searchd_config.optFastStartup != 1) {
 		thesaurus_destroy(searchd_config.thesaurusp);
 	}
-	//freegjør spelling. Trekt, men kjekt av valgring kan finne ut om noe ikke her blirr frigjort.
+	//free the speller. A stretch, but handy so valgrind can find out if something isn't being freed here.
 	if (searchd_config.optFastStartup != 1) {
 		untrain(spelling);
 	}
@@ -560,7 +560,7 @@ attr_conf *parse_navmenu_cfg(char *cfgstr, int *failed, int verbose) {
 	return cfg;
 }
 
-//copy a memory area, and return the size copyed
+//copy a memory area, and return the size copied
 #ifdef DEBUG_MEMCPYRC
 static size_t memcpyrc(void *s1, const void *s2, size_t n) {
 #else
@@ -579,11 +579,11 @@ void do_chld(void *arg)
 {
 
 
-	// starter loging
+	// start logging
 	bblog(DEBUGINFO, "searchd_child: Starting new thread.");
 	bblog(DEBUGINFO, "searchd: do_chld()");
 
-	// deklarerer variabler
+	// declare variables
 	struct searchd_configFORMAT *searchd_config = arg;
 	int   mysocfd = (*searchd_config).newsockfd;
 	struct timeval globalstart_time, globalend_time;
@@ -599,8 +599,8 @@ void do_chld(void *arg)
 	struct SiderHederFormat *SiderHeder;
 
 
-	// Setter signalhånterer for allarm. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
-	//Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Vil resette den til en versjon som logger før vi kjører søk.	
+	// Set signal handler for the alarm. If the alarm fires at the start of the program, something is seriously wrong. For example we are out of memory.
+	//Logging works poorly then, syslog may call malloc and such. Will reset it to a version that logs before we run the search.	
        	signal (SIGALRM, catch_alarm_nolog);
 
 	/* Set an alarm to go off in a little while. This so we don't run forever if we get en ever loop */
@@ -609,7 +609,7 @@ void do_chld(void *arg)
 	dp_priority_locl_start();
 
 
-	// første malloc. Har vi forlite minne vil vi henge her.
+	// first malloc. If we have too little memory we will hang here.
 	if ((SiderHeder  = malloc(sizeof(struct SiderHederFormat))) == NULL) {
 		bblog(ERROR, "malloc()");
 		bblog(CLEAN, "~do_chld()");
@@ -630,8 +630,8 @@ void do_chld(void *arg)
         	struct timeval start_time, end_time;
 	#endif
 
-	// Setter signalhånterer for allarm. Hvis allarm skjer i straten av programet, er noe seriøst galt. For eks er vi tom for minne.
-	//Da fungerer det dårlig å logge, syslog kan kalle malloc og slikt. Nå resetter vi den den til en versjon som logger søk.	
+	// Set signal handler for the alarm. If the alarm fires at the start of the program, something is seriously wrong. For example we are out of memory.
+	//Logging works poorly then, syslog may call malloc and such. Now we reset it to a version that logs the search.	
        	signal (SIGALRM, catch_alarm);
 
 	/* Disable tcp delay */
@@ -657,7 +657,7 @@ void do_chld(void *arg)
 	}
 
 
-	//sender svar med en gang at vi kan gjøre dette
+	//send a reply right away that we can do this
 	net_status = net_CanDo;
 
 	if ((n=send(mysocfd,&net_status, sizeof(net_status),MSG_NOSIGNAL)) != sizeof(net_status)) {
@@ -670,7 +670,7 @@ void do_chld(void *arg)
 
 
 	#ifndef BLACK_BOX
-	//ToDo: må ha låsing her
+	//ToDo: need locking here
         if ((LOGFILE = bfopen("config/query.log","a")) == NULL) {
                 bblog_errno(ERROR, "logfile");
         }
@@ -685,7 +685,7 @@ void do_chld(void *arg)
 	strcpy(SiderHeder->servername,servername);
 
 	#ifndef WITHOUT_THESAURUS
-		// TODO: Denne må skalere til flere språk:
+		// TODO: This must scale to more languages:
 		char	*lang = NULL;
 		switch (queryNodeHeder.lang)
 		    {
@@ -754,7 +754,7 @@ void do_chld(void *arg)
 	{
 		bblog(WARN, "searchd_child: dosearch did not return success");
 		SiderHeder->responstype 	= searchd_responstype_error;
-		//setter at vi ikke hadde noen svar
+		//set that we had no results
 		SiderHeder->TotaltTreff 	= 0;
 		SiderHeder->showabal		= 0;
 
@@ -767,7 +767,7 @@ void do_chld(void *arg)
 
 	dp_priority_locl_end();
 
-	//kopierer inn subnames. Kan bare sende over MAX_COLLECTIONS, men søker i alle
+	//copy in subnames. Can only send over MAX_COLLECTIONS, but search in all of them
 	for (i=0;((i<MAX_COLLECTIONS) && (i<nrOfSubnames));i++) {
 		SiderHeder->subnames[i] = subnames[i];
 	}
@@ -782,7 +782,7 @@ void do_chld(void *arg)
 	
 		bblog(INFO, "searchd_child:");
 	}
-	//finer først tiden vi brukte
+	//first find the time we used
         gettimeofday(&globalend_time, NULL);
         SiderHeder->total_usecs = getTimeDifference(&globalstart_time,&globalend_time);
 
@@ -861,7 +861,7 @@ void do_chld(void *arg)
 		struct SiderFormat *s = Sider+i;
 		size_t len;
 
-		// da vi må vite maks lengde på dataen på forhond, slik at vi ikke går over sendarray må vi sette en maks på antal urler.
+		// since we must know the max length of the data in advance, so we don't overrun sendarray, we have to set a max on the number of urls.
 		if (s->n_urls > 10) {
 			s->n_urls = 10;
 		}

@@ -117,7 +117,7 @@ void dumpQueryDataForamt(struct QueryDataForamt *d) {
 }
 
 
-//legger tilen error til køen
+//add an error to the queue
 void addError(struct errorhaFormat *errorha, int errorcode,char errormessage[]) {
 
 		if ((*errorha).nr < maxerrors) {
@@ -171,12 +171,12 @@ int bsconnect (int *sockfd, char server[], int port, int timeoutInSec) {
 
 	if ((nerror = connect((*sockfd), (struct sockaddr *)&their_addr,sizeof(struct sockaddr))) == -1) {
 
-		//vi har en no bloacking socket og connect har begynt. Må så bruke select for å vente på den
+		//we have a non-blocking socket and connect has begun. Must then use select to wait for it
 		if (errno == EINPROGRESS) {
 
 			nerror = select((*sockfd) +1, NULL ,&set, NULL,&timeout);
 
-			//hvis vi ikke fikk noen error er vi nå kobblet til
+			//if we got no error we are now connected
 			if (nerror == 1) {
 				returnstatus = 1;
 			}
@@ -212,7 +212,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 	int n;
 	int returnstatus = 1;
 
-	//hvsi vi fikk en sokket som ikke har noen verdi. Sikkert da den har blit kanselert før
+	//if we got a socket that has no value. Probably because it was cancelled earlier
 	if ((*sockfd) == 0) {
 		return 0;
 	}
@@ -223,7 +223,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 	//time.tv_usec = 10 * 1000000; // milliseconds * nanosec. 10 * 1000000 = 0.01 sek
 	time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
 
-	//mens vi venter på data, eller til vi ikke gidder å vente mere
+	//while we wait for data, or until we no longer bother to wait
 	while ((dataReceived < datasize) && (socketWait < maxSocketWait)) {
 
 		if ((n=recv((*sockfd), (&buff[y] + dataReceived), datasize - dataReceived, MSG_DONTWAIT )) == -1 ) {
@@ -235,7 +235,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 
 			}
 			else {
-				//noe feil har skjed, eksitter
+				//something went wrong, exiting
 				perror("recv SiderHeder");
 
 				returnstatus = 0;
@@ -258,7 +258,7 @@ int bsread (int *sockfd,int datasize, char buff[], int maxSocketWait) {
 		dprintf("bsread: reciving %i of %i. SocketWait %i\n",dataReceived,datasize,socketWait);
 
 	}
-	//vi timet ut socketetn. Setter den som ikke tilkoblet
+	//we timed out the socket. Mark it as not connected
 	if (socketWait >= maxSocketWait) {
 		dprintf("bsread: timed out\n");
 		returnstatus = 0;
@@ -330,7 +330,7 @@ int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], 
 	int i;
 	int nrleft = 0;
 
-	//går gjenom alle og finner hvor mange vi venter på
+	//go through all and find how many we are waiting for
 	for (i=0;i<nrof;i++) {
 		printf("%i: sockfd %i bytesleft %i\n",i,sockfd[i],bytesleft[i]);
 		if ((sockfd[i] != 0) && (bytesleft[i] != 0)) {
@@ -354,7 +354,7 @@ int bdread_continue(int sockfd[], int nrof,int bytesleft[], int lastgoodread[], 
 
 }
 
-//leser datasize fra nrof og lagrer sekvensielt i result
+//read datasize from nrof and store sequentially in result
 void bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait) {
 
 	int sendt[nrof];
@@ -368,7 +368,7 @@ void bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
         time.tv_sec = 0;
         time.tv_nsec = 10000000; // i nanoseconds = 0.01 sek
 
-	//inaliserer sendt og bytesleft
+	//initialize sent and bytesleft
 	for (i=0;i<nrof;i++) {
 		sendt[i] = 0;
 		bytesleft[i] = datasize;
@@ -393,7 +393,7 @@ void bdread(int sockfd[],int nrof,int datasize, void *result, int maxSocketWait)
 					dprintf("EAGAIN. wait %i < %i\n",readsdone,maxSocketWait);
 				}
 				else {
-					//noe feil har skjed, eksitter
+					//something went wrong, exiting
 					perror("bdread: recv SiderHeder");
 		
 					close(sockfd[i]);
@@ -430,13 +430,13 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 		printf("brGetPages: alreadynr %i, *pageNr %i, nrOfServers %i\n",alreadynr,*pageNr,nrOfServers);
 	#endif
 
-	//sejjer om vi har fåt et midlertidig svar på at jobben har begynt
+	//check if we got a temporary reply that the job has started
 	/****************************************************************/
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 
 		if (sockfd[i] != 0) {
 
-			//motter hedderen for svaret
+			//receive the header for the response
 			if (bsread (&sockfd[i],sizeof(net_status),(char *)&net_status,maxSocketWait_CanDo)) {
 
 				if (net_status != net_CanDo) {
@@ -457,26 +457,26 @@ void brGetPages(int *sockfd,int nrOfServers,struct SiderHederFormat *SiderHeder,
 
 	for (i=alreadynr;i<nrOfServers+alreadynr;i++) {
 
-		//inaliserer til 0 slik at vi ikke tror at vi har noe data fra servere som ikke svarte
+		//initialize to 0 so we don't think we have data from servers that did not respond
 		SiderHeder[i].showabal = 0;
 	
-		//motter hedderen for svaret
+		//receive the header for the response
 		if (sockfd[i] != 0) {
 
 			if (!bsread (&sockfd[i],sizeof(struct SiderHederFormat),(char *)&SiderHeder[i],maxSocketWait_SiderHeder)) {
 				dprintf("brGetPages: Failed to bsread SiderHeder");
-				continue; // ingen vits i å fortsette å lese fra denne hvis vi ikke fik til å gjøre dette read kallet
+				continue; // no point continuing to read from this one if we failed to make this read call
 			}
 
 #ifdef ATTRIBUTES
 			if ((SiderHeder[i].navigation_xml = malloc( sizeof(char) * (SiderHeder[i].navigation_xml_len +1)) ) == NULL) {
 				perror("Can't malloc data for navigation_xml");
-				continue; // ingen vits å å fortsette mer
+				continue; // no point continuing further
 			}
 
 			if (!bsread (&sockfd[i], SiderHeder[i].navigation_xml_len, SiderHeder[i].navigation_xml, maxSocketWait_SiderHeder)) {
 				dprintf("brGetPages: Failed to bsread navigation_xml");
-				continue; // ingen vits å å fortsette mer
+				continue; // no point continuing further
 			}
 
 			SiderHeder[i].navigation_xml[SiderHeder[i].navigation_xml_len] = '\0';
@@ -621,7 +621,7 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 	struct SiderHederFormat *SiderHeder = malloc(sizeof(struct SiderHederFormat) * maxServers);
 
 
-        //kopierer inn query
+        //copy in the query
         strscpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
         strscpy(queryNodeHeder.subname,QueryData.subname,sizeof(queryNodeHeder.subname) -1);
         strscpy(queryNodeHeder.userip,QueryData.userip,sizeof(queryNodeHeder.userip) -1);
@@ -638,11 +638,11 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 
         queryNodeHeder.MaxsHits = QueryData.MaxsHits * QueryData.start;
 
-        //på første side kan vi la være og hente alle treff siden dataene er fordelt, men for de neste
-        //sidene trenger vi de.
+        //on the first page we can skip fetching all hits since the data is distributed, but for the next
+        //pages we need them.
         if (QueryData.start == 1) {
                 if (nrOfServers >= 3) {
-                        queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // datane er fordelt, så hver server trenger ikke å generere$
+                        queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // the data is distributed, so each server does not need to generate
                 }
         }
         queryNodeHeder.filterOn = QueryData.filterOn;
@@ -658,7 +658,7 @@ void bsConectAndQueryOneServer(char server[], int searchport, char query[], char
 
 	printf("SiderSize: %i\n",SiderSize);
 
-        //inaliserer side arrayen
+        //initialize the page array
         for(i=0;i<(nrOfServers + nrOfPiServers) * queryNodeHeder.MaxsHits;i++) {
                 (*Sider)[i].iindex.allrank = 0;
                 (*Sider)[i].deletet = 1;
@@ -820,7 +820,7 @@ int cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, s
 	#endif
 
 
-	//ser ut til at vi av og til kan ha flere sider en vi har plass til i bufferen
+	//it seems we sometimes can have more pages than we have room for in the buffer
 	if (*page_nr > max_sizer) {
 		fprintf(stderr, "Bug?: cache_read: have more pages in cache then space in buffer! nr of pages was %i\n",*page_nr);
 		*page_nr = max_sizer;
@@ -905,7 +905,7 @@ int cache_read(char *path, int *page_nr, struct SiderHederFormat *final_sider, s
 
 	goto out;
  err:
-	//Runarb: 20 may 2008: hvorfor ble denne satt til 1 hvis den returnerte ok? Da returnerer den altid 1, selv på feil som kaller goto  err. 
+	//Runarb: 20 may 2008: why was this set to 1 if it returned ok? Then it always returns 1, even on errors that call goto err. 
 	ret = 0;
  out:
 	gzclose(cache);
@@ -1123,7 +1123,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 						#endif
 					}
 				}
-				//teller bare normale sider (hva med Paid Inclusion ?)
+				//only count normal pages (what about Paid Inclusion ?)
 				if (Sider[i].type == siderType_normal) {
 					++x;
 				}
@@ -1159,7 +1159,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 	}
 
 	bind[0].buffer_type = MYSQL_TYPE_STRING; // query
-	bind[0].buffer = QueryData->query;	// Ax: Max lengde i databasen er 30 tegn. Lage en nice-write?
+	bind[0].buffer = QueryData->query;	// Ax: Max length in the database is 30 chars. Make a nice-write?
 	len[0] = strlen(QueryData->query);
 	bind[0].length = &len[0];
 
@@ -1170,17 +1170,17 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 
 	if (FinalSiderHeder==NULL) {
 
-		bind[2].buffer_type = MYSQL_TYPE_NULL; // treff
+		bind[2].buffer_type = MYSQL_TYPE_NULL; // hits
 		bind[2].buffer = NULL;
 
-		bind[3].buffer_type = MYSQL_TYPE_NULL; // sÃketid
+		bind[3].buffer_type = MYSQL_TYPE_NULL; // search time
 		bind[3].buffer = NULL;
 	}
 	else {
-		bind[2].buffer_type = MYSQL_TYPE_LONG; // treff
+		bind[2].buffer_type = MYSQL_TYPE_LONG; // hits
 		bind[2].buffer = &FinalSiderHeder->TotaltTreff;
 
-		bind[3].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
+		bind[3].buffer_type = MYSQL_TYPE_DOUBLE; // search time
 		bind[3].buffer = &FinalSiderHeder->total_usecs;
 	}
 	bind[4].buffer_type = MYSQL_TYPE_STRING; // ip
@@ -1211,7 +1211,7 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 	len[9] = strlen(QueryData->GeoIPcontry);
 	bind[9].length = &len[9];
 
-	bind[10].buffer_type = MYSQL_TYPE_LONG; // side
+	bind[10].buffer_type = MYSQL_TYPE_LONG; // page
 	bind[10].buffer = &QueryData->start;
 
 	if (mysql_stmt_bind_param(logstmt, bind) != 0) {
@@ -1253,17 +1253,17 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 						spot = x + 1;		
 
 						memset(bind, 0, sizeof(bind));
-						memset(len, 0, sizeof(len)); // må vi ha denne?
+						memset(len, 0, sizeof(len)); // do we need this?
 
 						bind[0].buffer_type = MYSQL_TYPE_STRING; // query
 						bind[0].buffer = QueryData->query;
 						len[0] = strlen(QueryData->query);
 						bind[0].length = &len[0];
 						
-						bind[1].buffer_type = MYSQL_TYPE_LONG; // treff
+						bind[1].buffer_type = MYSQL_TYPE_LONG; // hits
 						bind[1].buffer = &FinalSiderHeder->TotaltTreff;
 						
-						bind[2].buffer_type = MYSQL_TYPE_DOUBLE; // sÃketid
+						bind[2].buffer_type = MYSQL_TYPE_DOUBLE; // search time
 						bind[2].buffer = &FinalSiderHeder->total_usecs;
 						
 						bind[3].buffer_type = MYSQL_TYPE_STRING; // ip
@@ -1304,8 +1304,8 @@ void mysql_search_logg(MYSQL *demo_db, struct QueryDataForamt *QueryData,
 						//dprintf("is NOT pi! :(\n");
 					}
 				}
-				//teller bare normale sider (hva med Paid Inclusion ?)
-				// Denne skal vel vaere innenfor !deletet?
+				//only count normal pages (what about Paid Inclusion ?)
+				// This should probably be inside !deletet?
 				if (Sider[i].type == siderType_normal) {
 					++x;
 				}

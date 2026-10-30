@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
 
 		FileBuckets[bucket].count++;
 
-		//tester om filen er open, hvis ikke opner vi
+		//test if the file is open, if not we open it
 		if (!FileBuckets[bucket].OpenFile) {
 
 			sprintf(FileBuckets[bucket].Filename,"/tmp/boithoSort_%i",bucket); 
@@ -98,7 +98,7 @@ int main (int argc, char *argv[]) {
 	}
 	popclose();
         
-	//resetter filpekeren for udfilen slik at vi skriver til bunnanen av den
+	//reset the file pointer for the udfile so we write to the bottom of it
 	//rewind(UDFILE);
 	fflush(UDFILE);
 
@@ -117,12 +117,12 @@ int main (int argc, char *argv[]) {
 
 
 			fflush(FileBuckets[i].FFILHANDLER);
-			//begynner fra bagyndelsen
+			//start from the beginning
 			//rewind(FileBuckets[i].FFILHANDLER);
 			fseek(FileBuckets[i].FFILHANDLER, 0, SEEK_SET);
 			
 
-			//koppierer ny data
+			//copy new data
 			while(!feof(FileBuckets[i].FFILHANDLER)) {
 
 
@@ -139,7 +139,7 @@ int main (int argc, char *argv[]) {
 
 			}
 
-			//lokker og fjerner opne filer
+			//close and remove open files
 			fclose(FileBuckets[i].FFILHANDLER);
 			remove(FileBuckets[i].Filename);
 			

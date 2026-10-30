@@ -48,7 +48,7 @@ static char *sbfile(char fulname[] ,char name[]) {
 
 static char *bfile(char name[]) {
 
-	//må legge til trå støtte her
+	// must add thread support here
 	static char fulname[512];
 
 	if (sbfile(fulname,name) == NULL) {

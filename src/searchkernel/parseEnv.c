@@ -9,7 +9,7 @@ parseTheEnv (struct QueryDataForamt *QueryData) {
 
 	int res;
 
-	//inaliserer
+	// initialize
 	QueryData->query[0] = '\0';
 	
 

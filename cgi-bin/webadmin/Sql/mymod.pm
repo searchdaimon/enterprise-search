@@ -11,21 +11,21 @@ require Exporter;
 ###############################################################################################################
 #settup
 #####
-#variabler:
+#variables:
 $Sytem_Navn = "boitho";
 
 
 
 
 ###############################################################################################################
-#Kjøres hver gang man bruker mymod.pm
+#Runs every time mymod.pm is used
 ###############################################################################################################
 
 
 
 
 
-#henter server spesifik data fra fil
+#fetches server-specific data from file
 open(INF,"/home/boitho/boithoTools/setup.txt") or die("Can't open setup.txt: $!");
 @setup_ary = <INF>;
 close(INF);

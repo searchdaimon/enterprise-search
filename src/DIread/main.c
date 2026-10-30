@@ -36,7 +36,7 @@ main(int argc, char **argv) {
 
 
 #if 1
-	//loppergjenom alle
+	//loop through all
 	while (DIGetNext(&docindex, LotNr, &DocID, subname)) {
 		printf("DocID: %d\n", DocID);
 		if (anchorRead(LotNr, subname, DocID, text, sizeof(text)))

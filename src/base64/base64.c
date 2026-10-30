@@ -1,9 +1,9 @@
 /*
 <boitho>
-base64 dekoder, som også kan dekode text med linjeskift
-Skrevet av Runarb
+base64 decoder, which can also decode text containing line breaks
+Written by Runarb
 
-Lånt fra perls MIME::Base64
+Borrowed from Perl's MIME::Base64
 </boitho>
 
 
@@ -148,7 +148,7 @@ int base64_decode(char *out, const char *in, int maxlen __attribute((unused))) {
       thats_it:
 	//SvCUR_set(RETVAL, r - SvPVX(RETVAL));
 	*r = '\0';
-	//returnerer lengde
+	//return the length
 	#ifdef DEBUG
 		printf("~base64_decode\n");
 	#endif	

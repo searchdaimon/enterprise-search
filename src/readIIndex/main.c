@@ -27,7 +27,7 @@ int main (int argc, char *argv[]) {
 
 
 	while (!feof(fileha)) {
-		//wordid hedder
+		//wordid header
         	if (fread(&term,sizeof(term),1,fileha) != 1) {
 			perror("can't read term: ");
 			return -1;
@@ -40,7 +40,7 @@ int main (int argc, char *argv[]) {
 		printf("term: %u antall: %u\n",term,Antall);
 
 		for (i=0;i<Antall;i++) {
-			//side hedder
+			//page header
 			if (fread(&DocID,sizeof(DocID),1,fileha) != 1) {
 				printf("can't read DocID for nr %i\n",i);
 				perror("Error: ");

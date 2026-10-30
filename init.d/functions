@@ -25,13 +25,13 @@ export PATH="/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin"
 
 if [ -f /etc/sysconfig/i18n -a -z "${NOLOCALE:-}" ] ; then
   . /etc/sysconfig/i18n
-  if [ "${LANG:-}" = "ja_JP.eucJP" -a "`/sbin/consoletype`" != "pty" ]; then
+  if [ "${LANG:-}" = "ja_JP.eucJP" -a "`/sbin/consoletype 2>/dev/null || echo pty`" != "pty" ]; then
     unset LANG
-  elif [ "${LANG:-}" = "ko_KR.eucKR" -a "`/sbin/consoletype`" != "pty" ]; then
+  elif [ "${LANG:-}" = "ko_KR.eucKR" -a "`/sbin/consoletype 2>/dev/null || echo pty`" != "pty" ]; then
     unset LANG
-  elif [ "${LANG:-}" = "zh_CN.GB2312" -a "`/sbin/consoletype`" != "pty" ]; then
+  elif [ "${LANG:-}" = "zh_CN.GB2312" -a "`/sbin/consoletype 2>/dev/null || echo pty`" != "pty" ]; then
     unset LANG
-  elif [ "${LANG:-}" = "zh_TW.Big5" -a "`/sbin/consoletype`" != "pty" ]; then
+  elif [ "${LANG:-}" = "zh_TW.Big5" -a "`/sbin/consoletype 2>/dev/null || echo pty`" != "pty" ]; then
     unset LANG
   else
     export LANG

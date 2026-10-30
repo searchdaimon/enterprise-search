@@ -119,6 +119,24 @@ sub _tbl_shares_attr {
 		next unless exists $s->{attr}{$field};
 		$tbl_attr{$field} = $s->{attr}{$field};
 	}
+
+	# HTML selects post "" for "(Default rate)" and unset lookups. The appliance's
+	# old MySQL silently coerced "" to 0 for int columns; MariaDB 10.x runs in
+	# STRICT mode by default and rejects it ("Incorrect integer value"), so map
+	# "" to the column default here: 0 for NOT NULL rate, NULL for nullable ints.
+	$tbl_attr{rate} = 0
+		if defined $tbl_attr{rate} && $tbl_attr{rate} eq '';
+	for my $nullable (qw(auth_id system)) {
+		$tbl_attr{$nullable} = undef
+			if defined $tbl_attr{$nullable} && $tbl_attr{$nullable} eq '';
+	}
+	# The authentication select posts the literal "new_values" when the user
+	# picks "(New values)". set_auth() replaces it with a real id when a
+	# username and password were given; otherwise it must not reach the int
+	# column (old MySQL stored 0, strict MariaDB rejects it). Dropping it keeps
+	# the existing auth_id on update and the NULL default on insert.
+	delete $tbl_attr{auth_id}
+		if defined $tbl_attr{auth_id} && $tbl_attr{auth_id} eq 'new_values';
 	return %tbl_attr;
 }
 

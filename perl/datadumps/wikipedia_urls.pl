@@ -44,7 +44,7 @@ while(defined($page = $pages->page)) {
 	#print "\tnamespace: " . $page->namespace . "\n";
 	#print "\tredirect: " . $page->redirect . "\n";
 
-	#legger til artikkelen selv
+	#add the article itself
 	my $wurl = $baseurl . $page->title;
 	$wurl =~ s/ /_/g;
 	#print "w: $wurl\n";

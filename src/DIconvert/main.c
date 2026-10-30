@@ -69,7 +69,7 @@ main (int argc, char *argv[]) {
 	sprintf(DITEMPPatch,"%s_OLD",DIOLDPatch);
 
 
-	//tester om vi har noen DI
+	//test whether we have any DI
 	if (fopen(DIOLDPatch,"r") == NULL) {
 		printf("dosent hav any DI\n");
 		exit(1);

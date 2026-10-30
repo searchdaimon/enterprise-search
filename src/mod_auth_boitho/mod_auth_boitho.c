@@ -18,7 +18,7 @@
 
 #define DEBUG
 // runarb 06.04.2011:
-// hardcoded. Skal egentlig være spesifisert i config/main.conf. Nå blir det tul med andre utviklere...
+// hardcoded. Should really be specified in config/main.conf. For now it would cause trouble for other developers...
 #define CMDPORT 7392
 
 

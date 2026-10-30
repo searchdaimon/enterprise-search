@@ -23,11 +23,11 @@ int main (int argc, char *argv[]) {
 
 	for (i=1; i < argc; i++) {
 
-		//printf("leser %s\n",argv[i]);
+		//printf("reading %s\n",argv[i]);
 
 		nyeurler = fopen(argv[i],"rb");
 
-		//lager navn for de filene som sal inneholde resultatet
+		//build names for the files that will hold the result
 
 		sprintf(name_FilterInn,"%s_FilterInn",argv[i]);
 		sprintf(name_FilterOut,"%s_FilterOut",argv[i]);

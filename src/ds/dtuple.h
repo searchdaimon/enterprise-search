@@ -23,7 +23,7 @@ typedef struct
 
 
 /**
- *	Returnerer container-struktur for tuple basert på input-containerne.
+ *	Returns the container struct for a tuple based on the input containers.
  */
 container* tuple_container( int n, ... );
 

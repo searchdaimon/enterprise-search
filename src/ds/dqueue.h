@@ -15,7 +15,7 @@
 container* queue_container( container *C );
 
 int queue_size( container *C );
-    // Advarsel, verdiene slettes (free) når denne funksjonen kjøres:
+    // Warning: the values are deleted (freed) when this function runs:
 void queue_pop( container *C );
 value queue_peak( container *C );
 value queue_peak_front( container *C, int index_from_first );

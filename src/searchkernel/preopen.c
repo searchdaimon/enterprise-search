@@ -1,5 +1,5 @@
 /*
-	runarb: 15 ja. Dette var en test av om å preåpne re filer ville øke ytelsen. Det ble ingen forskjell.
+	runarb: 15 Jan. This was a test of whether pre-opening re files would improve performance. It made no difference.
 */
 
 #include <sys/file.h>
@@ -27,7 +27,7 @@
 
 #define MAX_PREOPEM_FILE 300
 
-// maks minne vi kan bruke på å cache i indekser
+// max memory we can use to cache i indexes
 #define MAX_INDEX_CACHE (1024*1024*256)
 
 void preopen(void) {
@@ -47,8 +47,8 @@ void preopen(void) {
 	while (((subname = listAllColl_next(dirh)) != NULL) && (count < MAX_PREOPEM_FILE)) {
                 bblog(DEBUGINFO, "subname: %s", subname);
 		for(i=1;i<maxLots;i++) {
-			// vi åpner kun lotter som har DocumentIndex. Dette er spesielt viktig da vi oppretter 
-			// filene hvis de ikke finnes.
+			// we only open lots that have a DocumentIndex. This is especially important since we create
+			// the files if they don't exist.
 			if ((FH = lotOpenFileNoCasheByLotNr(i,"DocumentIndex","rb", 'r', subname)) == NULL) {
 				continue;
 			}
@@ -61,7 +61,7 @@ void preopen(void) {
 			if (count > MAX_PREOPEM_FILE) {
 				break;
 			}
-			// +3 da vi øker med filtypes, dates, og crc32map
+			// +3 since we increment by filtypes, dates, and crc32map
 			count += 3;
 		}	
 	}

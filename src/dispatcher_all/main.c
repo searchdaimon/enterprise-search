@@ -24,6 +24,11 @@
 
 
 #include "../common/define.h"
+
+/* MySQL host for the boithobb config database. BOITHO_MYSQL_HOST overrides the
+ * default when the database runs on another host (e.g. a separate container);
+ * the same convention as src/key/key.c and src/common/config.c. */
+#define DISPATCHER_MYSQL_HOST (getenv("BOITHO_MYSQL_HOST") ? getenv("BOITHO_MYSQL_HOST") : "localhost")
 #include "../common/lot.h"
 #include "../common/vid.h"
 #include "../common/stdlib.h"
@@ -274,7 +279,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 		}
 
 
-		//finner en hillitet query
+		//find a highlighted query
 		if (*nrRespondedServers != 0) {
 			funnet = 0;
 			for(i=0;i<(nrOfServers + nrOfPiServers) && !funnet;i++) {
@@ -288,15 +293,15 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 			FinalSiderHeder->hiliteQuery[0] = '\0';
 		}
 
-		//hvis vi ikke fikk svar fra noen
+		//if we got no response from anyone
 		if(*nrRespondedServers == 0) {
 			dieLog(demo_db, QueryData, 16,"","Couldn't contact the search system. Please try again later.");
 		}
-		//genererer feil om at ikke alle server svarte på queryet
+		//generate an error that not all servers responded to the query
 		if (*nrRespondedServers != (nrOfServers + nrOfPiServers)) {
 			addError(errorha,11,"Not all the search nodes responded to your query. Result quality may have been negatively effected.");
 		}
-		//hånterer error. Viser den hvis vi hadde noen
+		//handle error. Show it if we had any
 		if (*nrRespondedServers != 0) {
 			for(i=0;i<(nrOfServers + nrOfPiServers);i++) {
 				if (SiderHeder[i].responstype == searchd_responstype_error) {
@@ -305,7 +310,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 			}
 		}
 
-		//fjerner eventuelle adult sider
+		//remove any adult pages
 		AdultPages = 0;
 		NonAdultPages = 0;
 		for(i=0;i<queryNodeHeder->MaxsHits * nrOfServers + nrOfPiServers;i++) {	
@@ -322,7 +327,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 		}
 
 		dprintf("AdultPages %i, NonAdultPages: %i\n",AdultPages,NonAdultPages);
-		//hvis vi har adult pages sjekker vi om vi har nokk ikke adult pages å vise, hvis ikke viser vi bare adult
+		//if we have adult pages, check whether we have enough non-adult pages to show; if not, show only adult
 
 	} // !hascashe 
 	else {
@@ -336,7 +341,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 	//sorterer resultatene
 	dprintf("mgsort: pageNr %i\n",pageNr);
 
-	//dette skaper problemer for blaingen på bb. Sikkert samme problmet på web, så vi må se på hva vi kan gjøre
+	//this causes problems for paging on bb. Probably the same problem on web, so we must look at what we can do
 	#ifndef BLACK_BOX
 		mgsort(Sider, pageNr , sizeof(struct SiderFormat), compare_elements);
 	#endif
@@ -350,7 +355,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 
 	filtersTrapedReset(dispatcherfiltersTraped);
 
-	//dette er kansje ikke optimalet, da vi går gjenom alle siden. Ikke bare de som skal være med
+	//this is maybe not optimal, since we go through every page. Not just the ones to be included
 	for(i=0;i<queryNodeHeder->MaxsHits * (nrOfServers + nrOfPiServers);i++) {
 
 
@@ -361,13 +366,13 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 
 			dprintf("looking on url %s, DocID %u, adult %i, allrank %u, i %i, type %i\n",Sider[i].DocumentIndex.Url,Sider[i].iindex.DocID,Sider[i].DocumentIndex.AdultWeight,Sider[i].iindex.allrank,i,Sider[i].type);
 
-			//setter som slettet
+			//mark as deleted
 			Sider[i].deletet = 1;
 
 
 #ifndef BLACK_BOX
-				// hvis dette er en pi side, må vi håntere at det kan komme versjoner av den som har bedre rank
-				// hvis det skjer skal vi bruke pi siden, og forkaste den andre
+				// if this is a pi page, we must handle that versions of it with a better rank may appear
+				// if that happens we use the pi page and discard the other
 		
 			if (pi_switch(i,&Sider[i],Sider)) {
 				dprintf("pi switch'ed url \"%s\"\n",Sider[i].url);
@@ -426,7 +431,7 @@ void handle_results(int *sockfd, struct SiderFormat *Sider, struct SiderHederFor
 			}
 			#endif
 
-			//hvis siden overlevde helt hit er den ok
+			//if the page survived all the way here it is ok
 			Sider[i].deletet = 0;
 		}
 	}
@@ -596,7 +601,7 @@ unsigned int getDocIDFromSql (MYSQL *demo_db, char rankUrl[]) {
 	}
 
 	
-	//hvis den ikke var i over, å vi søke i neste db
+	//if it was not in the above, search the next db
 	snprintf(mysql_query, sizeof(mysql_query), "select WWWDocID from pi_sider where url='%s' and WWWDocID <> 0 AND WWWDocID is not NULL",
 			rankUrl);
 
@@ -695,7 +700,7 @@ int main(int argc, char *argv[])
         struct SiderHederFormat *AddSiderHeder = calloc(1,sizeof(struct SiderHederFormat) * maxServers);
 	size_t maxSider;
 
-	// ToDo: Use calloc her, like above for SiderHeder and AddSiderHeder.
+	// ToDo: Use calloc here, like above for SiderHeder and AddSiderHeder.
 	struct SiderHederFormat FinalSiderHeder;
 	memset(&FinalSiderHeder,'\0',sizeof(struct SiderHederFormat));
 
@@ -726,7 +731,7 @@ int main(int argc, char *argv[])
 		gettimeofday(&total_start_time, NULL);
 	#endif
 
-	//starter å ta tiden
+	//start timing
 	gettimeofday(&search_start_time, NULL);
 
 
@@ -763,7 +768,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
 		}
 	#else
-		if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+		if(!mysql_real_connect(&demo_db, DISPATCHER_MYSQL_HOST, "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
 			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
 		}
 
@@ -846,7 +851,7 @@ int main(int argc, char *argv[])
 
 	cgi_set_defaults(&QueryData);
 
-        //hvis vi har argumeneter er det første et query
+        //if we have arguments, the first one is a query
         if (getenv("QUERY_STRING") == NULL) {
 
 	        char *optRank = NULL;
@@ -954,7 +959,7 @@ int main(int argc, char *argv[])
 
 			printf("query %s, subname %s\n",QueryData.query,QueryData.subname);
 
-			//printer ut oversikt over serverne vi skal koble til
+			//print out an overview of the servers we will connect to
 			printf("server(s):\n");
 			for(i=0;i<nrOfServers;i++) {
 				printf("%i %s\n",i,servers[i]);
@@ -1142,21 +1147,21 @@ int main(int argc, char *argv[])
 	#ifdef BLACK_BOX
 
 	#else
-		//hvis vi har : i seg må vi avslutte da vi ikke støtter dette
+		//if it contains a : we must abort since we do not support this
 		if(strchr(QueryData.query,':') != NULL) {
 			die(4,QueryData.query,"Command not yet implemented.");
 		}
 	#endif
-	//hvis vi har et tomt query
+	//if we have an empty query
 	if(strlen(QueryData.query) == 0) {
 		die(5,QueryData.query,"Query too short.");
 	}
 
-        //gjør om til liten case
+        //convert to lower case
 	#ifdef BLACK_BOX
 	
 	#else
-		//må gjøres for web da både cashe er lagret på disk som lovercase. Hvis ikke vil ikke søk på Msn treffe msn
+		//must be done for web since cache is stored on disk as lowercase. Otherwise a search for Msn won't match msn
 		convert_to_lowercase_n(QueryData.query,sizeof(QueryData.query));
 	#endif
 
@@ -1182,7 +1187,7 @@ int main(int argc, char *argv[])
 
 
 	#ifndef BLACK_BOX
-		//prøver å finne ut hvilket land ut fra ip
+		//try to determine which country from the ip
 		GeoIP *gi;
 		GeoIPRecord * gir;
 
@@ -1224,7 +1229,7 @@ int main(int argc, char *argv[])
 		gettimeofday(&start_time, NULL);
 	#endif
 
-	//kopierer inn query	
+	//copy in the query	
 	strscpy(queryNodeHeder.query,QueryData.query,sizeof(queryNodeHeder.query) -1);
 	strscpy(queryNodeHeder.subname,QueryData.subname,sizeof(queryNodeHeder.subname) -1);
 	strscpy(queryNodeHeder.userip,QueryData.userip,sizeof(queryNodeHeder.userip) -1);
@@ -1250,11 +1255,11 @@ int main(int argc, char *argv[])
 
 	queryNodeHeder.MaxsHits = QueryData.MaxsHits * QueryData.start;
 
-	//på første side kan vi la være og hente alle treff siden dataene er fordelt, men for de neste 
-	//sidene trenger vi de. 
+	//on the first page we can skip fetching all hits since the data is distributed, but for the next 
+	//pages we need them. 
 	if (QueryData.start == 1) {
 		if (nrOfServers >= 3) {
-			queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // datane er fordelt, så hver server trenger ikke å generere mer en xx deler av den
+			queryNodeHeder.MaxsHits = (queryNodeHeder.MaxsHits / 2); // the data is distributed, so each server need not generate more than xx parts of it
 		}
 	}
 	queryNodeHeder.filterOn = QueryData.filterOn;
@@ -1264,7 +1269,7 @@ int main(int argc, char *argv[])
 
 	Sider = malloc(maxSider);
 
-	//inaliserer side arrayen
+	//initialize the page array
 	for(i=0;i<(nrOfServers + nrOfPiServers) * queryNodeHeder.MaxsHits;i++) {
         	Sider[i].iindex.allrank = 0;
         	Sider[i].deletet = 1;
@@ -1311,7 +1316,7 @@ int main(int argc, char *argv[])
 	bsConnectAndQuery(sockfd, nrOfPiServers, piservers,
 		&queryNodeHeder, collections, num_colls, 0, searchport);
 
-	//kobler til vanlige servere
+	//connect to regular servers
 	if (!hascashe) {
 		bsConnectAndQuery(sockfd, nrOfServers, servers,
 			&queryNodeHeder, collections, num_colls, nrOfPiServers, searchport);
@@ -1334,7 +1339,7 @@ int main(int argc, char *argv[])
 	}
 
 	//addservere
-	//addserver bruker som regel mest tid, så tar den sist slik at vi ikke trenger å vente unødvendig
+	//addserver usually takes the most time, so do it last so we don't need to wait unnecessarily
 	brGetPages(addsockfd,nrOfAddServers,AddSiderHeder,Sider,&pageNr,0);
 
 	#ifdef DEBUG_TIME
@@ -1356,7 +1361,7 @@ int main(int argc, char *argv[])
 	#ifdef BLACK_BOX
 
 	#else 
-		//Sier ikke noe om filtrerte treff hvis vi hadde mange nokk
+		//don't say anything about filtered hits if we had enough
 		if (FinalSiderHeder.TotaltTreff > 100) {
 
 			dprintf("have more then 100 filtered results. Has %i\n",FinalSiderHeder.TotaltTreff);
@@ -1369,7 +1374,7 @@ int main(int argc, char *argv[])
                 gettimeofday(&start_time, NULL);
         #endif
 
-	//stopper å ta tidn og kalkulerer hvor lang tid vi brukte
+	//stop timing and calculate how long we took
 	gettimeofday(&search_end_time, NULL);
 	FinalSiderHeder.total_usecs = getTimeDifference(&search_start_time,&search_end_time);
 
@@ -1403,7 +1408,7 @@ int main(int argc, char *argv[])
 
 	}
 	else if ((QueryData.outformat == _OUT_FOMRAT_SD) && (QueryData.version == 2.0)) {
-		noDoctype = 1; //det var ikke doctype orginalt i xml'en. Og sende den bryter 24so.
+		noDoctype = 1; //there was no doctype originally in the xml. And sending it breaks 24so.
     		disp_out_sd_v2_0(FinalSiderHeder, QueryData, noDoctype, SiderHeder, hascashe, nrRespondedServers, (nrOfServers + nrOfPiServers), nrOfAddServers, dispatcherfiltersTraped,
 		sockfd, addsockfd, AddSiderHeder, errorha, Sider, queryNodeHeder, etime
 		);
@@ -1424,7 +1429,7 @@ int main(int argc, char *argv[])
 	#endif
 
 	if (!hascashe) {
-		//kalkulerer dette på ny, men uten pi servere
+		//recalculate this, but without pi servers
 		nrRespondedServers = 0;
 		for (i=0;i<nrOfServers;i++) {
 
@@ -1433,7 +1438,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		//stenger ned tilkoblingen til nodene
+		//shut down the connection to the nodes
 		for (i=0;i<nrOfServers + nrOfPiServers;i++) {
 			if (sockfd[i] != 0) {
 				close(sockfd[i]);
@@ -1469,7 +1474,7 @@ int main(int argc, char *argv[])
 		else if (!QueryData.filterOn) {
 
 		}
-		//skriver bare cashe hvis vi fikk svar fra all servere, og vi var ikke ute etter ranking
+		//only write cache if we got a response from all servers, and we were not after ranking
 		else if ( pageNr > 0 && nrRespondedServers == nrOfServers && dispconfig.usecashe) {
 			if (!cache_write(cachepath, &pageNr, &FinalSiderHeder, SiderHeder, maxServers, Sider, pageNr)) {
 				perror("cache_write");
@@ -1513,7 +1518,7 @@ int main(int argc, char *argv[])
 	
 	free(SiderHeder);
 	free(AddSiderHeder);
-	//hvis vi har web system kan vi ha flere servere, og de er da som en char **
+	//if we have a web system we can have several servers, and they are then like a char **
 	#ifndef BLACK_BOX
 		for(i=0;i<nrOfServers;i++) {
 			free(servers[i]);
@@ -1531,7 +1536,7 @@ int main(int argc, char *argv[])
 		free(addservers);
 	#endif
 
-	//må vi tvinge en buffer tømming ???
+	//do we need to force a buffer flush ???
 	printf("\n\n");	
 	
 
@@ -1539,7 +1544,7 @@ int main(int argc, char *argv[])
         	gettimeofday(&end_time, NULL);
         	fprintf(stderr,"Time debug: freeing at the end %f\n",getTimeDifference(&start_time,&end_time));
 
-		// skriver total tiden
+		// write the total time
         	gettimeofday(&total_end_time, NULL);
         	fprintf(stderr,"Time debug: Total time %f\n",getTimeDifference(&total_start_time,&total_end_time));
 	#endif
@@ -1555,7 +1560,7 @@ int compare_elements (const void *_p1, const void *_p2) {
 	p2 = _p2;
 
 	if (p1->type != p2->type) {
-                //sortering på type, slik at ppc kommer sammen, og først
+                //sort by type, so that ppc comes together, and first
                 if (p1->type > p2->type)
                         return -1;
                 else
@@ -1574,13 +1579,13 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 	p2 = _p2;
 
 	if (p1->type != p2->type) {
-		//sortering på type, slik at ppc kommer sammen, og først. Må så sorteres etter pris og relevans
+		//sort by type, so that ppc comes together, and first. Then sort by price and relevance
 		if (p1->type > p2->type)
 			return -1;
 		else
 			return p1->type < p2->type;
 	}
-	//hvis vi har en normal side, og har forskjelig path lengde
+	//if we have a normal page, and have different path length
 	else if (p1->type == siderType_normal) {
 		if (p1->posisjon == p2->posisjon ){	
 			if (p1->iindex.allrank > p2->iindex.allrank) {
@@ -1597,7 +1602,7 @@ int compare_elements_posisjon (const void *_p1, const void *_p2) {
 		}
 	}
 	else {
-		//for ppc og ppc_side sider. Sorterer først på bud, så pr relevans
+		//for ppc and ppc_side pages. Sort first by bid, then by relevance
 		if (p1->bid == p2->bid) {
 			
 			if (p1->iindex.allrank > p2->iindex.allrank) {
@@ -1919,7 +1924,7 @@ void read_dispatcher_cfg(struct config_t * cfg, struct dispconfigFormat * dispco
 			fprintf(stderr,"can't load \"bannedwords\" from config\n");
 	  	}
 		else {
-			//finner antall ord
+			//find the number of words
 			dispconfig->bannedwordsnr = config_setting_length(cfgarray);
 
 			if ((dispconfig->bannedwords = malloc(sizeof(char *) * (dispconfig->bannedwordsnr))) == NULL) {

@@ -44,7 +44,7 @@ main (int argc, char *argv[]) {
 		exit(1);
 	}	
 
-	//loppergjenom alle
+	//loop through all of them
 	int htmlbufferSize = sizeof(htmlbuffer);
 	int count = 0;
 	while (rGetNext(LotNr,&ReposetoryHeader,htmlbuffer,htmlbufferSize,imagebuffer,&radress,0,0,subname)) {

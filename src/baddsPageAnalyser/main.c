@@ -53,12 +53,12 @@ int main (int argc, char *argv[]) {
 
 	httpGet(&HtmlBuffer,url);
 
-					//setter opp en alarm slik at run_html_parser blir avbrut hvis den henger seg 
+					//set up an alarm so run_html_parser is aborted if it hangs
 	alarm_got_raised = 0;
 	signal(SIGALRM, html_parser_timout);
 					
 	alarm( 5 );
-	//parser htmlen
+	//parse the html
 
 	run_html_parser(url , HtmlBuffer, strlen(HtmlBuffer), fn );
 	alarm( 0);
@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
 	unsigned short AdultWeight;
 	wordsMakeRevIndex(&adult,&AdultWeight);
 
-	//sortere på forekomst
+	//sort by occurrence
 	pagewordsSortOnOccurrence();
 
 	for(i=0;i<pagewords.revIndexnr;i++) {

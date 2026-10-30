@@ -16,13 +16,13 @@
 #endif
 
 /*
- * Denne lexical analyzeren støtter Latin-1, Latin-1 supplement, utf-8, samt character entities (html escapes)
- * i alle dokumenter. Den ser ikke på hva som er definert character encoding, men antar at en eller flere av
- * disse brukes. Alt (med unntak av quot,amp,lt og gt) oversettes til utf-8. Vi har følgende mangler (todo):
+ * This lexical analyzer supports Latin-1, Latin-1 supplement, utf-8, as well as character entities (html escapes)
+ * in all documents. It does not look at what the defined character encoding is, but assumes that one or more of
+ * these are used. Everything (except quot,amp,lt and gt) is converted to utf-8. We have the following shortcomings (todo):
  *
- * - Ingen støtte for andre charsets.
+ * - No support for other charsets.
  *
- * Se forøvrig http://www.w3.org/TR/html4/charset.html
+ * See also http://www.w3.org/TR/html4/charset.html
  *
  * (C) SearchDaimon AS, Searchdaimon AS 2004-2008, Magnus Galåen (magnusga@idi.ntnu.no)
  */
@@ -44,7 +44,7 @@ tfchars		[a-z0-9_`!#$%()*+,\-./:;=?@[\]^{|}~]
 url		[0-9a-z&-.:/\\?=]
 blank		[ \t\n\r\f]
 latin-sup	[ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ]
-    /* Her har vi fjernet noen html-spesifikke tegn (lt,gt,amp,quot, samt nbsp): */
+    /* Here we have removed some html-specific characters (lt,gt,amp,quot, as well as nbsp): */
 letteresc	(Agrave|Aacute|Acirc|Atilde|Auml|Aring|AElig|Ccedil|Egrave|Eacute|Ecirc|Euml|Igrave|Iacute|Icirc|Iuml|ETH|Ntilde|Ograve|Oacute|Ocirc|Otilde|Ouml|Oslash|Ugrave|Uacute|Ucirc|Uuml|Yacute|THORN|szlig|agrave|aacute|acirc|atilde|auml|aring|aelig|ccedil|egrave|eacute|ecirc|euml|igrave|iacute|icirc|iuml|eth|ntilde|ograve|oacute|ocirc|otilde|ouml|oslash|ugrave|uacute|ucirc|uuml|yacute|thorn|yuml)
 tegnesc_minus	(iexcl|cent|pound|curren|yen|brvbar|sect|uml|copy|ordf|laquo|not|shy|reg|macr|deg|plusmn|sup2|sup3|acute|micro|para|middot|cedil|sup1|ordm|raquo|frac14|frac12|frac34|iquest|times|divide|fnof|Alpha|Beta|Gamma|Delta|Epsilon|Zeta|Eta|Theta|Iota|Kappa|Lambda|Mu|Nu|Xi|Omicron|Pi|Rho|Sigma|Tau|Upsilon|Phi|Chi|Psi|Omega|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|omicron|pi|rho|sigmaf|sigma|tau|upsilon|phi|chi|psi|omega|thetasym|upsih|piv|bull|hellip|prime|Prime|oline|frasl|weierp|image|real|trade|alefsym|larr|uarr|rarr|darr|harr|crarr|lArr|uArr|rArr|dArr|hArr|forall|part|exist|empty|nabla|isin|notin|ni|prod|sum|minus|lowast|radic|prop|infin|ang|and|or|cap|cup|int|there4|sim|cong|asymp|ne|equiv|le|ge|sub|sup|nsub|sube|supe|oplus|otimes|perp|sdot|lceil|rceil|lfloor|rfloor|lang|rang|loz|spades|clubs|hearts|diams|OElig|oelig|Scaron|scaron|Yuml|circ|tilde|ensp|emsp|thinsp|zwnj|zwj|lrm|rlm|ndash|mdash|lsquo|rsquo|sbquo|ldquo|rdquo|bdquo|dagger|Dagger|permil|lsaquo|rsaquo|euro)
 utf8-a		([\101-\132]|[\141-\172]|\302\252|\302\265|\302\272|\303[\200-\226]|\303[\230-\266]|\303[\270-\277]|[\304-\312][\200-\277]|\313[\200-\201]|\313[\206-\221]|\313[\240-\244]|\313\254|\313\256|\315\205|\315[\260-\264]|\315[\266-\267]|\315[\272-\275]|\316\206|\316[\210-\212]|\316\214|\316[\216-\241]|\316[\243-\277]|\317[\200-\265]|\317[\267-\277]|[\320-\321][\200-\277]|\322[\200-\201]|\322[\212-\277]|\324[\200-\243]|\324[\261-\277]|\325[\200-\226]|\325\231|\325[\241-\277]|\326[\200-\207]|\326[\260-\275]|\326\277|\327[\201-\202]|\327[\204-\205]|\327\207|\327[\220-\252]|\327[\260-\262]|\330[\220-\232]|\330[\241-\277]|\331[\200-\227]|\331[\231-\236]|\331[\256-\277]|\333[\200-\223]|\333[\225-\234]|\333[\241-\250]|\333[\255-\257]|\333[\272-\274]|\333\277|\334[\220-\277]|\335[\215-\277]|\336[\200-\261]|\337[\212-\252]|\337[\264-\265]|\337\272|\340\244[\201-\271]|\340\244[\275-\277]|\340\245[\200-\214]|\340\245\220|\340\245[\230-\243]|\340\245[\261-\262]|\340\245[\273-\277]|\340\246[\201-\203]|\340\246[\205-\214]|\340\246[\217-\220]|\340\246[\223-\250]|\340\246[\252-\260]|\340\246\262|\340\246[\266-\271]|\340\246[\275-\277]|\340\247[\200-\204]|\340\247[\207-\210]|\340\247[\213-\214]|\340\247\216|\340\247\227|\340\247[\234-\235]|\340\247[\237-\243]|\340\247[\260-\261]|\340\250[\201-\203]|\340\250[\205-\212]|\340\250[\217-\220]|\340\250[\223-\250]|\340\250[\252-\260]|\340\250[\262-\263]|\340\250[\265-\266]|\340\250[\270-\271]|\340\250[\276-\277]|\340\251[\200-\202]|\340\251[\207-\210]|\340\251[\213-\214]|\340\251\221|\340\251[\231-\234]|\340\251\236|\340\251[\260-\265]|\340\252[\201-\203]|\340\252[\205-\215]|\340\252[\217-\221]|\340\252[\223-\250]|\340\252[\252-\260]|\340\252[\262-\263]|\340\252[\265-\271]|\340\252[\275-\277]|\340\253[\200-\205]|\340\253[\207-\211]|\340\253[\213-\214]|\340\253\220|\340\253[\240-\243]|\340\254[\201-\203]|\340\254[\205-\214]|\340\254[\217-\220]|\340\254[\223-\250]|\340\254[\252-\260]|\340\254[\262-\263]|\340\254[\265-\271]|\340\254[\275-\277]|\340\255[\200-\204]|\340\255[\207-\210])
@@ -57,7 +57,7 @@ utf8-all	([\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\
 %option	nomain noyywrap reentrant bison-bridge
 %x	TAG ENDTAG COMMENT SCRIPT STYLE SELECT TEXTAREA NOSCRIPT NOFRAMES OBJECT TAG_TF
 %%
-    /* Pga av begrensning på maks linjelengde i lex, må utf8-bokstavene spesifiseres over flere character classes: */
+    /* Because of the limit on maximum line length in lex, the utf8 letters must be specified across several character classes: */
 ({utf8-a}|{utf8-b}|{utf8-c}|{utf8-d}|{utf8-e}|{utf8-f})+	{ D; if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, WORD); }
 {utf8-all}		{ D; if (BHPM_VISIBLE) bhpm_newstring(yytext, yyscanner, ESC); }
 \`			{ D; if (BHPM_VISIBLE) bhpm_newstring("'", yyscanner, WORD); }
@@ -67,7 +67,7 @@ utf8-all	([\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\
 [\200-\377]		{ D; if (BHPM_VISIBLE) bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, ESC ); }
 \&{letteresc};?		{ D; if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, WORD); }
 \&{tegnesc_minus};?	{ D; if (BHPM_VISIBLE) bhpm_new_esc_to_utf8(yytext, yyscanner, ESC); }
-    /* quot,amp,lt og gt bør alltid sendes videre som character entities (html-escapes): */
+    /* quot,amp,lt and gt should always be passed on as character entities (html escapes): */
 (\&quot;?|\&#34;?)	{ D; if (BHPM_VISIBLE) bhpm_newstring("&quot;", yyscanner, ESC); }
 (\&amp;?|\&#38;?)	{ D; if (BHPM_VISIBLE) bhpm_newstring("&amp;", yyscanner, ESC); }
 (\&lt;?|\&#60;?)	{ D; if (BHPM_VISIBLE) bhpm_newstring("&lt;", yyscanner, ESC); }
@@ -173,7 +173,7 @@ utf8-all	([\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\
 				}
 			    else bhpm_newstring("\'", yyscanner, TEXTFIELD);
 			}
-    /* Tatt fra toppen: */
+    /* Taken from the top: */
 <TAG_TF>\\			{ D; /* ignore */ }
 <TAG_TF>({utf8-all}|{tfchars})+	{ D; bhpm_newstring(yytext, yyscanner, TEXTFIELD); }
 <TAG_TF>{latin-sup}		{ D; bhpm_newutf8( (int)((unsigned char)yytext[0]), yyscanner, TEXTFIELD ); }
@@ -222,7 +222,7 @@ utf8-all	([\300-\337][\200-\277]|[\340-\357][\200-\277][\200-\277]|[\360-\367][\
 <NOFRAMES>\<\/{blank}*noframes(\>|{blank}[^\>]*\>)	{ D; BEGIN INITIAL; }
 <OBJECT>\<{blank}*object(\>|{blank}[^\>]*\>)		{ D; bhpmget_extra(yyscanner)->nested_obj++; }
 <OBJECT>\<\/{blank}*object(\>|{blank}[^\>]*\>)		{ D; if ((--(bhpmget_extra(yyscanner)->nested_obj))==0) BEGIN INITIAL; }
-    /* Framtving at ord-bufferet tømmes: */
+    /* Force the word buffer to be flushed: */
 <*><<EOF>>		{ bhpm_newstring("", yyscanner, -1); yyterminate(); }
 .|\n			{ D; (bhpmget_extra(yyscanner))->space = 1; }
 <*>.|\n			{ D; }
@@ -379,7 +379,7 @@ void add_to_summary( char *str, yyscan_t scanner )
 		}
 	    else if (he->newhead)
 	        {
-		    // Denne viser kun headere deklarert med h[1-6]-tags, de andre ignorerer vi.
+		    // This only shows headers declared with h[1-6] tags, we ignore the others.
 //		    if (he->inlink) { bprintf(he->Bbody, "</link>"); he->inlink = 0; }
 		    if (he->inspan) bprintf(he->Bbody, "</span>\n");
 		    if (he->inhead) bprintf(he->Bbody, "  </h2>\n");
@@ -442,7 +442,7 @@ void add_to_summary( char *str, yyscan_t scanner )
 
 static inline void send_word( char *str, yyscan_t scanner )
 {
-    // Fjern alle ' som pre/postfix (skal kun være infix)
+    // Remove all ' used as prefix/postfix (should only be infix)
     while (str[0]=='\'') str++;
 
     int		end = strlen(str)-1;
@@ -512,10 +512,10 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 
 	    #ifdef DEBUG
 		//Runar
-		// Bruker statisk minne, ikke dynamisk, da vi en skjelden gang får segfeil i free
-		// desuten er det raskere, ved at vi ikke gjør systemkallet malloc heletiden
-	        //har fast lengde på stringene. Hvis den er for lang vil ikke alt bli kopiert over.
-		// Ax: Strenger lengre enn 2k er uansett søppel som ikke bør vises i sammendraget.
+		// Use static memory, not dynamic, since on rare occasions we get a segfault in free
+		// besides it is faster, since we don't make the malloc system call all the time
+	        // the strings have a fixed length. If it is too long, not everything will be copied over.
+		// Ax: Strings longer than 2k are garbage anyway that should not be shown in the summary.
 	        if (strlen(str) > maxNewString) {
 	                printf("New string is to long, will be truncated. Length was %i\n",strlen(str));
 	        }
@@ -525,7 +525,7 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 	    he->stringcircle[he->stringtop][maxNewString] = '\0';		// I tilfelle 'str' er lengre enn maxlengden.
 
 	    he->slen = strlen( he->stringcircle[he->stringtop] );
-	    *bhpmget_lval(scanner) = (int)he->stringcircle[he->stringtop];
+	    *bhpmget_lval(scanner) = he->stringcircle[he->stringtop];
 	}
 
     if (tt == WORD || tt == ESC)
@@ -538,7 +538,7 @@ static inline void bhpm_newstring( char *str, yyscan_t scanner, int tt )
 
 
 /*
- * Konverterer val (iso10646/unicode nummerverdi for karakter) til utf-8:
+ * Converts val (iso10646/unicode numeric value for a character) to utf-8:
  */
 static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt )
 {
@@ -559,7 +559,7 @@ static inline void bhpm_newutf8( int val, yyscan_t scanner, int tt )
 	    if (he->stringtop >= 32) he->stringtop = 0;
 	    he->slen = 0;
 	    he->tt = tt;
-	    *bhpmget_lval(scanner) = (int)he->stringcircle[he->stringtop];
+	    *bhpmget_lval(scanner) = he->stringcircle[he->stringtop];
 	}
     else if (he->slen >= maxNewString - 5)
 	return;
@@ -622,17 +622,17 @@ static inline void bhpm_new_esc_to_utf8( const char* str, yyscan_t scanner, int 
 
     if (escape == NULL)
 	{
-	    // Dette skjer kun hvis escapen ikke har rett på store eller små bokstaver.
+	    // This only happens if the escape does not have the correct upper- or lowercase letters.
 	    escape = bsearch( &(str[1]), bhpm_hecval, 191, sizeof(struct htmlesc_val), bhpm_htmlesc_val_casecompare );
 	}
 
-    // escape skal ikke kunne være null, ettersom str allerede er verifisert å skulle eksistere.
+    // escape should not be able to be null, since str has already been verified to exist.
     bhpm_newutf8( escape->val, scanner, tt );
 }
 
 
 /*
- *  Sjekker om unicode-verdi er bokstav, og sender videre til utf-8-funksjonen.
+ *  Checks whether the unicode value is a letter, and passes it on to the utf-8 function.
  */
 static inline void bhpm_newunicode( int val, yyscan_t scanner )
 {

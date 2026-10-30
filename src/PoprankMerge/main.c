@@ -22,7 +22,7 @@ struct popmemmapFormat {
 int popopenMmap(struct popmemmapFormat *popmemmap,char *filname) {
 
  	//int fd;
-        struct stat inode;      // lager en struktur for fstat å returnere.
+        struct stat inode;      // a struct for fstat to fill in.
 	int i;
 	popmemmap->largesDocID = 0;
 
@@ -95,7 +95,7 @@ void popcloseMmap (struct popmemmapFormat *popmemmap) {
 
 	printf("largesDocID was %u, posible_new_size %"PRId64"\n",popmemmap->largesDocID,posible_new_size);
 
-	//will bare trunere hvis vi har våkst filen. slik at ikke å legge til en eldre popindex minser den
+	//will only truncate if we have grown the file, so that adding an older popindex doesn't shrink it
 	if (posible_new_size > popmemmap->original_size) {
 
 		ftruncate(popmemmap->fd,(popmemmap->largesDocID * sizeof(unsigned int)) );
@@ -105,7 +105,7 @@ void popcloseMmap (struct popmemmapFormat *popmemmap) {
 }
 int popRankForDocIDMmap(struct popmemmapFormat *popmemmap,unsigned int DocID) {
 	//printf("DocID %i\n",DocID);
-	//fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
+	//prevents us from requesting a docid larger than the memory area and segfaulting.
 	if ((DocID * sizeof(unsigned int)) < popmemmap->size) {
 		return popmemmap->ranks[DocID];
 	}
@@ -115,7 +115,7 @@ int popRankForDocIDMmap(struct popmemmapFormat *popmemmap,unsigned int DocID) {
 }
 int popRankForDocIDMmapSet(struct popmemmapFormat *popmemmap,unsigned int DocID,int increasement) {
 	//printf("DocID %i\n",DocID);
-	//fohindrer at vi ber om en docid som er størrre en minne område og segfeiler.
+	//prevents us from requesting a docid larger than the memory area and segfaulting.
 
 	off_t size = (DocID * sizeof(unsigned int));
 

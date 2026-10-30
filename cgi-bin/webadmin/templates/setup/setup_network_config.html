@@ -21,7 +21,11 @@
 	[% checkListHTML %]
 	
 	<form action="setup.cgi" method="post">
+	[% IF network_unavailable %]
+	<p>This system has no appliance network configuration to edit; skip this step.</p>
+	[% ELSE %]
 	[% PROCESS network_config %]
+	[% END %]
 	<input type="hidden" name="form_id" value="network_config" />
 		
 	<div id="buttons_block">

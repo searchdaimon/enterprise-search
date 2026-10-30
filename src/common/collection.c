@@ -6,7 +6,7 @@ void collection_normalize_name(char collection_name[], int length) {
 
 	int y;
 
-                //fjerner ikke aski tegn, som / og space. De fører til problemer
+                // remove non-ascii characters, such as / and space. They cause problems
                 for(y=0;y<length;y++) {
                         if (isalnum(collection_name[y])) {
                                 //er arcii

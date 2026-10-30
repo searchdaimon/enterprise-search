@@ -4,8 +4,8 @@
 #define BADPORT 3491
 #define MAX_LDAP_ATTR_LEN 512
 
-//må kalle dette noe annet, hvis ikke får vi en dublikat med define.h
-#define maxSubnameLength 512 //512 fra 6 nov
+//must call this something else, otherwise we get a duplicate with define.h
+#define maxSubnameLength 512 //512 since 6 nov
 
 
 #define bad_askToAuthenticate   1

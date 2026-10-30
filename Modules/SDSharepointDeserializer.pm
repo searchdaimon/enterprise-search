@@ -31,7 +31,7 @@ sub deserialize {
 		$ref = $ref->{'soap:Body'};
 	}
 
-	# Remove result and reponse keys
+	# Remove result and response keys
 	foreach $x (qw(Response Result Collection)) {
 		my @keys = grep(!/^xmlns$/, keys %{$ref});
 		if (scalar @keys == 1) {

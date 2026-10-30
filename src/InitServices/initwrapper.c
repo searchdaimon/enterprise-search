@@ -85,11 +85,11 @@ void exec_and_exit(char *service, char *param) {
     snprintf(exec_string, sizeof(exec_string), 
 		    "%s%s", INIT_DIR, service);
 
-    //runarb: gjør om slik at vi bruker /bin/sh direkte, uten -c    
+    //runarb: change so that we use /bin/sh directly, without -c    
     //char *shargs[] = {"/bin/sh", "-c", exec_string, '\0'};
     char *shargs[] = {"/bin/sh", exec_string, param, '\0'};
 
-    //printf("kjorer %s %s %s \n", shargs[0], shargs[1], shargs[2]);
+    //printf("running %s %s %s \n", shargs[0], shargs[1], shargs[2]);
 
     int exec_return;
     if (!exeoc(shargs, exeocbuf, &exeocbuflen, &exec_return)) {

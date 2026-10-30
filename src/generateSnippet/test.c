@@ -30,10 +30,10 @@ int main(int argc, char *argv[])
 //    thesaurus		*T = thesaurus_init("../../data/thesaurus.text", "../../data/thesaurus.id");
     thesaurus		*T = thesaurus_init("../../data/mini.thesaurus.text", "../../data/mini.thesaurus.id");
 
-    // Kjør stemming på query:
+    // Run stemming on the query:
     thesaurus_expand_query(T, &qa);
 
-    // Print query med innebygd print-funksjon:
+    // Print query with the built-in print function:
     char	buf[1024];
     sprint_expanded_query(buf, 1023, &qa);
 //    sprint_query(buf, 1023, &qa);

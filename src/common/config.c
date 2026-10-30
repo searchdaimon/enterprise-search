@@ -18,7 +18,7 @@ struct _configdataFormat *_configdata = NULL;
 int _configdatanr = 0;
 time_t lastConfigRead = 0;
 
-/* Må ha lock både da mysql bibloteket ikke er trsåkert, og for å hindre at vi flusher configen mens en annen tråd leser fra den */
+/* Must have a lock both because the mysql library is not thread-safe, and to prevent us from flushing the config while another thread reads from it */
 #ifdef WITH_THREAD
 pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -28,7 +28,7 @@ int
 bconfig_flush(int mode) {
 	time_t now = time(NULL);
 
-	//sjekker om vi har den alerede
+	// check whether we already have it
 	if ((lastConfigRead != 0) && (mode == CONFIG_CACHE_IS_OK) && ((lastConfigRead + cache_time) > now)) {
 		debug("have config in cache. Won't query db again\n");
 		return 0;
@@ -49,7 +49,7 @@ bconfig_flush(int mode) {
         MYSQL_ROW mysqlrow;
 
 #ifdef WITH_THREAD
-	my_init();
+	mysql_library_init(0, NULL, NULL);
 
 	#ifdef DEBUG
 	if (mysql_thread_safe() == 0) {
@@ -65,7 +65,7 @@ bconfig_flush(int mode) {
 		goto _free_and_return_error;
 	}
 
-        if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+        if(!mysql_real_connect(&demo_db, getenv("BOITHO_MYSQL_HOST") ? getenv("BOITHO_MYSQL_HOST") : "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
                 printf(mysql_error(&demo_db));
 		goto _free_and_return_error;
         }
@@ -113,7 +113,7 @@ bconfig_flush(int mode) {
 #endif
 	return 1;
 
-//firgjør lock og returnerer feil.
+// release lock and return error.
 _free_and_return_error:
 #ifdef WITH_THREAD
 	pthread_mutex_unlock(&config_lock);

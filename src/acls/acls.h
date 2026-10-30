@@ -1,6 +1,6 @@
 
 /**
- *	CHANGELOG:	25.01.2008	Magnus	La til userToSubname_deletecol() for å slette collections.
+ *	CHANGELOG:	25.01.2008	Magnus	Added userToSubname_deletecol() to delete collections.
  */
 
 #ifndef _ACLS__H_
@@ -16,7 +16,7 @@ struct userToSubnameDbFormat {
         DB *dbp;
 };
 
-// mode : fil retighet, r for read, w for write
+// mode : file permission, r for read, w for write
 int userToSubname_open(struct userToSubnameDbFormat *userToSubnameDb, char mode);
 
 char **userToSubname_getsubnamesList(struct userToSubnameDbFormat *db, char group[], int *num_colls);

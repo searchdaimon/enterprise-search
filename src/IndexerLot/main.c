@@ -199,7 +199,7 @@ struct acllotFormat {
 struct attriblotFormat {
 	char subname[maxSubnameLength];
 	container *words;
-	// Alt gÃ¥r i lot 1.
+	// Everything goes in lot 1.
 };
 
 
@@ -220,12 +220,12 @@ static unsigned int acllot_hashfromkey(void *ky)
 
 static int acllot_equalkeys(void *k1, void *k2)
 {
-	//hvis di ikke her samme lengde er de ikke like
+	//if they don't have the same length they aren't equal
 	if ((*(struct aclusernameFormat *)k1).len != (*(struct aclusernameFormat *)k2).len) {
 		return 0;
 	}
 	else {
-	//hvis vi derimot her samme lenge so må vi sjkke
+	//if they do have the same length we have to compare
     		return (0 == memcmp((*(struct aclusernameFormat *)k1).username,(*(struct aclusernameFormat *)k2).username,(*(struct aclusernameFormat *)k1).len));
 	}
 }
@@ -287,11 +287,11 @@ void iiacladd(struct IndexerRes_acls *iiacl,char acl[]) {
   	TokCount = split(acl, ",", &Data);
 
 
-	//legger til acler
+	//add acls
 	Count = 0;
 	while( (Data[Count] != NULL) ) {
 
-		//gruppenavn med spacer skaper problemer. Erstater det med _ i steden
+		//group names with spaces cause problems. Replace them with _ instead
 		//strsandr(Data[Count]," ","_");
 		//strsandr(Data[Count],"-","_");
 		aclElementNormalize(Data[Count]);
@@ -343,7 +343,7 @@ void acllot_add(struct acllotFormat *acllot,char acl[]) {
 		strscpy((*aclusername).username,Data[Count],MAX_USER_NAME_LEN);
 
 		if (NULL == (oldvalue = hashtable_search((struct hashtable *)(*acllot).h,aclusername) )) {
-			//printf("not found!. Vil insert first");
+			//printf("not found!. Will insert first");
 			value = malloc(sizeof(int));
 			(*value) = 1;
 
@@ -367,10 +367,10 @@ void acllot_add(struct acllotFormat *acllot,char acl[]) {
 
 #ifdef ATTRIBUTES
 /**
- *	Attributter:
+ *	Attributes:
  */
 
-// InitialisÃ©r mapping-fil mellom crc32 og attributter:
+// Initialize the mapping file between crc32 and attributes:
 void attriblot_init(struct attriblotFormat **attriblot, char *subname)
 {
     (*attriblot) = malloc(sizeof(struct attriblotFormat));
@@ -379,7 +379,7 @@ void attriblot_init(struct attriblotFormat **attriblot, char *subname)
     (*attriblot)->words = set_container( string_container() );
 }
 
-// Skriv mapping mellom crc32 og attributter til disk:
+// Write the mapping between crc32 and attributes to disk:
 void attriblot_close(struct attriblotFormat *attriblot)
 {
     FILE	*fp = lotOpenFileNoCasheByLotNr(1, "crc32attr.map", "ab", 'e', attriblot->subname);
@@ -408,7 +408,7 @@ void attriblot_close(struct attriblotFormat *attriblot)
 	{
 	    char	attribute[MAX_ATTRIB_LEN];
 	    memset(attribute, 0, MAX_ATTRIB_LEN);
-	    strcpy(attribute, (char*)map_val(it).ptr);	// Lengden vil aldri overstige MAX_ATTRIB_LEN.
+	    strcpy(attribute, (char*)map_val(it).ptr);	// The length will never exceed MAX_ATTRIB_LEN.
 	    unsigned int crc32 = map_key(it).i;
 
 	    fwrite(&crc32, sizeof(unsigned int), 1, fp);
@@ -424,7 +424,7 @@ void attriblot_close(struct attriblotFormat *attriblot)
     free(attriblot);
 }
 
-// Legg til attributter til crc32-mappingen:
+// Add attributes to the crc32 mapping:
 void attriblot_add(struct attriblotFormat *attriblot, char *attributes)
 {
     char k[MAX_ATTRIB_LEN], v[MAX_ATTRIB_LEN], kv[MAX_ATTRIB_LEN];
@@ -438,7 +438,7 @@ void attriblot_add(struct attriblotFormat *attriblot, char *attributes)
 	}
 }
 
-// Legg til attributter i egen invertert index:
+// Add attributes to a separate inverted index:
 void iiattribadd(struct IndexerRes_attrib *iiattrib, char *attributes)
 {
     char k[MAX_ATTRIB_LEN], v[MAX_ATTRIB_LEN], kv[MAX_ATTRIB_LEN];
@@ -455,7 +455,7 @@ void iiattribadd(struct IndexerRes_attrib *iiattrib, char *attributes)
 	}
 }
 
-// Legg til attributter per dokument i en egen forward index:
+// Add attributes per document to a separate forward index:
 void attributeIndexAdd(struct relocal re, unsigned int DocID, char *attributes)
 {
     if (re.attributeIndex==NULL) return;
@@ -553,7 +553,7 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,Bytef *htmlcompres
 	char imagebuffer[],unsigned int *radress, char **acl_allow, char **acl_denied,struct ReposetoryHeaderFormat *ReposetoryHeader, char **url, char **attributes) {
 	//lock
 	int forreturn;
-	//må holde status om rGetNext() har sakt at dette er siste. Hvis ikke hamrer vi bortenfor eof
+	//must track whether rGetNext() has said this is the last one. Otherwise we hammer past eof
 	static int lastpage = 0;
 	static int lastLot = 0;
 
@@ -561,7 +561,7 @@ int getNextPage(struct IndexerLot_workthreadFormat *argstruct,Bytef *htmlcompres
 		pthread_mutex_lock(&(*argstruct).reposetorymutex);
 	#endif
 
-	//hvis vi har byttet lot må vi prøve igjen
+	//if we have switched lot we must try again
 	if(lastLot != (*argstruct).lotNr) {
 		lastpage = 0;
 	}
@@ -783,9 +783,9 @@ void *IndexerLot_workthread(void *arg) {
 
 				}
 
-				//hvis dette er samme dokumens som vi har fra før kan vi ignorere det.
-				//runarb: 28 aug 2008. Legger til en sjekk på at dokumentet ikke er 0 bytes stort. Vi
-				//kan ikke ha indeksert det hvis vi ikke har størelsen, men RepositoryPointer == radress == 0 er lov, og skjer for første dokument
+				//if this is the same document we already have, we can ignore it.
+				//runarb: 28 aug 2008. Adding a check that the document is not 0 bytes in size. We
+				//cannot have indexed it if we don't have the size, but RepositoryPointer == radress == 0 is allowed, and happens for the first document
 				if ( (argstruct->rEindex == 0) && (DocumentIndexPost->RepositoryPointer == radress) && (DocumentIndexPost->htmlSize2 != 0)) {
 					#ifdef DEBUG
 						printf("have already indexed this dokument\n");
@@ -850,7 +850,7 @@ void *IndexerLot_workthread(void *arg) {
 
 
 
-				//begynner på en ny side
+				//starting on a new page
                                 wordsReset(pagewords,ReposetoryHeader.DocID);
 
 
@@ -939,8 +939,8 @@ void *IndexerLot_workthread(void *arg) {
 
 
 
-					//setter anatll utgående linker
-					//bruker en unsigned char. Kan ikke ha flere en 255 
+					//set the number of outgoing links
+					//uses an unsigned char. Can't have more than 255 
 					if ((*pagewords).nrOfOutLinks > 255) {
 						(*DocumentIndexPost).nrOfOutLinks = 255;
 					}
@@ -949,7 +949,7 @@ void *IndexerLot_workthread(void *arg) {
 					}
 
 
-					//har ikke metadesc enda
+					//don't have metadesc yet
 					metadesc = strdup("");
 
 					#ifndef BLACK_BOX
@@ -975,12 +975,12 @@ void *IndexerLot_workthread(void *arg) {
                				}
 				}
 				else if (argstruct->optQuery != NULL) {
-					//ignorerer bare ikke 200 sider 
+					//just ignore non-200 pages 
 					goto pageDone;
 				}
 				else {
-					//ikke 200->299 side
-					//egentlig ukjent
+					//not a 200->299 page
+					//actually unknown
 					awvalue = 0;
 					DIS_delete(DocumentIndexPost);
 					++argstruct->filtered.notHttp200;
@@ -994,7 +994,7 @@ void *IndexerLot_workthread(void *arg) {
 					if (DocumentIndexPost->crc32 != crc32) {
 						printf("error: crc32 is not the same\n");
 					}
-					//vi kan nå trykt gå til neste. Vi har hentet det vi vil, som er AdultValue
+					//we can now safely go to the next one. We have fetched what we want, which is AdultValue
 					(*argstruct).DIArray[DocIDPlace].p = DocumentIndexPost;
 					(*argstruct).DIArray[DocIDPlace].haveawvalue = 1;
 					(*argstruct).DIArray[DocIDPlace].DocID = ReposetoryHeader.DocID;
@@ -1002,8 +1002,8 @@ void *IndexerLot_workthread(void *arg) {
 					goto pageDone;
 				}
 
-					//data skal kopieres over uanset hva som skjer
-					//kopierer over di data
+					//data is to be copied over no matter what happens
+					//copy over the di data
 					copyRepToDi(DocumentIndexPost,&ReposetoryHeader);
 
 					(*DocumentIndexPost).RepositoryPointer = radress;
@@ -1014,8 +1014,8 @@ void *IndexerLot_workthread(void *arg) {
 					#endif
 
 					#ifdef BLACK_BOX
-						//handel acl
-						//trenger dette acl greiene å være her, kan di ikke være lenger opp, der vi ikke har trå lås ?
+						//handle acl
+						//does this acl stuff need to be here, can't it be further up, where we don't have a thread lock ?
 						acllot_add((*argstruct).acllot,acl_allow);
 						
 						#ifdef IIACL
@@ -1049,7 +1049,7 @@ void *IndexerLot_workthread(void *arg) {
 
 						iintegerSetValueNoCashe(&ReposetoryHeader.time,sizeof(int),ReposetoryHeader.DocID,"dates",(*argstruct).subname);
 						//printf("filtypes \"%c%c%c%c\"\n",ReposetoryHeader.doctype[0],ReposetoryHeader.doctype[1],ReposetoryHeader.doctype[2],ReposetoryHeader.doctype[3]);
-						//normaliserer
+						//normalize
 						for(i=0;i<4;i++) {
 							ReposetoryHeader.doctype[i] = btolower(ReposetoryHeader.doctype[i]);
 						}
@@ -1066,7 +1066,7 @@ void *IndexerLot_workthread(void *arg) {
 
 
 
-					//lager summery
+					//build summary
 					if ((body != NULL) && (title != NULL) && (metadesc != NULL)) {
 
 						#ifndef BLACK_BOX
@@ -1109,15 +1109,15 @@ void *IndexerLot_workthread(void *arg) {
 
 					}
 
-					//skiver til DocumentIndex
+					//write to DocumentIndex
 					//DIWrite(DocumentIndexPost,ReposetoryHeader.DocID,(*argstruct).subname);
 
 
 				/*
-				Runarb: 20 mai 2011: Koden under var haket ut, og følgende kommentar var lagt til. Dessverre vet jeg ikke hva det betyr
-				Vi ser ut til å bure gced under lasting av revindex også. Sikkert brukt ved sletting på web.
+				Runarb: 20 may 2011: The code below was commented out, and the following comment was added. Unfortunately I don't know what it means
+				We seem to gc gced during loading of revindex as well. Probably used when deleting via the web.
 				*/
-				//da dette er en oppdatering vil vi ha nye ord i den reverserte index, og kan trykt slette de som ligger i invertert index.
+				//since this is an update we want new words in the reversed index, and can safely delete those that are in the inverted index.
 				if (documentUpdate) {
 					#ifdef DEUG
 						printf("DocId %u was updatated. Adding it to the gced file\n",ReposetoryHeader.DocID);
@@ -1184,7 +1184,7 @@ pageDone:
 					free(attributes);
 
 				free(HtmlBuffer);
-				//hvis vi ikke har peket til DocumentIndexPost, men har allokert den, kan vi slette den
+				//if we haven't pointed to DocumentIndexPost, but have allocated it, we can delete it
 				if ((argstruct->DIArray[DocIDPlace].p == NULL) && (DocumentIndexPost != NULL)) {
 					free(DocumentIndexPost);
 				}
@@ -1246,7 +1246,7 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 			printf("dir (nextdirname %s)\n",nextdirname);
 			rmkdir(nextdirname,lotNr,subname);
 
-			//kaller seg selv rekurift
+			//calls itself recursively
 			netlot_end_recursiveDir(lotpath,nextdirname,lotNr,subname, server);
 		}
 		else if (dp->d_type == DT_REG) {
@@ -1276,14 +1276,14 @@ void netlot_end_recursiveDir (char lotpath[],char lotinternpath[],unsigned int l
 
 
 /*******************************************************
-rutine for å sende date tilbake til lagringserver.
+routine for sending data back to the storage server.
 *******************************************************/
 void netlot_end (int lotNr,char subname[], char server[]) {
 
 	char lotpath[512];
 	FILE *FH;
 
-	//åpretter en tom dyrty fil, slik at vi får en som overskriver den vi har fra før
+	//create an empty dirty file, so that we get one that overwrites the one we already have
 	if ((FH = lotOpenFileNoCasheByLotNr(lotNr,"dirty","wb", 'e',subname)) == NULL) {
 		perror("local reposetory");
 		exit(1);
@@ -1297,12 +1297,12 @@ void netlot_end (int lotNr,char subname[], char server[]) {
 
 	netlot_end_recursiveDir(lotpath,"",lotNr,subname, server);
 
-	//sletter loten
+	//delete the lot
 	rrmdir(lotpath);
 }
 
 /*******************************************************
-rutine for å hente en fil på lagringserver
+routine for fetching a file from the storage server
 *******************************************************/
 int netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) {
 
@@ -1333,7 +1333,7 @@ int netlot_start_get_file(int lotNr,char subname[],char file[], char server[]) {
 
 
 /*******************************************************
-rutine for å hente det vi trnger på lagringserver.
+routine for fetching what we need from the storage server.
 *******************************************************/
 int netlot_start(int lotNr,char subname[], int optrEindex, char server[]) {
 
@@ -1453,13 +1453,13 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 
 
-		//sjekker om vi har nokk plass lokalt
+		//check whether we have enough space locally
 		if (!lotHasSufficientSpace(lotNr,4096,subname)) {
 			printf("insufficient disk space\n");
 			exit(1);
 		}
 
-		//netlot: Vi henter det vi trenger
+		//netlot: we fetch what we need
 		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
 			if (!netlot_start(lotNr,subname,opt->rEindex,opt->NetLot)) {
 				printf("can't netLot for lot nr %i!\n",lotNr);
@@ -1468,14 +1468,14 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		}
 
 
-		//vi tilater bare at en og en jobber med filen samtidig.
+		//we only allow one worker on the file at a time.
         	if ( (INDEXLOCK = lotOpenFileNoCasheByLotNr(lotNr,"index.lock","wb", 'e',subname)) == NULL) {
 			printf("can't loct tje index lock\n");
 			exit(-1);
 		}
 		flock(fileno(INDEXLOCK),LOCK_EX);
 
-		//finner siste indekseringstid
+		//find the last indexing time
 		lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
 		
 
@@ -1483,28 +1483,28 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		if (opt->rEindex == 1) {
 			FiltetTime = 0;
-			//opner får skriving (vil overskrive eventuelle gamle filer). 
+			//open for writing (will overwrite any old files). 
 			strcpy(openmode,"wb");
 		}
 		else if (lastIndexTime == 0) {
 			FiltetTime = 0;
 
-			//opner får skriving (vil overskrive eventuelle gamle filer). 
+			//open for writing (will overwrite any old files). 
 			strcpy(openmode,"wb");
 		}
 		else if (opt->MustBeNewerThen != 0) {
-			//regner ut hvor ny den må være
+			//calculate how new it must be
 			printf("Isnet new. Last indexed %s",ctime((time_t *)&lastIndexTime));
 			exit(1);
 		}		
 		else if(lastIndexTime != 0) {
 			printf("lastIndexTime is not 0, but %i\n",lastIndexTime);
-			//23 jul 2008: Vi bruker ikke dette langere. Det skaper problemer for gc.
-			// i steden sjekker vi om crc32 og pekere er det samme. Sikkert litt mer overhead, men da fungerer gc :)
+			//23 jul 2008: We don't use this anymore. It causes problems for gc.
+			// instead we check whether crc32 and pointers are the same. Probably a bit more overhead, but then gc works :)
 			//FiltetTime = lastIndexTime;
 			FiltetTime = 0;
 
-			//opner for appending
+			//open for appending
 			strcpy(openmode,"ab");
 		}
 		else {
@@ -1513,16 +1513,16 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		}
 		printf("openmode\"%s\"\n",openmode);
 
-		//støtter ikke å apande revindexer langere. Det betyr at vi må lage ny iindex hver gang, hvis ikke blir
-		//det overskreved.
+		//we no longer support appending to revindexes. That means we must create a new iindex every time, otherwise it gets
+		//overwritten.
 		//revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main",openmode,subname);
 		revindexFilesOpenLocal(argstruct->revindexFilesHa,lotNr,"Main","wb",subname);
 
 		#ifdef BLACK_BOX		
 
 			#ifdef IIACL
-				//støtter ikke å apande revindexer langere. Det betyr at vi må lage ny iindex hver gang, hvis ikke blir
-				//det overskreved.
+				//we no longer support appending to revindexes. That means we must create a new iindex every time, otherwise it gets
+				//overwritten.
 				//revindexFilesOpenLocal(argstruct->acl_allowindexFilesHa,lotNr,"acl_allow",openmode,subname);
 				//revindexFilesOpenLocal(argstruct->acl_deniedindexFilesHa,lotNr,"acl_denied",openmode,subname);
 				revindexFilesOpenLocal(argstruct->acl_allowindexFilesHa,lotNr,"acl_allow","wb",subname);
@@ -1532,11 +1532,11 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			acllot_init(&argstruct->acllot,subname,openmode,lotNr);
 
 			#ifdef ATTRIBUTES
-			// Åpne reversert index:
+			// Open reversed index:
 			revindexFilesOpenLocal(argstruct->attribindexFilesHa,lotNr,"attributes","wb",subname);
 			attriblot_init(&argstruct->attriblot,subname);
 
-			// Initialiser og åpne vanlig index:
+			// Initialize and open the regular index:
 
 			char		*attrkeys_filename, *attrcols_filename;
 			container	*new_keys = set_container( string_container() ),
@@ -1545,7 +1545,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			asprintf(&attrkeys_filename, "%s.new_attribute_keys", reponame);
 			FILE	*f_attrkeys = lotOpenFileNoCasheByLotNr(1, attrkeys_filename, "r", 's', subname);
 
-			// Sjekk for nye attributter:
+			// Check for new attributes:
 			if (f_attrkeys!=NULL)
 			    {
 				char		key[MAX_ATTRIB_LEN];
@@ -1560,13 +1560,13 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 				char		attrkeys_fullpath[PATH_MAX];
 				GetFilPathForLotFile(attrkeys_fullpath, attrkeys_filename, 1, subname);
-				unlink(attrkeys_fullpath);	// Slett fila etter den er lest.
+				unlink(attrkeys_fullpath);	// Delete the file after it has been read.
 			    }
 
 			asprintf(&attrcols_filename, "%s.attribute_columns", reponame);
 			FILE	*f_attrcols = lotOpenFileNoCasheByLotNr(1, attrcols_filename, "r", 's', subname);
 
-			// Sjekk for gamle attributter:
+			// Check for old attributes:
 			if (f_attrcols!=NULL)
 			    {
 				char		key[MAX_ATTRIB_LEN];
@@ -1597,7 +1597,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 						int stretchLot;
 						for (stretchLot=0;stretchLot<maxLots;stretchLot++) {
-							// Merge gamle og nye attributter i index:
+							// Merge old and new attributes in the index:
 
 							struct reformat *oldIndex = reopen(stretchLot, sizeof(unsigned int)*set_size(old_keys), "attributeIndex", subname, RE_READ_ONLY);
 							if (oldIndex == NULL) {
@@ -1659,7 +1659,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 				destroy(old_keys);
 			    }
-			else	// Ingen nye attributter:
+			else	// No new attributes:
 			    {
 				destroy(new_keys);
 				new_keys = old_keys;
@@ -1673,7 +1673,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			    }
 			else if ((argstruct->re.attributeIndex = reopen(lotNr, sizeof(unsigned int)*set_size(new_keys), "attributeIndex", subname, 0)) != NULL)
 			    {
-				// Skriv attributter til fil, samt lagre rekkefølgen i minnet.
+				// Write attributes to file, and store the order in memory.
 				argstruct->re.attributeKeys = new_keys;
 				new_keys = NULL;
 
@@ -1696,7 +1696,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 			free(attrkeys_filename);
 			free(attrcols_filename);
 
-			// @@TODO: Fjerning (og detektering) av tomme kolonner. (Garbage collection)
+			// @@TODO: Removal (and detection) of empty columns. (Garbage collection)
 
 			#endif	// ATTRIBUTES
 		#else
@@ -1902,7 +1902,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 					exit(1);
 				}
 
-				//startet tråder
+				//started threads
 				for(i=0;i<opt->NrofWorkThreads;i++) {
 					debug("starting tread nr %i\n",i);
 					if ((n = pthread_create(&threadid[i], NULL, IndexerLot_workthread, argstruct)) != 0) {
@@ -1910,7 +1910,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 					}
 				}
 
-				//venter på trådene
+				//waiting for the threads
         			for (i=0;i<opt->NrofWorkThreads;i++) {
                 			if ((n = pthread_join(threadid[i], NULL)) != 0) {
 						perror("pthread_join");
@@ -2032,7 +2032,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		#endif
 
-		//skriver riktig indexs tid til lotten
+		//write the correct index time to the lot
 		setLastIndexTimeForLot(lotNr,argstruct->httpResponsCodes,subname);
 
 		#ifdef PRESERVE_WORDS
@@ -2085,7 +2085,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 		fclose(argstruct->dictionarywordsfFH);
 		#endif
-		// vi må ikke kopiere revindex filene da vi jobber på de lokale direkte
+		// we must not copy the revindex files since we work on the local ones directly
 
 
 		if (opt->HandleOld) {
@@ -2173,7 +2173,7 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 
 			#endif
 
-                	//siden vi nå har lagt til alle andringer fra rev index kan vi nå slettet gced filen også
+                	//since we have now added all changes from the rev index we can now delete the gced file too
                 	//Indekser_deleteGcedFile(lotNr, subname);
 			lotDeleteFile("gced", lotNr, subname);
 		}
@@ -2191,9 +2191,9 @@ void run(int lotNr, char subname[], struct optFormat *opt, char reponame[]) {
 		    }
 		#endif
 	
-		//netlot: Vi sender det vi har laget
+		//netlot: we send what we have produced
 		if ((opt->NetLot != NULL) && (opt->Query == NULL)) {
-			//lokker eventuelt åpne filer, som etter gced.
+			//close any open files, such as after gced.
 			lotCloseFiles();
 			
 			netlot_end(lotNr,subname,opt->NetLot);
@@ -2299,7 +2299,7 @@ int main (int argc, char *argv[]) {
 				opt.NetLot = optarg;
 				break;
 			case 'w':
-				//lag en ordbok
+				//build a dictionary
 				opt.MakeWordList = 1;
 				break;
 
@@ -2383,14 +2383,14 @@ int main (int argc, char *argv[]) {
 		int len2;
 		char *text;
 		struct ReposetoryHeaderFormat ReposetoryHeader;
-		//toDo: vi må hente bilde fra readHTMLNET()
+		//toDo: we must fetch the image from readHTMLNET()
 		char image[] = "";
 		int lastLot = 0;
 		char dirtylots[maxLots];
 
-		//setter opt som er nødvendige
+		//set the opt values that are necessary
 		opt.rEindex = 1;
-		//diread er ikke tråsikker
+		//diread is not thread-safe
 		opt.NrofWorkThreads = 1;
 
 		len = 1048576 * 5; //5MB
@@ -2424,7 +2424,7 @@ int main (int argc, char *argv[]) {
 				//	printf("len %i\n",strlen(text));
 				//}
 
-				//toDo: vi må hente bilde fra readHTMLNET()				
+				//toDo: we must fetch the image from readHTMLNET()				
 				ReposetoryHeader.imageSize = 0;
 
 				ReposetoryHeader.htmlSize2 = strlen(text);
@@ -2448,10 +2448,10 @@ int main (int argc, char *argv[]) {
 
 		#endif
 	}
-	//hvis lotNr er 0 skal vi hente info fra serveren om hvilkene lotter den har som trenger å indekseres.		
+	//if lotNr is 0 we fetch info from the server about which lots it has that need indexing.		
 	else if ((opt.NetLot != NULL) && (lotNr == 0)) {
 
-		//henter lot nr fra server
+		//fetch lot nr from the server
 		i = 0;
 		while (((lotNr = getLotToIndex(subname,opt.NetLot, opt.dirty)) != 0) && (opt.LotMax == 0 || opt.LotMax > i)) {
 			printf("starting indexing of lot %i. nr %i\n",lotNr,i);

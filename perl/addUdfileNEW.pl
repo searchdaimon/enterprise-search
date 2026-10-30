@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-#randomiserer urlkøen.
+#randomizes the url queue.
 
 use String::CRC32;
 use common qw(fin_domene);
@@ -8,7 +8,7 @@ use common qw(fin_domene);
 use constant UrlQueuePostLength => 204;
 use constant nrOfqueues => 5;
 
-#make elementer man skal ha i minne fo hver kø. Når dette nåes lagres den køen på disk.
+#max number of elements to keep in memory per queue. When this is reached the queue is stored to disk.
 use constant maxQueuesElementsInMemory => 100;
 
 our $terminated = 0;
@@ -50,7 +50,7 @@ while ((!eof(UDFILE)) && (not $terminated)) {
 	
 	if ($ElementsInMemory > maxQueuesElementsInMemory) {
 		savequeue(@queues);
-		#nuler ut køen nå nor den er lagret
+		#clears the queue now that it has been stored
 		@queues = ();
 		$ElementsInMemory = 0;
 	}
@@ -86,7 +86,7 @@ sub savequeue {
 	#seek(NEWUDFILE,0,2);
 
 
-	#så lenge vi fortsetter å lese ut poster gjør vi det
+	#as long as we keep reading out records we do so
 	$posterigjen = 1;
 	while ($posterigjen) {
 	
@@ -98,7 +98,7 @@ sub savequeue {
 			if (scalar(@{ $i} ) != 0) {
 				my $post = shift(@{ $i});
 
-				#### debug. vi urler som bli lag til
+				#### debug. the urls that get added
 				my ($url,$DocID) = unpack('A200,I',$post);
 				print "$count: $url\n";
 				###
@@ -119,7 +119,7 @@ sub savequeue {
 }
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {	
 	if (not $terminated) {

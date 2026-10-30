@@ -513,7 +513,7 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 	    // Container? Recalculate qa:
 	    if (item->container_id > 0)
 		{
-		    // NB! Overlappende selecteds i forskjellige groups kan feile.
+		    // NB! Overlapping selecteds in different groups can fail.
 		    //printf("Recalculating qa for container %i\n", item->container_id);
 		    filter = 0;
 		    for (j=0; j<vector_size(A); j++)
@@ -533,8 +533,8 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 	    /*
 	    if (item->selected>=0)
 		{
-		    filter|= (1<<item->selected);	// Skulle bli samme om filtrert eller ikke?
-							// må -un-filtreres for rekursivitet
+		    filter|= (1<<item->selected);	// Should be the same whether filtered or not?
+							// must be -un-filtered for recursivity
 		}
 	    */
 
@@ -580,7 +580,7 @@ int _attribute_build_items_(container *X, container *A, query_array *qa, int def
 
 	    if (item->container_id > 0)
 		{
-		    // NB! Overlappende selecteds i forskjellige groups kan feile.
+		    // NB! Overlapping selecteds in different groups can fail.
 		    for (j=0; j<vector_size(A); j++)
 			{
 			    struct _attr_query_element_ *vquery = (struct _attr_query_element_*)vector_get(A,j).ptr;
@@ -1001,7 +1001,7 @@ char* attribute_generate_xml(container *attributes, int attrib_count, attr_conf 
 	    else default_filter|= (1<<vquery->filter_id);
 	}
 
-    // Hide dato from "all"-query:
+    // Hide date from "all"-query:
     for (i=0; i<qa->n; i++)
 	if (qa->query[i].operand == QUERY_DATE)
 	    qa->query[i].hide = 1;

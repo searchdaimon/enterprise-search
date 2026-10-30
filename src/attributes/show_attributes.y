@@ -295,7 +295,7 @@ static container* recurse_items(item *I, int sort_inherit);
 static void recursive_delete(struct attr_group *a);
 
 
-// Returnerer warnings.
+// Returns warnings.
 attr_conf* show_attributes_init(char *text, char **warnings, int *failed, int verbose)
 {
 	*failed = 0;

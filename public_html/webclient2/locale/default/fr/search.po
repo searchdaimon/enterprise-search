@@ -412,3 +412,6 @@ msgstr "Archive ZIP"
 
 msgid "Application data"
 msgstr "Donnée d'application"
+
+msgid "Refine search"
+msgstr "Affiner la recherche"

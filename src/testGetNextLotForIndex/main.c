@@ -32,7 +32,7 @@ int main (int argc, char *argv[]) {
 	MAPLIST = openMaplist();
 
 
-        //lager mappe oversikt
+        //build directory overview
         count = 0;
 
         while ((feof(MAPLIST) == 0) && (NrOfDataDirectorys > count)) {

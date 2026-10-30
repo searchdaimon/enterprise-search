@@ -15,10 +15,10 @@ int main (int argc, char *argv[]) {
 
 	printf("NrOfLots: %i\n",NrOfLots);
 
-	//allokerer minne til en array over lottene
+	//allocate memory for an array of the lots
 	lots = malloc(sizeof(int) * NrOfLots);	
 
-	//legger inn lotene
+	//insert the lots
 	y = 0;
 	for (i=4;i<argc;i++) {
 		printf("lotnr %s\n",argv[i]);
@@ -27,7 +27,7 @@ int main (int argc, char *argv[]) {
 		y++;	
 	}
 
-	//sorterer lottene
+	//sort the lots
 	qsort(lots,NrOfLots,sizeof(int),cmp1);
 
 	for(i=0;i<NrOfLots;i++) {

@@ -90,14 +90,14 @@ int main (int argc, char *argv[]) {
 
                 			bucket = WordID % NrOfDataDirectorys;
 
-					//ToDo: bare en hit. Hva om vi har doener som inneholder samme ord flere ganger?
-					//	som ntnu.ntnu.no ?? Kanje ikke så sansynelig så skipper det problemet for nå
+					//ToDo: just one hit. What if we have domains that contain the same word several times?
+					//	such as ntnu.ntnu.no ?? Probably not that likely so we skip that problem for now
 					nr = 1; 
                 
         	        		fwrite(&DocID,sizeof(unsigned int),1,revindexFilesHa[bucket]);
-					//runarb: 13 mai 2007. vi har byttet til å bruke et tal for språk.
-					//burde da dette fra DocumentIndex hvis det finnes, men lagres ikke der
-					//må si i IndexRes på hvordan vi gjør det der
+					//runarb: 13 may 2007. we have switched to using a number for language.
+					//should then read this from DocumentIndex if it exists, but it isn't stored there
+					//must tell IndexRes how we do it there
         	        		//fprintf(revindexFilesHa[bucket],"aa ");
 					lang = 0;
 					fwrite(&lang,sizeof(unsigned char),1,revindexFilesHa[bucket]);

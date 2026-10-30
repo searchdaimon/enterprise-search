@@ -14,7 +14,7 @@ int main (int argc, char *argv[]) {
 char *A[][2] = {
 		// from, to 
 
-		//normale url, disse skal altid fungere
+		//normal urls, these should always work
 		{"http://www.boitho.com/File.html","http://www.boitho.com/File.html"}, 
 		{"http://sub.boitho.com/File.html","http://sub.boitho.com/File.html"}, 
 
@@ -28,9 +28,9 @@ char *A[][2] = {
 		{"HTTP://www.Boitho.coM/File.html","http://www.boitho.com/File.html"},
 		{"http://www.boitho.com/side.html#august","http://www.boitho.com/side.html"},
 
-		// ikke gyldige, men normaliseres OK
+		// not valid, but normalize OK
 		{"http://www.boitho.comindex.html?a=b","http://www.boitho.com/index.html?a=b"},
-		//feil
+		//error
 		{"http://www.boitho.com/div/javascript:openchild('/product-popup.pl?pcode=10136136');",""},
 		{"http://www.boitho.com/div/JavaScript:openchild('/product-popup.pl?pcode=10136136');",""},
 		{"http://www.swindon.gov.uk/atozlistingsbyletterdisplay/socialcare/signpost/socialcare/signpost/community/roadstransport/feedbackcomments.htm",""}
@@ -47,7 +47,7 @@ for(i=0;i<Asize;i++) {
 	//printf("%s %s\n",A[i][0],A[i][1]);
 	strscpy(url,A[i][0]);
 
-	//normaliser
+	//normalize
 	if (!url_normalization(url,sizeof(url))) {
 		printf("Error: bad status from url_normalization: %s -> %s\n",A[i][0],A[i][1]);
 	}

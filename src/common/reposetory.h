@@ -4,20 +4,20 @@
 /*
 reposetory.h
 
-Subrutiner for å jobbe å Boitho Reposetory
+Subroutines for working with the Boitho Repository
 
 Et Reposetory lagres i flere filer, i flere mapper. 
 
-Det må være en fil kalt maplist.conf i samme mappe som 
+There must be a file called maplist.conf in the same directory as 
 programet som bruker denne filen, som indeholder en liste 
 med 64 mapper som filer kan lagres i. Dette brtyr at man 
-kan bruke opptil 64 disker å spre lagringen utover.
+can use up to 64 disks to spread the storage across.
 
 
 Open filhonterere cashes, og lagres i arrayen "OpenReposetoryFiles"
 
 
-Kal "ropen" for å opne Reposetoryet, "rclose" for å stenge Reposetoryet.
+Call "ropen" to open the Repository, "rclose" to close the Repository.
 
 */
 
@@ -43,20 +43,20 @@ struct addNewUrlhaFormat {
 #define MaxOpenReposetoryFiles 3
 
 
-//formatet som brues for å lagre en Reposetory post
+// the format used to store a Repository record
 #define ReposetoryStorageFormat "%i\n%s\n%s\n%s"
 
 
 
 
-//formater på cashe over opne filhontarere
+// format of the cache over open file handles
 struct ReposetoryOpenFilesFormat {
 	short int LotNr;
 	FILE *FILEHANDLER;
 };
 
 
-//array med opne filhonterere
+// array of open file handles
 struct ReposetoryOpenFilesFormat OpenReposetoryFiles[MaxOpenReposetoryFiles];
 
 
@@ -85,7 +85,7 @@ int rGetNext_fh (unsigned int LotNr, struct ReposetoryHeaderFormat *ReposetoryHe
 int runpack(char *ReposetoryData,uLong comprLen,char *inndata,int length);
 int rReadSummary(unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[]);
 int rReadSummary_l(const unsigned int DocID,char **metadesc, char **title, char **body ,unsigned int radress64bit,unsigned short rsize,char subname[],  int fd);
-//Bilde rutiner
+// Image routines
 void risave (int DocID, char *image, int size,char subname[]);
 
 //anchor

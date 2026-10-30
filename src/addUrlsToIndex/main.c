@@ -15,7 +15,7 @@ int main (int argc, char *argv[]) {
 
 	char *pointer;
 	int i;
-        //tester for at vi har fåt hvilken fil vi skal bruke
+        //check that we were told which file to use
         if (argc < 2) {
                 printf("Usage: ./addanchors UDFILE\n\n");
                 exit(1);
@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
         while(!feof(UDFILE)) {
                 fread(&udfilePost,sizeof(struct udfileFormat),1,UDFILE);
 
-		//ser ikke ut som om dette er null terminert., menspacpaddet.
+		//does not look like this is null terminated, but space padded.
 		udfilePost.url[152] = '\0';
 		if ((cpoinet = (char *)strchr(udfilePost.url,' ')) != NULL) {
 			*cpoinet = '\0';
@@ -42,11 +42,11 @@ int main (int argc, char *argv[]) {
 
 
 		/*
-        	inaliserer strukten. Vi sletter alt i den ved å aksesere minne direkte.
-        	Dette gjøres slik at vi ikke får noe støy etter \0, da det også vil bli
-        	lagret.
+        	initialize the structure. We clear everything in it by accessing memory directly.
+        	This is done so that we don't get any garbage after \0, since that would
+        	also be stored.
 
-        	Vi ikke trenger å kjene formatet på strukturen.
+        	We don't need to know the format of the structure.
         	*/
         	
         	pointer = (char *)&DocumentIndexPost;

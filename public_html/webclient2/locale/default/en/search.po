@@ -388,3 +388,6 @@ msgstr "ZIP Archive"
 msgid "Application data"
 msgstr "Application data"
 
+
+msgid "Refine search"
+msgstr "Refine search"

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-//er ikke tread sikker
+//is not thread safe
 char *bitoa(const int val) {
         static char buf[13];
         sprintf(buf,"%i",val);
@@ -10,7 +10,7 @@ char *bitoa(const int val) {
         return buf;
 }
 
-//er ikke tread sikker
+//is not thread safe
 char *utoa(const unsigned int val) {
         static char buf[13];
         sprintf(buf,"%u",val);
@@ -18,7 +18,7 @@ char *utoa(const unsigned int val) {
         return buf;
 }
 
-//er ikke tread sikker
+//is not thread safe
 char *ftoa(const double val) {
         static char buf[13];
         sprintf(buf,"%f",val);

@@ -879,7 +879,7 @@ sub crawl_update {
 	$self->{majorversion} = $version[0];
 
 
-	# Ax: Alle sidene må recrawles. Hvis ikke blir ikke sider det er lenket til sjekket:
+	# Ax: All pages must be recrawled. Otherwise pages that are linked to do not get checked:
 	#my $lastcrawl = $self->get_last_crawl_time();
 	my $lastcrawl = 0;
 	print "Last crawl? $lastcrawl\n";

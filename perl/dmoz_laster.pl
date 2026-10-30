@@ -5,7 +5,7 @@ use Digest::SHA1  qw(sha1);
 #use IR qw(ResulveUrl);
 use common qw(gyldig_url);
 
-# land liste, data fra http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/ , og honde modifisert av runar
+# country list, data from http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/ , and hand-modified by runar
 
 if (scalar(@ARGV) < 2) {
 	print "Usage:\n\t perl dmoz_laster.pl dmozdump nyeurlfil\n\n";
@@ -260,7 +260,7 @@ if (scalar(@ARGV) < 2) {
 );
 
 #############################################################################################################################################
-# Henter data fra dmoz filen
+# Fetches data from the dmoz file
 #############################################################################################################################################
 
 
@@ -280,7 +280,7 @@ flock(NYEURLER,2) or die ("Can't lock lock file: $!");
 seek(NYEURLER,0,2);
 
 
-#inaliserer
+#initialize
 our $terminated = 0;
 
 $dmoz_category = "";
@@ -288,34 +288,34 @@ $url = "";
 $titel = "";
 $description = "";
 
-#begynner på 1 slik at vi slipper problemer med at vi deler på 0
+#start at 1 so we avoid problems with dividing by 0
 $count = 1;
 $count_vis = 1;
 
-#hvor fote vi skal printe ut status
+#how often we should print out status
 $NprintStatus = 100000;
 
 my $count_url_gyldig = 0;
 my $count_url_Ikkegyldig = 0;
 
 
-#finner start time
+#find start time
 $start_time = time;
 $SIG{INT} = $SIG{TERM} = $SIG{HUP} = \&signal_handler;
 
-#kjør dene loopen til end of file (det ikke komer mede data)
+#run this loop until end of file (no more data is coming)
 while ((!eof(INF)) && (!$terminated)) {
 
 $linje = "";
 $linje = <INF>;       # reads one line from the file into the scalar $a
 #print "linjer: $linje";
 
-#tar bort elle entere (\n)
+#removes all newlines (\n)
 
 #$linje =~ s/\n//;
 
 	
-	#hvis vi finner at linjen er en kategori så:
+	#if we find that the line is a category then:
 	if ($linje eq "") {
 		print "blank linje\n";
 	}
@@ -368,7 +368,7 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 	elsif ($linje =~ m#</ExternalPage>#) {
 	
 	
-		#sjekker om det er norsk data
+		#checks whether it is Norwegian data
 		#if (($dmoz_category =~ /norsk/i) 	
 		#if (($dmoz_category =~ /Top\/Arts/i) 	
 		#or ($dmoz_category =~ /Top\/Games/i) 
@@ -403,10 +403,10 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 		if ($count == $count_vis) {
 			$count_vis = $count + $NprintStatus;
 			
-			#finner hvor lenge det er siden
+			#find how long it has been since
 			$difference = time - $start_time;
 
-			#finner brukt tip pr side
+			#find time used per page
 			$pr_side = $difference / $count;
 			
 			$seconds    =  $difference % 60;
@@ -438,11 +438,11 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 			#@key_words2 = vekting("40",@key_words2);
 			
 
-			#setter @key_words lik den første arrayen med nøkkelord, de neste må puejes
+			#set @key_words equal to the first array of keywords, the rest must be pushed
 			#@key_words = @key_words1;
 			#push(@key_words,@key_words2);
 			
-			#stoppord sjeker
+			#stop word check
 			#@key_words = stoppord(@key_words);
 			
 
@@ -451,7 +451,7 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 			#print "}\n";
 			
 			$count++;
-			#laster inn i databsen
+			#loads into the database
 			
 			#$Sist_Oppdatert = SQL_datetime();
 			#$rv = $dbh->do(qq{insert into Sider values("$url","$User_Name","$description","$titel","$dmoz_category","$Sist_Oppdatert")}) or dienice("can´t do statment: ",$dbh->errstr);
@@ -459,19 +459,19 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 			$kilde = 1;
 			$sprok = '';
 			
-			#hvis vi har Top/World prøver vi å mappe landet
+			#if we have Top/World we try to map the country
 			if ($dmoz_category =~ /^Top\/World\//i) {
 				$sprok = $dmoz_category;
 				$sprok =~ s/^Top\/World\/.*\///;
-				#anokterer (henter det vi tokk port)
+				#anchor (fetches what we captured)
 				$sprok = $1;
-				#gjør om til opper case
+				#convert to upper case
 				$sprok = uc($sprok);
 				$sprok = $country_list{$sprok};
 			}
 			
 			
-			#gjør om litt på fomatet slik at vi får dmoz: i steden for Top/
+			#reformat a bit so that we get dmoz: instead of Top/
 			$dmoz_category =~ s/^Top\//dmoz: /;
 			
 			
@@ -480,10 +480,10 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 			#add_url($url,$titel,$description,$dmoz_category,$sprok,$kilde);
 
 
-			#resolver URLen, slik at man får ting som / på slutten der det skal være det.
+			#resolve the URL, so that things like a trailing / appear where they should be.
 			$url = ResulveUrl('http://www.dmoz.org/',$url);
 
-			# Format på nye urlfilen
+			# Format of the new url file
 			#struct update_block
 			#{
 			#    unsigned char       sha1[20];
@@ -497,7 +497,7 @@ $linje = <INF>;       # reads one line from the file into the scalar $a
 				++$count_url_gyldig;
 			#}
 			#else {
-			#	#print "Url ugyldig: $url\n";
+			#	#print "Url invalid: $url\n";
 			#	++$count_url_Ikkegyldig;
 			#}	
 
@@ -531,7 +531,7 @@ print "gyldig urls: $count_url_gyldig, Ikke gyldig urls: $count_url_Ikkegyldig\n
 
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {	
 	if (not $terminated) {

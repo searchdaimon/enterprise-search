@@ -211,7 +211,7 @@ sentence :
 			    slot-= data->phrase_sizes[data->accepted[data->tilstand]];
 			    while (slot<0) slot+= data->history_size;
 
-			    // Sjekk for overlappende treff:
+			    // Check for overlapping hits:
 			    vsize = vector_size(data->Match);
 			    if (vsize>0) mb = vector_get(data->Match, vsize-1).ptr;
 
@@ -334,7 +334,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
     if (forced) return;
 
-    // Spol fram til neste linje-start:
+    // Fast-forward to the next line start:
     while (queue_size(Q) > 0 && !(pair(queue_peak(Q)).second.i & v_section_div)) queue_pop(Q);
 
     while (queue_size(Q) > 0 && data->eoln_pos<vector_size(data->Eoln)
@@ -508,26 +508,26 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 
     /**
-        Algoritme for kalkulering av beste snippet:
+        Algorithm for calculating the best snippet:
 
-        x bit (26+)		d_hits (antall unike treff)
-	1 bit (25)		div har good sentences
-        8 bit (17-24)		closeness (avstand mellom trefford gitt flere sokeord)
-	2 bit (15-16)		antall hits i bstart-div (max 3)
-	1 bit (14)		hits i bstart-span
-	1 bit (13)		hits i bstart-sentence
+        x bit (26+)		d_hits (number of unique hits)
+	1 bit (25)		div has good sentences
+        8 bit (17-24)		closeness (distance between hit words given multiple search terms)
+	2 bit (15-16)		number of hits in bstart-div (max 3)
+	1 bit (14)		hits in bstart-span
+	1 bit (13)		hits in bstart-sentence
         2 bit (11-12)		div and !head | div and head | !div and head | --
         2 bit (9-10)		span | sentence
-	3 bit (6-8)		pos for første hit i snippet
-	2 bit (4-5)		antall good sentences (max 4) -1
+	3 bit (6-8)		pos of first hit in snippet
+	2 bit (4-5)		number of good sentences (max 4) -1
         4 bit (0-3)		sum_hits (max 15)
      */
 
 	    // Calculate score for this snippet:
 
-	    if (sum_hits) sum_hits++;	// sum_hits er alltid minst 1 dersom det forekommer en hit,
-					// selv om alle hits er i lenker.
-	    sum_hits-= hits_in_links;	// Fjern hits i lenker.
+	    if (sum_hits) sum_hits++;	// sum_hits is always at least 1 if a hit occurs,
+					// even if all hits are in links.
+	    sum_hits-= hits_in_links;	// Remove hits in links.
 
 	    // Calculate score:
 	    score|= (d_hits<<26);
@@ -652,7 +652,7 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 
 	    queue_pop(Q);
 
-	    // Spol fram til neste linje-start:
+	    // Fast-forward to the next line start:
 	    while (queue_size(Q) > 0 && !(pair(queue_peak(Q)).second.i & v_section_div)) queue_pop(Q);
 
 	    while (queue_size(Q) > 0 && data->eoln_pos<vector_size(data->Eoln)
@@ -886,26 +886,26 @@ static inline void calculate_snippet(struct bsg_intern_data *data, char forced, 
 #endif
 
     /**
-        Algoritme for kalkulering av beste snippet:
+        Algorithm for calculating the best snippet:
 
-        x bit (26+)		d_hits (antall unike treff)
-	1 bit (25)		div har good sentences
-        8 bit (17-24)		closeness (avstand mellom trefford gitt flere sokeord)
-	2 bit (15-16)		antall hits i bstart-div (max 3)
-	1 bit (14)		hits i bstart-span
-	1 bit (13)		hits i bstart-sentence
+        x bit (26+)		d_hits (number of unique hits)
+	1 bit (25)		div has good sentences
+        8 bit (17-24)		closeness (distance between hit words given multiple search terms)
+	2 bit (15-16)		number of hits in bstart-div (max 3)
+	1 bit (14)		hits in bstart-span
+	1 bit (13)		hits in bstart-sentence
         2 bit (11-12)		div and !head | div and head | !div and head | --
         2 bit (9-10)		span | sentence
-	3 bit (6-8)		pos for første hit i snippet
-	2 bit (4-5)		antall good sentences (max 4) -1
+	3 bit (6-8)		pos of first hit in snippet
+	2 bit (4-5)		number of good sentences (max 4) -1
         4 bit (0-3)		sum_hits (max 15)
      */
 
 	    // Calculate score for this snippet:
 
-	    if (sum_hits) sum_hits++;	// sum_hits er alltid minst 1 dersom det forekommer en hit,
-					// selv om alle hits er i lenker.
-	    sum_hits-= hits_in_links;	// Fjern hits i lenker.
+	    if (sum_hits) sum_hits++;	// sum_hits is always at least 1 if a hit occurs,
+					// even if all hits are in links.
+	    sum_hits-= hits_in_links;	// Remove hits in links.
 
 	    // Calculate score:
 	    score|= (d_hits<<26);
@@ -1383,7 +1383,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
     int		nr, nr1=0, nr2=0;
     int		best_hits = 0;
 
-    // Finn de to mini-snippetene som utfyller hverandre best:
+    // Find the two mini snippets that complement each other best:
     for (i=0; i<data->num_queries; i++)
 	for (j=i+1; j<data->num_queries; j++)
 	    {
@@ -1406,7 +1406,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
 		    }
 	    }
 
-    // Dersom de to mini-snippetene tilsammen ikke er bedre enn den store, så skrive ut vanlig snippet istedet:
+    // If the two mini snippets together are no better than the big one, print the normal snippet instead:
     if ((nr1==nr2) || (data->q_best[nr1].score == 0 || data->q_best[nr2].score == 0)
 	|| (data->q_best[nr1].start == data->q_best[nr2].start)
 	|| (best_hits < data->best.hits)
@@ -1423,7 +1423,7 @@ static inline char* print_best_dual_snippet( struct bsg_intern_data *data, char*
         bprintf(B, "<![CDATA[");
     }
 
-    // Skriv ut to mini-snippets med '...' imellom:
+    // Print two mini snippets with '...' in between:
     for (nr=nr1, x=0; x<2; nr=nr2, x++)
 	{
 	    int		pos;
@@ -1725,7 +1725,7 @@ int generate_snippet( query_array qa, char text[], int text_size, char **output_
 		    data->accepted[state] = i;
 		}
 
-	    // Generere "tilbakehopp" for tilstandsmaskin:
+	    // Generate "fallback transitions" for the state machine:
 	    for (i=0; i<num_states; i++)
 		{
 		    for (j=0; j<sigma_size; j++)

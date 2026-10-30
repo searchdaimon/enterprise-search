@@ -16,7 +16,7 @@ sub lexer {
 	my($term);
 
 
-	#gjør om tegn
+	#convert characters
 	
 	$tegn =~ s/&aring;/å/g;
 	$tegn =~ s/&aelig;/æ/g;
@@ -24,37 +24,37 @@ sub lexer {
 
 	#$tegn =~ s/&lt;/\</g;
 	#$tegn =~ s/&gt;/\>/g;
-	#\21 okt 2005: fjerner dette da det tar for mye tid
+	#\21 Oct 2005: removing this since it takes too much time
 #	$tegn =~ s/&amp;/&/g;
 #	$tegn =~ s/&quot;/"/g;
 #	$tegn =~ s/&nbsp;/ /g;
 	#/
 	
-	#gjør om bindestrek til space
+	#convert hyphen to space
 	#$tegn =~ s/-/ /g;
 	#$tegn =~ s/_/ /g;
 	
-	#konverterer til lowercase
+	#convert to lowercase
 	$tegn = lc($tegn);
 	
-	#tar ut allt bortsett fra a-z øæå
+	#strip out everything except a-z and Norwegian letters
 	#$tegn =~ s/[^a-zøæå ]//g;
 	
-	#erstatter alle spacer etter hverandre med en
+	#replace runs of consecutive spaces with a single one
 	$tegn =~ s/ +/ /g;
 	
 	
-	my @mulige_ord = split(/[^\wøæå]/, $tegn); #splitter på ikke alfanumeriske tegn (\w)
+	my @mulige_ord = split(/[^\wøæå]/, $tegn); #split on non-alphanumeric characters (\w)
 	
 	
-	#legger til posisjonsinfo
+	#add position info
 	%termer;
 	my $count = 0;
 	for my $i (@mulige_ord) {
 		#print "$i - $count\n";
 		
-		${ $termer{$i} }[$#{ $termer{$i} } +1][0] = $count;	#hvor i dokumentet
-		${ $termer{$i} }[$#{ $termer{$i} }][1] = $TypePosition;	#hva for type, body, url, tittel eller....
+		${ $termer{$i} }[$#{ $termer{$i} } +1][0] = $count;	#where in the document
+		${ $termer{$i} }[$#{ $termer{$i} }][1] = $TypePosition;	#which type: body, url, title or....
 		
 		$count++;
 	}
@@ -68,12 +68,12 @@ sub stoppord {
 	my(@ord) = ();
 
 	########################################################################
-	#sjekker om den riktige stop ord listen er lastet, hvis ikke laste vi den
+	#check whether the correct stop word list is loaded, if not we load it
 	if (not exists $stoppord_liste{$language}) {
-		#Prøver å laste listen
+		#try to load the list
 		my $fil = '../data/stoppord/' . $language . '.txt';
 		open(INF,"$fil") or warn("Can't open $fil: $!");
-		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, lastet med \n på slutten, så \n må være med nor vi samenligner
+		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, loaded with \n at the end, so \n must be included when we compare
 		close(INF);
 		
 		foreach my $i (@a) {
@@ -84,24 +84,24 @@ sub stoppord {
 		
  		$stoppord_liste{$language} = {%b};
 		
-		#lister opp de vi har med
+		#list out the ones we have
 		#foreach $i (keys %b) {
 		#	print "$i\n";
 		#}
 	}
 	########################################################################
 	foreach my $term (keys %mulige_ord) {
-		#fjerner det siste tegnet hvis det er noe annet en a-zøæå, slik at som pungtum, komma, osv forsvinner.
+		#remove the last character if it is anything other than a-z and Norwegian letters, so that periods, commas, etc disappear.
 		#$term = $i->[0];
-		#$posisjon = $i->[1]; 
+		#$posisjon = $i->[1];
 		#$term =~ s/[^a-zøæå0-9]$//g;
 		
 		if (
-				($term =~ /[^a-zøæå0-9]/) 						#ineholder annet en alfanumersike tegn
-			|| 	($term eq '')									#er balnkt
-			||	(length($term) < $minimum_term_lengde) 			#er kortere en vi vil
-		    	||	(length($term) > $maksimum_term_lengde) 			#er lengere en vi vil
-			||	(exists $stoppord_liste{$language}->{$term})	#i stopp ord listen
+				($term =~ /[^a-zøæå0-9]/) 						#contains something other than alphanumeric characters
+			|| 	($term eq '')									#is blank
+			||	(length($term) < $minimum_term_lengde) 			#is shorter than we want
+		    	||	(length($term) > $maksimum_term_lengde) 			#is longer than we want
+			||	(exists $stoppord_liste{$language}->{$term})	#in the stop word list
 			) {
 			#print "-$term-\n";
 			#push(@ord,$term);
@@ -117,25 +117,25 @@ sub stoppord {
 }
 
 ###################################################################################################################
-# gjør om en relativ url til en full url.
-# Returnerer full url
+# convert a relative url to a full url.
+# Returns the full url
 #
-#	Inn verdier
-#	$BaseUrl	: urlen som ny url kom fra	Eks: http://www.domene.com/ 
-#	$NyUrl		: ny url som skal resolves. Eks: ../path/side.htm 
+#	Input values
+#	$BaseUrl	: the url the new url came from	Ex: http://www.domene.com/ 
+#	$NyUrl		: new url to be resolved. Ex: ../path/side.htm 
 #
-#	Denne prosedyren er mye billigere å bruke en URI::URL da den ikke starter opp en hel masse, men har ikke så mange
-#	funksjoner slik at den må kalle URI::URL for ca 1/4 av urlene. Men dette skjer automatisk uten at brukeren trenger
-#	å bry seg.
+#	This procedure is much cheaper to use than URI::URL since it does not start up a whole lot, but does not have as many
+#	functions so it has to call URI::URL for about 1/4 of the urls. But this happens automatically without the user needing
+#	to care.
 ###################################################################################################################
 sub ResulveUrl {
 	my($BaseUrl,$NyUrl) = @_;
-#		if ($NyUrl =~ /^http:\/\//) { #hvis dette ikke er en ful url som begynner på http:// og ikke  relativ som begynner på ../
+#		if ($NyUrl =~ /^http:\/\//) { #if this is not a full url starting with http:// and not a relative one starting with ../
 #			$FerdigUrl = $NyUrl;
 #			
 #		}
-#		elsif ((($NyUrl !~ /^\.|^\//) || ($BaseUrl =~ /$\//)) && ($NyUrl !~ /:/)){ #hvis urlene ikke begynner på . eller / og hovedurl begynner slutter / og ny url ikke her : i seg (https: mailto: ftp: osv) kan den legges til
-#			if ($BaseUrl =~ /$\//) { #hvis vi begynner med en / taen denne bort
+#		elsif ((($NyUrl !~ /^\.|^\//) || ($BaseUrl =~ /$\//)) && ($NyUrl !~ /:/)){ #if the url does not begin with . or / and the base url ends with / and the new url does not contain a : (https: mailto: ftp: etc) it can be appended
+#			if ($BaseUrl =~ /$\//) { #if we start with a / remove it
 #				$temp = $BaseUrl;
 #				chop($temp);
 #				
@@ -143,7 +143,7 @@ sub ResulveUrl {
 #				$FerdigUrl = $temp . '/' . $NyUrl;
 #			}
 #			else {
-#				if (($NyUrl !~ /^https/) && ($NyUrl !~ /^mailto/)) {	#hvis vi verken begynner på https eller mailto
+#				if (($NyUrl !~ /^https/) && ($NyUrl !~ /^mailto/)) {	#if we begin with neither https nor mailto
 #					#print "2 $BaseUrl $NyUrl\n";
 #					$FerdigUrl = $BaseUrl . $NyUrl;
 #					
@@ -159,24 +159,24 @@ sub ResulveUrl {
 	return $FerdigUrl;
 }
 ###################################################################################################################
-#	sjekker hvor mange ord i en hash som ligger i data/AdultWords.txt og data/AdoldHardCoreWords.txt for å kalkulere en
-#	vekt på hvor sansynelig at dette er porno
+#	check how many words in a hash appear in data/AdultWords.txt and data/AdoldHardCoreWords.txt in order to calculate a
+#	weight for how likely it is that this is porn
 #
-#	data/AdultWords.txt - ord som ofte forekomer på pornosider, men også andre plasser, har dobbel mening
-#	data/AdoldHardCoreWords.txt - ord som ikke har noen ikke porno mening
-#	data/AdultFraser.txt - fraser på 2 ord som gårigjen mye på porno sider
+#	data/AdultWords.txt - words that often appear on porn sites, but also elsewhere, have a double meaning
+#	data/AdoldHardCoreWords.txt - words that have no non-porn meaning
+#	data/AdultFraser.txt - 2-word phrases that recur a lot on porn sites
 ###################################################################################################################
 BEGIN {
 
 	warn("have disabled AdultWords.txt loading");
 	return;
 
-	my $adultWords;	#persitent variabel. Blir her melom hver gang vi kalle subrutinen
+	my $adultWords;	#persistent variable. Stays here between each time we call the subroutine
 
-		#Prøver å laste listen
+		#try to load the list
 		my $fil = '../data/AdultWords.txt';
 		open(INF,"$fil") or die("Can't open $fil: $!");
-		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, lastet med \n på slutten, så \n må være med nor vi samenligner
+		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, loaded with \n at the end, so \n must be included when we compare
 		close(INF);
 		
 		my %b = {};
@@ -188,15 +188,15 @@ BEGIN {
 		
  		$adultWords{'AdultWords'} = {%b};
 		
-		#lister opp de vi har med
+		#list out the ones we have
 		foreach $i (keys %b) {
 			#print "$i\n";
 		}
 		
-		#Prøver å laste listen
+		#try to load the list
 		my $fil = '../data/AdultHardCoreWords.txt';
 		open(INF,"$fil") or die("Can't open $fil: $!");
-		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, lastet med \n på slutten, så \n må være med nor vi samenligner
+		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, loaded with \n at the end, so \n must be included when we compare
 		close(INF);
 		
 		my %b = {};
@@ -208,17 +208,17 @@ BEGIN {
 		
  		$adultWords{'AdoldHardCoreWords'} = {%b};
 		
-		#lister opp de vi har med
+		#list out the ones we have
 		#foreach $i (keys %b) {
 		#	print "$i\n";
 		#}
 		##############################
 		#	AdultFraser.txt
 		#############################
-		#Prøver å laste listen
+		#try to load the list
 		my $fil = '../data/AdultFraser.txt';
 		open(INF,"$fil") or die("Can't open $fil: $!");
-		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, lastet med \n på slutten, så \n må være med nor vi samenligner
+		my @a = <INF>;       # reads the ENTIRE FILE into hash %b, loaded with \n at the end, so \n must be included when we compare
 		close(INF);
 		
 		my %b = {};
@@ -250,18 +250,18 @@ sub adultFilter {
 		}
 		if (exists $adultWords{'AdultFraser'}->{$i}) {
 			#print "\nFins $i kombinert med ";
-			#lopper gjenom aller ordene komer etter det fårste ordet, de er deiis to ordene tilsamen sum utgjør frasen vi leter etter
+			#loop through all the words that come after the first word; together the two words make up the phrase we are looking for
 			foreach my $x (@{ $adultWords{'AdultFraser'}->{$i} }) {
 			#	print "$x eller ";
-				if (exists $TermHash{$x}) {	#hvis et av fraseordene også fins
+				if (exists $TermHash{$x}) {	#if one of the phrase words also exists
 					foreach my $y (@{ $TermHash{$x} }) {
 					#	print "\n\t$x i $y->[1], $y->[0]";
-						#nå har vi funnet siste ordet i frasen, så vi lopper gjenom og sjekker etter om det er kombinert med første ord noen plass
+						#now we have found the last word in the phrase, so we loop through and check whether it is combined with the first word anywhere
 						foreach my $h (@{ $TermHash{$i} }) {
 						#	print "\nh: $i $h->[1] $h->[0]";
-							#if (($h->[1] eq $y->[1]) && ($h->[0] == ($y->[0] -1))) { #trekker fra 1, da vil posisjonen være like hvis de står etter hverandre.
+							#if (($h->[1] eq $y->[1]) && ($h->[0] == ($y->[0] -1))) { #subtract 1, then the positions are equal if they are adjacent.
 							if ($h->[1] eq $y->[1]) {
-								my $distance = $y->[0] - $h->[0];	#finner avstand
+								my $distance = $y->[0] - $h->[0];	#find the distance
 								#print "\ndistance $distance\n";
 								if ($distance == 1) {
 								#print "\nfant: $i:$h->[0] $x: $y->[0] \n";

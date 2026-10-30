@@ -67,7 +67,7 @@ int main (int argc, char *argv[]) {
 
 	if ((argc -optind)== 4) {
 
-                //finner siste indekseringstid
+                //get the last indexing time
                 lastIndexTime =  GetLastIndexTimeForLot(lotNr,subname);
 
 
@@ -76,7 +76,7 @@ int main (int argc, char *argv[]) {
                         exit(1);
                 }
 
-               //sjekker om vi har nokk palss
+               //check that we have enough space
                 if (!lotHasSufficientSpace(lotNr,4096,subname)) {
                         printf("insufficient disk space\n");
                         exit(1);
@@ -90,10 +90,10 @@ int main (int argc, char *argv[]) {
 
 			//"$revindexPath/$revindexFilNr.txt";
 			GetFilPathForLot(path,lotNr,subname);
-			//ToDo: må sette språk annen plass
+			//ToDo: must set the language somewhere else
 			sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
 
-			//oppretter paths
+			//create the paths
 			makePath(iipath);			
 
 			sprintf(iipath,"%s%i.txt",iipath,lotPart);
@@ -119,12 +119,12 @@ int main (int argc, char *argv[]) {
 
 		//"$revindexPath/$revindexFilNr.txt";
 		GetFilPathForLot(path,lotNr,subname);
-		//ToDo: må sette språk annen plass
+		//ToDo: must set the language somewhere else
 		//aa sprintf(iipath,"%siindex/%s/index/aa/%i.txt",path,argv[1 +optind],lotPart);
-                //ToDo: må sette språk annen plass
+                //ToDo: must set the language somewhere else
                 sprintf(iipath,"%siindex/%s/index/aa/",path,argv[1 +optind]);
 
-                //oppretter paths
+                //create the paths
                 makePath(iipath);
 
                 sprintf(iipath,"%s%i.txt",iipath,lotPart);
@@ -184,16 +184,16 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 	
 
 
-		//så lenge vi ikke går over noen grense.
+		//as long as we don't go past some limit.
 		//while (count < revIndexArraySize) {
 
-		//her kan vi enten ha record seperator, eller info om treff
+		//here we can have either a record separator or hit info
 		
 		
 
 			if (fread(&revIndexArray[count].DocID,sizeof(revIndexArray[count].DocID),1,REVINDEXFH) != 1) {
 				#ifdef DEBUG
-				//har kommer vi til eof, det er helt normalt
+				//here we reach eof, which is completely normal
 				printf("can't read any more data\n");
 				perror("revindex");
 				#endif
@@ -218,7 +218,7 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 				return 0;
 			}
 
-			//leser antal hist vi skulle ha
+			//read the number of hits we should have
 			fread(&revIndexArray[count].hits,revIndexArray[count].nrOfHits * sizeof(short),1,REVINDEXFH);
 
 			revIndexArray[count].tombstone = 0;
@@ -237,7 +237,7 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 		//}
 		//}
 			
-		////hvis vi når grensen
+		////if we reach the limit
 		//if (count == revIndexArraySize) {
 		//	printf("revIndexArraySize hit\n");
 		//	break;
@@ -250,17 +250,17 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 	printf("Documents in index: %i\n",count);
 	#endif
 	
-	//runarb: 17 aug 2007: hvorfor har vi med -- her. Ser ut til at vi da mksiter siste dokumentet. haker ut for nå
+	//runarb: 17 aug 2007: why do we have -- here. Looks like it makes us lose the last document. Disabling for now
 	//--count;
 
 	fclose(REVINDEXFH);
 
 	
 	//printf("sort\n");
-	//sorterer på WordID
+	//sort by WordID
 	//qsort(revIndexArray, count , sizeof(struct revIndexArrayFomat), compare_elements);
 	//int mgsort(void *data, int size, int esize, int i, int k, int (*compare) (const void *key1, const void *key2));
-	//må ha en stabil sorteringsalgoritme
+	//must use a stable sort algorithm
 	//mgsort_i = 0;	
 	//mgsort_k = count -1;
 	//mgsort(revIndexArray, count , sizeof(struct revIndexArrayFomat),mgsort_i,mgsort_k,compare_elements);
@@ -274,7 +274,7 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 		exit(1);
 	}
 
-	//teller forkomster av DocID's pr WordID
+	//count occurrences of DocIDs per WordID
 	lastWordID = 0;
 	forekomstnr = -1;
 	lastDocID = 0;
@@ -327,21 +327,21 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 
 		//printf("\tDocID %u, nrOfHits %u\n",revIndexArray[i].DocID,revIndexArray[i].nrOfHits);
 
-		//sjekker at dette ikke er en slettet DocID
+		//check that this is not a deleted DocID
 		if (revIndexArray[i].tombstone) {
 			#ifdef DEBUG
 				printf("DocID %u is tombstoned\n",revIndexArray[i].DocID);
 			#endif
 			continue;
 		}
-		//skrive DocID og antall hit vi har
+		//write DocID and the number of hits we have
 		fwrite(&revIndexArray[i].DocID,sizeof(revIndexArray[i].DocID),1,REVINDEXFH);
 		//v3
 		fwrite(&revIndexArray[i].langnr,sizeof(char),1,REVINDEXFH);
 
 		fwrite(&revIndexArray[i].nrOfHits,sizeof(revIndexArray[i].nrOfHits),1,REVINDEXFH);
 
-		//skriver alle hittene		
+		//write all the hits		
 		for(y=0;y<revIndexArray[i].nrOfHits;y++) {
 			#ifdef DEBUG		
 				printf("\t\thit %hu\n",revIndexArray[i].hits[y]);
@@ -354,11 +354,11 @@ static int Indekser(char iindexPath[],struct revIndexArrayFomat revIndexArray[],
 	}
 
 	fclose(REVINDEXFH);
-	} //else filsjekk
+	} //else file check
 }
 
-//sortere først på WordID, så DocID
-//krever en stabil algoritme
+//sort first by WordID, then by DocID
+//requires a stable algorithm
 int compare_elements (const void *p1, const void *p2) {
 
 //        struct iindexFormat *t1 = (struct iindexFormat*)p1;

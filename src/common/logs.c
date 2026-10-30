@@ -17,7 +17,7 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 
         va_start(ap, fmt);
 
-		//skriver til log
+		// write to log
 		if (LOG == NULL) {
                 	printf("log (log filehandler is NULL, won't log to file): ");
                 	vprintf(fmt,ap);
@@ -34,13 +34,13 @@ void blog(FILE *LOG, int level, const char *fmt, ...) {
 			printf("%s: ", buf);
 			fprintf(LOG, "%s: ", buf);
 
-			//skriver beskjeden til log fil
+			// write the message to the log file
 	                vfprintf(LOG, fmt,ap);
 			fprintf(LOG, "\n");
 
 		}
 
-		//viser på skjerm
+		// show on screen
 		if (level <= 1) {
                		printf("log: ");
                		vprintf(fmt,ap);

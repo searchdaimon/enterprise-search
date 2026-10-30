@@ -7,7 +7,7 @@
 #include "scan.h"
 
 int crawlcanconect(struct collectionFormat *collection) {
-	//tester om vi kan koble til
+	//test whether we can connect
 	return 1;
 }
 
@@ -27,7 +27,7 @@ int crawlfirst(struct collectionFormat *collection,
 int crawlupdate(struct collectionFormat *collection,
 	int (*documentExist)(struct collectionFormat *collection,struct crawldocumentExistFormat *crawldocumentExist), 
 	int (*documentAdd)(struct collectionFormat *collection,struct crawldocumentAddFormat *crawldocumentAdd)) {
-	//opdate
+	//update
 	
 	
 	return 1;
@@ -37,7 +37,7 @@ int crawlupdate(struct collectionFormat *collection,
 struct crawlLibInfoFormat crawlLibInfo = {
 	NULL,
         crawlfirst,
-        crawlfirst, // bruker bare crawlfirst da vi ikke har noen måte og finne ut hvis gammel en record er
+        crawlfirst, // just use crawlfirst since we have no way to find out how old a record is
         crawlcanconect,
 	NULL,
 	scanMySQL,

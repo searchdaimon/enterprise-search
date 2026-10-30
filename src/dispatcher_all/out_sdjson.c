@@ -52,7 +52,7 @@ void disp_out_sd_json(
 	JsonNode *results_info = json_mkobject();
 	JsonNode *root = json_mkobject();
 
-	//får rare svar fra hilite. Dropper å bruke den får nå
+	//getting strange answers from hilite. Skipping its use for now
 	FinalSiderHeder.hiliteQuery[0] = '\0';
 	#ifdef WITH_SPELLING
 	strsandr(SiderHeder->spellcheckedQuery, "\"","&quot;");
@@ -88,7 +88,7 @@ void disp_out_sd_json(
 
 /*
 
-	    //hvis vi har noen feil viser vi dem
+	    //if we have any errors, show them
 	    for (i=0;i<errorha.nr;i++) {
 		printf("<error>\n");
 		printf("  <errorcode>%i</errorcode>\n",errorha.errorcode[i]);
@@ -143,7 +143,7 @@ void disp_out_sd_json(
 
 
 	#ifdef ATTRIBUTES
-		// Vi definerer <navigation> i searchdbb da vi vil ha med query. Hvis noe gikk feil må vi derfor definere den her også 
+		// We define <navigation> in searchdbb since we want the query included. If something went wrong we must therefore define it here too 
 		if (SiderHeder[0].navigation_xml[0] != '\0') {
 		    	//printf("%s\n", SiderHeder[0].navigation_xml);
 			JsonNode *nav = json_decode( SiderHeder[0].navigation_xml );
@@ -190,7 +190,7 @@ void disp_out_sd_json(
 					"last year",
 					"two years plus"};
 
-	    // Bør gjøres sammen med attributter?
+	    // Should this be done together with attributes?
 	    query_array	qa;
 	    get_query(QueryData.query, strlen(QueryData.query), &qa);
 	    container	*remove = set_container( int_container() );
@@ -340,11 +340,11 @@ void disp_out_sd_json(
 			}
 			#endif
 
-				//gjør om språk fra tall til code
+				//convert language from number to code
 				char documentlangcode[4];
 				getLangCode(documentlangcode,atoi(Sider[i].DocumentIndex.Sprok));
 
-				//finner vid
+				//find vid
 				char vidbuf[64];
 				vid_u(vidbuf,sizeof(vidbuf),salt,Sider[i].iindex.DocID,etime,QueryData.userip);
 
@@ -406,7 +406,7 @@ void disp_out_sd_json(
 
 						json_append_member(result, "time_unix", json_mknumber(Sider[i].DocumentIndex.CrawleDato) );
 
-						// Konverterer til locale:
+						// Convert to locale:
 						if (strcmp(queryNodeHeder.HTTP_ACCEPT_LANGUAGE,"no") == 0) {
 							setlocale(LC_TIME, "no_NO.utf8");
 						}
@@ -421,8 +421,8 @@ void disp_out_sd_json(
 						json_append_member(result, "time_iso", json_mkstring(timebuf) );
 
 					}
-					// Sender med cache link hvis 
-					// collection er konfigurert til aa vise cache.
+					// Include cache link if 
+					// the collection is configured to show cache.
 					if ((int) Sider[i].subname.config.cache_link) {
 
 						JsonNode *caches = json_mkarray();
@@ -459,7 +459,7 @@ void disp_out_sd_json(
 			json_append_element(results, result );
 
 
-			//teller bare normale sider
+			//only count normal pages
 			if (Sider[i].type == siderType_normal) {
 				++x;
 			}

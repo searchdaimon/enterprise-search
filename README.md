@@ -55,6 +55,23 @@ Please see full article on how to get started as a developer at: [Setting up an 
 - [Testing & Test data](https://github.com/searchdaimon/enterprise-search/wiki/Testing-&-Test-data)
 - [Tips & Tricks](https://github.com/searchdaimon/enterprise-search/wiki/Tips-&-Tricks)
 
+##### Running it in Docker
+`Dockerfile` and `docker-compose.yml` build and run the whole appliance on Amazon Linux 2023, without systemd, with MariaDB in its own container:
+
+<pre>
+docker compose up -d --build   # build and start; first build compiles Berkeley DB, flex and bison from source
+docker compose logs -f es      # follow startup
+</pre>
+
+The web UI is then on http://localhost:8080 (`/public` anonymous search, `/admin` panel, default login `admin` / `water66`). The index and the config database live in named volumes and survive a rebuild. The image is multi-stage: a Perl or template change rebuilds in seconds, a C change recompiles only the C tree.
+
+##### Tests
+See `test/README.md`. Three layers, all run inside the image because the C tree only builds in the appliance environment:
+
+- C unit tests (`test/c/`, TAP output, linked against the same static libraries the daemons use) and Perl unit tests (`test/perl/t/`, including a `perl -c` sweep of every Perl source): `make test` in the container, or `docker build --target test .` which runs them under AddressSanitizer.
+- Smoke test (`test/smoke/smoke.sh`): with the compose stack running, `make -C test smoke-compose` checks that every daemon is up, that the web UI and admin panel answer, that a document pushed through the REST API becomes searchable and renders in the search UI without Perl warnings, and that every page of the admin panel renders.
+- CI (`.github/workflows/ci.yml`) runs both on every push.
+
 
 ##### Mailing list for developers
 http://lists.searchdaimon.com/mailman/listinfo/sddev

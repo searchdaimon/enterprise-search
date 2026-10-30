@@ -42,7 +42,7 @@ unsigned char* generate_pdf_thumbnail( const void *document, const size_t size, 
 	char command[512];
 	char documentfile[PATH_MAX];
 	char imagefile[PATH_MAX];
-	struct stat inode;      // lager en struktur for fstat å returnere.
+	struct stat inode;      // create a struct for fstat to return into.
 
 	//tmpfilename = mktemp("/tmp/generateThumbnail_XXXXXX"); //make a unique temporary file name
 

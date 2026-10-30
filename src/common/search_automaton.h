@@ -21,7 +21,7 @@ typedef struct automaton
 
 
 /*
-// Konverterer A-Z og utf-8 ÆØÅ (+de andre latin-1 -tegnene) til små bokstaver:
+// Converts A-Z and utf-8 accented uppercase (+the other latin-1 characters) to lowercase:
 static inline char* convert_to_lowercase( unsigned char *str )
 {
     int		i;

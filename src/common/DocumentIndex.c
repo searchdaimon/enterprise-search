@@ -13,7 +13,7 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 #include "bstr.h"
 #include "dp.h"
 
-//skrur av filcashn da vi deiver å segge feiler med den
+// turn off the file cache since we keep getting segfaults with it
 //#define DI_FILE_CASHE
 
 #ifdef DI_FILE_CASHE
@@ -35,7 +35,7 @@ ToDo: trenger en "close" prosedyre for filhandlerene.
 
 #define CurrentDocumentIndexVersion 4
 
-// DocumentIndex strukt, er rutiner som jobber på en di struct
+// DocumentIndex struct, these are routines that work on a di struct
 void DIS_delete(struct DocumentIndexFormat *DocumentIndexPost) {
 	DocumentIndexPost->htmlSize2 = 0;
 	DocumentIndexPost->htmlSize = 0;
@@ -49,7 +49,7 @@ void DIS_delete(struct DocumentIndexFormat *DocumentIndexPost) {
 
 int DIS_isDeleted(struct DocumentIndexFormat *DocumentIndexPost) {
 
-	//dokumentet er slettet hvis alle følgende pekere og størelse er 0
+	// the document is deleted if all the following pointers and size are 0
 	if (
 	   ((DocumentIndexPost->htmlSize2 == 0) && (DocumentIndexPost->htmlSize == 0))
 	&& (DocumentIndexPost->imageSize == 0)
@@ -70,7 +70,7 @@ int DIPostAdress(unsigned int DocID) {
 
 	int LotNr;
 
-	//finner lot for denne DocIDen
+	// find the lot for this DocID
 	LotNr = rLotForDOCid(DocID);
 
 	#ifdef BLACK_BOX
@@ -95,11 +95,11 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 	char FileName[128];
 	char FilePath[128];
 	
-	//finner lot for denne DocIDen
+	// find the lot for this DocID
 	LotNr = rLotForDOCid(DocID);
 
-	//hvis filen ikke er open åpner vi den
-	//segfeiler en skjelden gang
+	// if the file is not open we open it
+	// segfaults once in a rare while
 	#ifdef DI_FILE_CASHE
 	if ((LotNr == openDocumentIndex) && (diname == NULL || strcmp(openName,diname) == 0)) {
 
@@ -122,19 +122,19 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 
 		#ifdef DI_FILE_CASHE
 
-			//hvis vi har en open fil lukkes denne
+			// if we have an open file we close it
 			if (openDocumentIndex != -1) {
-				//segfeiler her for searchkernel
-				//18,okt segefeiler her igjen ????
+				// segfaults here for searchkernel
+				// 18 Oct segfaults here again ????
 				fclose(DocumentIndexHA);
 			}
 		#endif
 				
 		
-		//prøver først å åpne for lesing
+		// first try to open for reading
 		if (type == 'c') {
-			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
-			//dette gjør at søk ikke funker på web på grun av rettighter :-(
+			// temp: set file opening to r+ to make DIRead and DIwrite cooperate
+			// this makes search not work on web due to permissions :-(
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
 				printf("%d: cant open file %s for c\n", __LINE__, FileName);
 				perror(FileName);
@@ -142,8 +142,8 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			}
 		}
 		else if (type == 'r') {
-			//temp: setter filopning til r+ for å få til å samarbeid melom DIRead og DIwrite
-			//dette gjør at søk ikke funker på web på grun av rettighter :-(
+			// temp: set file opening to r+ to make DIRead and DIwrite cooperate
+			// this makes search not work on web due to permissions :-(
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
 				printf("%d: cant open file %s for r\n",__LINE__, FileName);
 				perror(FileName);
@@ -151,7 +151,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 			}
 		}
 		else if (type == 's') {
-			//en ekte r read
+			// a real r read
 			if ((DocumentIndexHA = fopen(FileName,"rb")) == NULL) {
 				printf("%d: cant open file %s for rb\n", __LINE__, FileName);
 				perror(FileName);
@@ -161,7 +161,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 
 		else if (type == 'w'){
 			if ((DocumentIndexHA = fopen(FileName,"r+b")) == NULL) {
-				//hvis det ikke går lager vi og åpne filen
+				// if that does not work we create and open the file
 				makePath(FilePath);
 				if ((DocumentIndexHA = fopen(FileName,"w+b")) == NULL) {
 					perror(FileName);
@@ -177,7 +177,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 		#endif
 	}
 
-	//søker til riktig post
+	// seek to the correct record
 	if (fseek(DocumentIndexHA,DIPostAdress(DocID),0) != 0) {
 		perror("Can't seek");
 		exit(1);
@@ -188,7 +188,7 @@ FILE *GetFileHandler (unsigned int DocID,char type,char subname[], char *diname)
 
 }
 
-//sjeker om det fins en DocumentIndex fro denne loten
+// check whether a DocumentIndex exists for this lot
 int DIHaveIndex (int lotNr,char subname[]) {
 
 	char FilePath[512];
@@ -225,7 +225,7 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
         	                exit(1);
                 	}
 		#endif
-		//skriver posten
+		// write the record
 		if (fwrite(DocumentIndexPost,sizeof(struct DocumentIndexFormat),1,file) != 1) {
 			perror("Can't write");
 			exit(1);
@@ -238,7 +238,7 @@ void DIWrite (struct DocumentIndexFormat *DocumentIndexPost, unsigned int DocID,
 		printf("Cant get fh\n");
 	}
 
-	//hvis vi ikke har på DI_FILE_CASHE må vi lokke filen
+	// if we do not have DI_FILE_CASHE on we must lock the file
 	#ifndef DI_FILE_CASHE
 		fclose(file);
 	#endif
@@ -267,9 +267,9 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 
 
 
-        //tester om reposetoriet allerede er open, eller ikke
+        // test whether the repository is already open or not
         if (LotOpen != LotNr) {
-                //hvis den har vært open, lokker vi den. Hvi den er -1 er den ikke brukt enda, så ingen vits å å lokke den da :-)
+                // if it has been open, we close it. If it is -1 it has not been used yet, so no point in closing it then :-)
                 if (LotOpen != -1) {
                         fclose(LotFileOpen);
                 }
@@ -299,13 +299,13 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 
 	
 
-        //hvis det det er data igjen i filen leser vi den
+        // if there is still data left in the file we read it
         if (!feof(LotFileOpen)) {
          
 
-        	//leser posten
-		//mystisk at vi får "Can't reed DocumentIndexPost: Success", ved eof her,
-		//i steden for at vi  får eof lenger opp
+        	// read the record
+		// mysterious that we get "Can't reed DocumentIndexPost: Success" at eof here,
+		// instead of getting eof further up
 		#ifdef BLACK_BOX
                         unsigned int CurrentDocumentIndexVersionAsUInt;
 			if ((fread(&CurrentDocumentIndexVersionAsUInt,sizeof(unsigned int),1,LotFileOpen)) != 1) {
@@ -313,7 +313,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 				perror("CurrentDocumentIndexVersionAsUInt");
 				#endif
 
-				//stnger ned filen
+				// close down the file
         	                fclose(LotFileOpen);
 	                        LotOpen = -1;
 
@@ -329,7 +329,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
                 		printf("Can't reed DocumentIndexPost. n: %i, eof %i\n",n,feof(LotFileOpen));
 				perror("fread() DocumentIndexPost");
 			}
-			//stnger ned filen
+			// close down the file
 			fclose(LotFileOpen);
 			LotOpen = -1;
 
@@ -341,7 +341,7 @@ int DIGetNext (struct DocumentIndexFormat *DocumentIndexPost, int LotNr,unsigned
 
         }
         else {
-		//hvis vi er tom for data stenger vi filen, og retunerer en 0 som sier at vi er ferdig.
+		// if we are out of data we close the file and return a 0 to say we are done.
 		#ifdef DEBUG
                 	printf("ferdig\n");
 		#endif
@@ -366,12 +366,12 @@ int DIRead_post_i(struct DocumentIndexFormat *DocumentIndexPost, int file) {
                 #endif
 
 
-        	//lesr posten
+        	// read the record
         	if (read(file,DocumentIndexPost,sizeof(*DocumentIndexPost)) < 0) {
 			#ifdef DEBUG
                 	perror("Can't reed");
 			#endif
-			//selv om vi ikke fikk lest fra filen må vi lokke den, så vi kan ikke kalle retun directe her
+			// even if we did not get to read from the file we must lock it, so we cannot call return directly here
 			forReturn =  0;
         	}
 		else {
@@ -405,12 +405,12 @@ int DIRead_post_fh(struct DocumentIndexFormat *DocumentIndexPost, FILE *file) {
                 #endif
 
 
-        	//lesr posten
+        	// read the record
         	if (fread(DocumentIndexPost,sizeof(*DocumentIndexPost),1,file) != 1) {
 			#ifdef DEBUG
 				perror("Can't reed");
 			#endif
-			//selv om vi ikke fikk lest fra filen må vi lokke den, så vi kan ikke kalle retun directe her
+			// even if we did not get to read from the file we must lock it, so we cannot call return directly here
 			forReturn =  0;
         	}
 		else {
@@ -446,7 +446,7 @@ int DIRead_fmode (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char 
 			forReturn = 1;
 		}
 
-		//hvis vi ikke har på DI_FILE_CASHE må vi lokke filen
+		// if we do not have DI_FILE_CASHE on we must lock the file
 		#ifndef DI_FILE_CASHE
 			fclose(file);
 		#endif
@@ -488,7 +488,7 @@ int DIRead_fh(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subn
 
 		
 
-		//søker til riktig post
+		// seek to the correct record
 		if (fseek(file,DIPostAdress(DocID),0) != 0) {
 			perror("Can't seek");
 			exit(1);
@@ -529,7 +529,7 @@ int DIRead_i(struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subna
 
 		
 
-		//søker til riktig post
+		// seek to the correct record
 		if (lseek(file,DIPostAdress(DocID),SEEK_SET) < 0) {
 			perror("Can't lseek");
 			forReturn = 0;
@@ -563,7 +563,7 @@ int DIRead (struct DocumentIndexFormat *DocumentIndexPost, int DocID,char subnam
 	return DIRead_fmode(DocumentIndexPost,DocID,subname,'c');
 }
 
-//stenger ned filer
+// close down files
 void DIClose(FILE *DocumentIndexHA) {
 	fclose(DocumentIndexHA);
 }

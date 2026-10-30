@@ -47,10 +47,10 @@
 #define html_tempelate "<html>\n<head>\n<title>%s</title>\n<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>\n</head>\n<body>\n%s\n</body>\n</html>\n"
 #define html_text_tempelate "<html>\n<head>\n<title>%s</title>\n<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'>\n</head>\n<body>\n<pre style='word-wrap:break-word;'>%s</pre>\n</body>\n</html>\n"
 
-//muligens bare convert:
+// possibly just convert:
 // ai
-//bugger "psd"
-// Magnus: Det heter altså "jpeg", ikke "jepg" ;)
+// bugger "psd"
+// Magnus: it is actually called "jpeg", not "jepg" ;)
 char *supportetimages[] = {"png", "jpg", "jpeg", "bmp", "tif", "tiff", "gif", "eps", "ai", '\0'};
 
 
@@ -192,11 +192,11 @@ int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, cha
 	uriindex_open(&dbp,subname, DB_CREATE);
 
 
-	//resetter minne
+	// reset memory
         memset(&key, 0, sizeof(DBT));
         memset(&data, 0, sizeof(DBT));
 
-        //legger inn datane i bdb strukturen
+        // put the data into the bdb struct
         key.data = uri;
         key.size = strlen(uri);
 
@@ -206,10 +206,10 @@ int uriindex_add (char uri[], unsigned int DocID, unsigned int lastmodified, cha
 	data.data = &uriindex;
 	data.size = sizeof(uriindex);
 
-        //legger til i databasen
+        // add to the database
         if  ((ret = dbp->put(dbp, NULL, &key, &data, 0)) != 0) {
                 dbp->err(dbp, ret, "DB->put");
-		//kan ikke returnere her for da blir den aldr lukket.
+		// can't return here, because then it would never be closed.
         	//return (EXIT_FAILURE);
         }
 
@@ -235,11 +235,11 @@ int uriindex_get (char uri[], unsigned int *DocID, unsigned int *lastmodified, c
 	}
 
 
-        //resetter minne
+        // reset memory
         memset(&key, 0, sizeof(DBT));
         memset(&data, 0, sizeof(DBT));
 
-	//legger inn datane i bdb strukturen
+	// put the data into the bdb struct
         key.data = uri;
         key.size = strlen(uri);
 
@@ -282,10 +282,10 @@ int uriindex_delete (char uri[], char subname[]) {
 	}
 
 
-        //resetter minne
+        // reset memory
         memset(&key, 0, sizeof(DBT));
 
-	//legger inn datane i bdb strukturen
+	// put the data into the bdb struct
         key.data = uri;
         key.size = strlen(uri);
 
@@ -308,7 +308,7 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	#ifdef BBDOCUMENT_IMAGE
 
 	if (strcmp(documenttype,"pdf") == 0) {
-		//pdf convert
+		// pdf convert
 		if (((*imagebuffer) = generate_pdf_thumbnail( document, dokument_size, imageSize )) == NULL) {
 			return 0;
 
@@ -322,7 +322,7 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	#else
 	#if BBDOCUMENT_IMAGE_BY_CONVERT
 	if (strcmp(documenttype,"pdf") == 0) {
-		//pdf convert
+		// pdf convert
 /*
 		if (((*imagebuffer) = generate_pdf_thumbnail_by_convert( document, dokument_size, imageSize )) == NULL) {
 			return 0;
@@ -345,7 +345,7 @@ int bbdocument_makethumb( char documenttype[],char document[],size_t dokument_si
 	#endif
 	#endif
 	
-	//er bare her hvis vi ikke klarte og lage bilde, og da har vi selsakt ikke noe størelse
+	// only here if we failed to create an image, and then of course we have no size
 	//printf("imageSize %"PRId64" at %s:%i\n",(*imageSize),__FILE__,__LINE__);
 	return 0;
 
@@ -406,7 +406,7 @@ int bbdocument_init(container **attrkeys) {
 		while ((!feof(filep)) && (fgets(lines,sizeof(lines) -1,filep) != NULL)) {
 			
 
-			//blanke linjer og komentarer som starter på #
+			// blank lines and comments that start with #
 			if ((lines[0] == '\n') || (lines[0] == '#')) {
 				continue;
 			}
@@ -427,7 +427,7 @@ int bbdocument_init(container **attrkeys) {
 
 			if (strcmp(splitdata[0],"documentstype") == 0) {
 
-				//legger til det gamle filteret
+				// add the old filter
 				if (fileFilter != NULL) {
 					if (NULL != hashtable_search(h_fileFilter,fileFilter->documentstype )) {
 						printf("####################### BUG ################################\n");
@@ -444,16 +444,16 @@ int bbdocument_init(container **attrkeys) {
 
 					printf("end inserting\n");
 				}
-				//begynner på et nytt filter
+				// start a new filter
 
 				fileFilter = malloc(sizeof(struct fileFilterFormat));
 				fileFilter->attrwhitelist = NULL;
 
-				//ikke alle filfiltere har sat alle opsjoner, så vi nulstiller alt, slik at det er lett og strcmp()'e
-				//etter en verdi, uten at vi må tenke på at den kansje ikke er satt.
+				// not all file filters have set all options, so we zero everything out, to make it easy to strcmp()
+				// for a value, without having to worry that it might not be set.
 				memset(fileFilter,'\0',sizeof(struct fileFilterFormat));
 
-				// default til FILTER_EXEOC
+				// default to FILTER_EXEOC
 				fileFilter->filtertype = FILTER_EXEOC;
 
 				strcpy((*fileFilter).documentstype,splitdata[1]);
@@ -463,12 +463,12 @@ int bbdocument_init(container **attrkeys) {
 
 			}
 			else if (strcmp(splitdata[0],"command") == 0) {
-				//vi kan ha : i komandoen. Kopierer derfor først inn hele, så fjerner vi command:
+				// we may have a : in the command. So first copy in the whole thing, then we strip out command:
 				//strcpy((*fileFilter).command,splitdata[1]);
 			
 				strscpy((*fileFilter).command,lines,sizeof((*fileFilter).command));
 				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"command: ","");
-				//leger til path der vi har sakt vi skal ha lokal path ( ./ )
+				// add the path where we have said we want a local path ( ./ )
 				strcasesandr((*fileFilter).command,sizeof((*fileFilter).command),"./",path);
 				printf(".command %s\n",(*fileFilter).command);
 			}
@@ -479,7 +479,7 @@ int bbdocument_init(container **attrkeys) {
 				strscpy((*fileFilter).format,splitdata[1],sizeof((*fileFilter).format));
 			}
 			else if (strcmp(splitdata[0],"outputtype") == 0) {
-				//stdio, file, osv,,
+				// stdio, file, etc,,
 				strcpy((*fileFilter).outputtype,splitdata[1]);
 			}
 			else if (strcmp(splitdata[0],"outputformat") == 0) {
@@ -508,7 +508,7 @@ int bbdocument_init(container **attrkeys) {
 				printf("unknown command \"%s\"\n",lines);
 			}
 
-			//clean
+			// clean
 			FreeSplitList(splitdata);
 
 		}
@@ -524,7 +524,7 @@ int bbdocument_init(container **attrkeys) {
                         }
 			printf("end inserting\n");
 		}
-		//markerer at vi har lagt det til
+		// mark that we have added it
 		fileFilter = NULL;
 
 		fclose(filep);
@@ -579,7 +579,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 		return 1;
 	}
 	else if ((no_lottery == 0) && (lastmodified == 0) && bbdocument_exist_zero_lottery(20)) {
-		//vi må av og til crawle de med ukjent/0 lastmodified
+		// we need to occasionally crawl those with unknown/0 lastmodified
 		debug("bbdocument_exist: Uri \"%s\" exists and we got 0 as current time. But we did winn in the lottery, and are askinf for it to be crawled. DocID \"%u\"\n", documenturi, DocID);
 		return 0;
 	}
@@ -590,7 +590,7 @@ int bbdocument_exist(char subname[],char documenturi[],unsigned int lastmodified
 	}
 
 
-	//ingen av testene slå ut. Dokumenetet finnes ikke
+	// none of the tests matched. The document does not exist
 	debug("bbdocument_exist: dokument dosent exist");
 	return 0;
 }
@@ -617,8 +617,8 @@ char *acl_normalize(char *acl[]) {
 
 }
  
-//stripper < og > tegn, da html parseren vil tro det er html tagger.
-//de er jo som kjent på formater < og >
+// strip < and > characters, since the html parser would think they are html tags.
+// they are of course in the form < and >
 void stripTags(char *cpbuf, int cplength) {
 
 	int i;
@@ -648,23 +648,23 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
 	printf("bbdocument_convert: dokument_size %i, title \"%s\",filetype \"%s\"\n",dokument_size,titlefromadd,filetype);
 
-	//konverterer filnavn til liten case
+	// convert filename to lowercase
 	for (i=0;i < strlen(filetype);i++) {
 		//printf("%c\n",filetype[i]);
 		filetype[i] = btolower(filetype[i]);
 	}
 
-	//hvis vi har et html dokument kan vi bruke dette direkte
-	//er dog noe uefektist her, ved at vi gjør minnekopiering
+	// if we have an html document we can use it directly
+	// this is a bit inefficient though, since we do a memory copy
 	if ((strcmp(filetype,"htm") == 0) || (strcmp(filetype,"html") == 0 )) {
 		if (titlefromadd[0]=='\0') {
 			bmemcpy(outbuffer, document, dokument_size);
 		}
 		else {
-			// Noen dokumenter kan ha lagt ved tittel ved add uten å ha tittel i html-en (f.eks epost).
-			// Legg til korrekt tittel i dokumentet.
-			// Html-parseren tar kun hensyn til den første tittelen, så det skal holde å legge den til
-			// øverst i dokumentet.
+			// Some documents may have supplied a title at add time without having a title in the html (e.g. email).
+			// Add the correct title to the document.
+			// The html parser only honors the first title, so it should be enough to add it
+			// at the top of the document.
 			bprintf(outbuffer, "<title>%s</title>\n", titlefromadd);
 			bmemcpy(outbuffer, document, dokument_size);
 		}
@@ -706,7 +706,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		return 0;
 	}
 
-	//hvis dette er en fil av type text trenger vi ikke og konvertere den.
+	// if this is a file of type text we don't need to convert it.
 	if (strcmp((*fileFilterOrginal).format,"text") == 0) {
 		#ifdef DEBUG
 			printf("fileFilter ses it is a file of format text. Can use it direktly\n");
@@ -715,15 +715,15 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		char *cpbuf;
 		int cpbufsize;
 
-		//konvertere alle \n til <br>
+		// convert all \n to <br>
 		cpbufsize = (dokument_size + 512 +1);
 		cpbuf = malloc(cpbufsize);
 
 		memcpy(cpbuf,document,dokument_size);
 		cpbuf[dokument_size] = '\0';
 
-		//stripper < og > tegn, da html parseren vil tro det er html tagger.
-		//de er jo som kjent på formater < og >
+		// strip < and > characters, since the html parser would think they are html tags.
+		// they are of course in the form < and >
 		stripTags(cpbuf,dokument_size);
 
 		#ifdef DEBUG
@@ -737,7 +737,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
                 return 1;
 	}
 
-	//vi må lage en kopi av filfilter infoen, da vi skal endre den.
+	// we have to make a copy of the file filter info, since we are going to modify it.
 	fileFilter = malloc(sizeof(struct fileFilterFormat));
 
 	memcpy(fileFilter, fileFilterOrginal, sizeof(struct fileFilterFormat));
@@ -748,7 +748,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
 
 	/*****************************************************************************
-		Vi har konverter. Må skrive til fil får å kunne sende den med
+		We have a converter. Must write to a file in order to be able to pass it along
 	*****************************************************************************/
 
 	pid_t pid = getpid();
@@ -769,7 +769,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	fwrite(document,1,dokument_size,filconfp);
 	fclose(filconfp);
 
-	//reåpner den read only, ogi lager en delt lås på filen, slik at vi ungår at perl /tmp watch sletter den.
+	// reopen it read only, and take a shared lock on the file, so that we avoid the perl /tmp watch deleting it.
 	if ((filconfp = fopen(filconvertetfile_real,"rb")) == NULL) {
 		perror(filconvertetfile_real);
 		exit(1);
@@ -819,15 +819,15 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 //<<<<<<< bbdocument.c
 
 //=======
-	//her parser vi argumenter selv, og hver space blir en ny argyment, selv om vi 
-	//bruker "a b", som ikke riktig blir to argumenter her, a og b
-	//splitter på space får å lage en argc
+	// here we parse arguments ourselves, and each space becomes a new argument, even when we
+	// use "a b", which doesn't really become two arguments here, a and b
+	// split on space to build an argc
 	/*TokCount = split((*fileFilter).command, " ", &splitdata);
 	//#ifdef DEBUG
 	printf("splitet comand in %i, program is \"%s\"\n",TokCount,splitdata[0]);
 	//#endif
 	printf("running: %s\n",(*fileFilter).command);
-	//sender med størelsen på buferen nå. Vil få størelsen på hva vi leste tilbake
+	// pass along the size of the buffer now. Will get back the size of what we read
 	char *execobuf = malloc(exeocbuflen);
 //>>>>>>> 1.64
 
@@ -909,20 +909,20 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 #endif
 
 	if (strcmp((*fileFilter).outputformat,"text") == 0) {
-                //stripper < og > tegn, da html parseren vil tro det er html tagger.
-                //de er jo som kjent på formater < og >
+                // strip < and > characters, since the html parser would think they are html tags.
+                // they are of course in the form < and >
                 stripTags(documentfinishedbuftmp,strlen(documentfinishedbuftmp));
 
 		bprintf(outbuffer, html_text_tempelate,titlefromadd,documentfinishedbuftmp);
 	}
 	else if (strcmp((*fileFilter).outputformat,"html") == 0) {
-		//html trenger ikke å konvertere
-		//dette er altså outputformat html. Ikke filtype outputformat. Filtupe hondteres lengere oppe
-		//ToDo: må vel kopiere inn noe data her???
+		// html doesn't need converting
+		// this is the output format html. Not the filetype output format. Filetype is handled further up
+		// ToDo: should probably copy in some data here???
 		bprintf(outbuffer, "%s", documentfinishedbuftmp);
-		// Ved filkonvertering vil tittelen som sendes med (from add) være filnavnet.
-		// Den vil vi kun bruke dersom dokumentet i seg selv ikke har en tittel.
-		// Derfor legges den tittelen til nederst i dokumentet:
+		// In file conversion the title passed along (from add) will be the filename.
+		// We only use it if the document itself does not have a title.
+		// Therefore that title is added at the bottom of the document:
 		bprintf(outbuffer, "<title>%s</title>\n", titlefromadd);
 	}
 	else if (strcmp((*fileFilter).outputformat,"textfile") == 0) {
@@ -951,8 +951,8 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 
 		printf("strlen cpbuf: %i\n",strlen(cpbuf));
 
-                //stripper < og > tegn, da html parseren vil tro det er html tagger.
-                //de er jo som kjent på formater < og >
+                // strip < and > characters, since the html parser would think they are html tags.
+                // they are of course in the form < and >
                 stripTags(cpbuf,inode.st_size);
 
 		fclose(fh);
@@ -962,7 +962,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 		bprintf(outbuffer, html_text_tempelate, titlefromadd, cpbuf);
 		free(cpbuf);
 
-		//seltter filen vi lagde
+		// delete the file we created
 		unlink(filconvertetfile_out_txt);
 	}
 	else if (strcmp((*fileFilter).outputformat,"htmlfile") == 0) {
@@ -1060,7 +1060,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 				unlink(path);
 				docbuf[docbufsize] = '\0';
 
-				//runarb: 18 jan 2008: har var titel "", ikke titlefromadd, som gjorde at 24so crawling mistet titler.
+				//runarb: 18 jan 2008: here the title was "", not titlefromadd, which made 24so crawling lose titles.
 				if (bbdocument_convert(ft, docbuf, docbufsize, outbuffer, titlefromadd, subname, documenturi, lastmodified, acl_allow, acl_denied,  NULL) == 0) {
 					fprintf(stderr, "Failed on bbdocument_convert.\n");
 					failed++;
@@ -1096,7 +1096,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 	fclose(filconfp);
 
 	#ifndef DEBUG
-		//runarb: 13okr2007: hvorfor ver denne komentert ut? Det hoper seg opp med filer
+		//runarb: 13okr2007: why is this commented out? Files pile up
 		//unlink(filconvertetfile_real);
 	#endif
 
@@ -1131,7 +1131,7 @@ int bbdocument_convert(char filetype[],char document[],const int dokument_size, 
 }
 
 
-//stenger ned alle åpne filer
+// close down all open files
 int bbdocument_close (container *attrkeys) {
 	rclose(attrkeys);
 
@@ -1142,7 +1142,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	struct ReposetoryHeaderFormat ReposetoryHeader;
 
-	size_t htmlbuffersize = 0;//((dokument_size *2) +512);	//+512 da vi skal ha med div meta data, som html kode
+	size_t htmlbuffersize = 0;//((dokument_size *2) +512);	//+512 because we want to include various meta data, as html code
 	char *htmlbuffer = NULL;// = malloc(htmlbuffersize);
 	char *imagebuffer;
 	char *documenttype_real;
@@ -1161,7 +1161,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	else printf(" )\n");
 
 
-	//tester at det ikke finnes først. Hvis det finnes hånterer vi det. Eventuelt også lagre  den nye versjonen hvis det er forandret.
+	// first test that it doesn't already exist. If it does we handle it. Possibly also store the new version if it has changed.
 	if (uriindex_get(documenturi,&DocIDForExistTest,&lastmodifiedForExistTest,subname)) {
 
 		if (lastmodified == 0) {
@@ -1176,11 +1176,11 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 		
 		printf("We have document from before, but modified time have been updated. Will update the document.\n");
 		printf("lastmodifiedForExistTest: %u, lastmodified: %u\n",lastmodifiedForExistTest,lastmodified);
-		//hvis url er kjent, men oppdater rebruker vi den.
+		// if the url is known, but updated, we reuse it.
 		ReposetoryHeader.DocID = DocIDForExistTest;
 	}
 	else {
-		//hvis vi ikke har DocID har vi et system som trenger å få opprettet det. For eks bb eller bdisk.
+		// if we don't have a DocID we have a system that needs to have it created. For example bb or bdisk.
 		ReposetoryHeader.DocID = rGeneraeADocID(subname);
 
 		#ifdef DEBUG
@@ -1189,8 +1189,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	}
 
-	// hvis vi har en "text applicatino" enkoding, som ikke er en vanlig tekst fil, men tekst som kommer fra 
-	// en apllikasjon behandler vi det som text.
+	// if we have a "text applicatino" encoding, which isn't a normal text file but text coming from
+	// an application, we treat it as text.
 	//if (strcmp(documenttype,"tapp") == 0) {
 	//	documenttype_real = strdup("text");
 	//}
@@ -1209,13 +1209,13 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 
 
-	//hvis vi ikke her med noen egen doctype så bruker vi den vi har fått via documenttype
+	// if we don't have a separate doctype here, we use the one we got via documenttype
 	if (doctype[0] == '\0') {
-		//vi trenger ikke å ha \0 på slutten her
+		// we don't need to have \0 at the end here
 		strncpy(ReposetoryHeader.doctype,documenttype_real,sizeof(ReposetoryHeader.doctype));
 	}
 	else {
-		//vi trenger ikke å ha \0 på slutten her
+		// we don't need to have \0 at the end here
 		strncpy(ReposetoryHeader.doctype,doctype,sizeof(ReposetoryHeader.doctype));
 	}
 
@@ -1223,8 +1223,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	if (!bbdocument_convert(documenttype_real,document,dokument_size,documentbuffer,title,subname,documenturi, lastmodified,acl_allow, acl_denied, &metahash)) {
 
 		printf("can't run bbdocument_convert\n");
-		//lager en tom html buffer
-		//Setter titelen som subjekt. Hva hvis vi ikke har title?
+		//create an empty html buffer
+		// Set the title as the subject. What if we don't have a title?
 		htmlbuffersize = strlen(html_text_tempelate) + strlen(title) + 1;
 		htmlbuffer = malloc(htmlbuffersize);
 		snprintf(htmlbuffer, htmlbuffersize, html_text_tempelate,title,"");
@@ -1268,7 +1268,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 	char *all_attributes = buffer_exit(attrbuffer);
 
 
-	//prøver å lag et bilde
+	// try to create an image
 	if ((image_size != 0) && (bbdocument_makethumb("jpg",image,image_size,&imagebuffer,&imageSize))) {
 		debug("generated image from input image\n");
 		ReposetoryHeader.imageSize = imageSize;
@@ -1286,8 +1286,8 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 
 	ReposetoryHeader.clientVersion = 2.14;
 
-	//runarb:  8 juli 2008: tar bort bruken av ReposetoryHeader's url
-	//runarb: 11 juli 2008: kan ikke gjøre dette, da vi kopierer den inn i DocumentIndex fra ReposetoryHeader 
+	//runarb:  8 juli 2008: removing the use of ReposetoryHeader's url
+	//runarb: 11 juli 2008: can't do this, since we copy it into DocumentIndex from ReposetoryHeader 
 	strncpy(ReposetoryHeader.url,documenturi,sizeof(ReposetoryHeader.url));
 		
 
@@ -1300,7 +1300,7 @@ int bbdocument_add(char subname[],char documenturi[],char documenttype[],char do
 #endif
 	ReposetoryHeader.time = lastmodified;
 
-	ReposetoryHeader.storageTime = 0; //setes automatisk av rApendPostcompress
+	ReposetoryHeader.storageTime = 0; // set automatically by rApendPostcompress
 
 #ifdef DEBUG
 	printf("ACL was allow \"%s\", %i bytes, denied \"%s\", %i bytes\nsubname %s\n",acl_allow,ReposetoryHeader.acl_allowSize,acl_allow,ReposetoryHeader.acl_allowSize,subname);
@@ -1342,6 +1342,14 @@ int bbdocument_deletecoll(char collection[]) {
 
 	debug("Deleting collection: \"%s\"\n",collection);
 
+	// An empty name would make the paths below point at the shared "iindex/"
+	// trees themselves; "www" is the legacy shared layout with no per-collection
+	// directory. Neither is a collection anyone can delete.
+	if (collection[0] == '\0' || strcmp(collection,"www") == 0) {
+		fprintf(stderr,"bbdocument_deletecoll: refusing to delete collection \"%s\"\n",collection);
+		return 0;
+	}
+
 	LotNr = 1;
 	while((fh =lotOpenFileNoCasheByLotNr(LotNr,"reposetory","r",'s',collection)) != NULL) {
 		GetFilPathForLot(FilePath,LotNr,collection);
@@ -1362,7 +1370,7 @@ int bbdocument_deletecoll(char collection[]) {
 				printf("Deleting: FilePath: %s\nIndexPath: %s\n",FilePath,IndexPath);
 			#endif
 
-			if ((unlink(IndexPath) != 1) && (errno != ENOENT)) { //ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
+			if ((unlink(IndexPath) != 1) && (errno != ENOENT)) { //ENOENT=No such file or directory. Don't show an error if the file didn't exist. That is completely normal
                 	        perror("remove IndexPath");
                 	}
 
@@ -1372,13 +1380,27 @@ int bbdocument_deletecoll(char collection[]) {
 				printf("Deleting: FilePath: %s\nDictionaryPath: %s\n",FilePath,DictionaryPath);
 			#endif
 
-			if ((unlink(DictionaryPath) != 0) && (errno != ENOENT)) {//ENOENT=No such file or directory. Viser ikke feil hvis filen ikke fantes. Det er helt normalt
+			if ((unlink(DictionaryPath) != 0) && (errno != ENOENT)) {//ENOENT=No such file or directory. Don't show an error if the file didn't exist. That is completely normal
                 	        perror("remove DictionaryPath");
                 	}
 		}
 	}
 
-	//sletter i userToSubname.db
+	// The loop above only knows the index files for one language ("aa") and
+	// left everything else behind: per-language index and dictionary files,
+	// attribute indexes and the directories themselves. A collection recreated
+	// under the same name then answered queries with stale DocIDs. Remove the
+	// whole iindex/<collection> tree from every data directory.
+	for (i=0; i < NrOfDataDirectorys; i++) {
+		struct stat st;
+		GetFilePathForIindexCollection(IndexPath,i,collection);
+		if (stat(IndexPath,&st) == 0 && S_ISDIR(st.st_mode)) {
+			debug("Deleting iindex tree: %s\n",IndexPath);
+			rrmdir(IndexPath);
+		}
+	}
+
+	// delete from userToSubname.db
         struct userToSubnameDbFormat userToSubnameDb;
 
         if (!userToSubname_open(&userToSubnameDb,'w')) {

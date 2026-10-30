@@ -61,7 +61,7 @@ sub crawl_update {
 	my $sth = $dbh->prepare('SELECT TABLE_SCHEMA,TABLE_NAME, OBJECTPROPERTY(object_id(TABLE_NAME), N\'IsUserTable\') AS type  FROM INFORMATION_SCHEMA.TABLES');
 	$sth->execute;
 
-	#laster ned sql resultater
+	# download the SQL results
 	my @tables = ();
 	while ((my $r = $sth->fetchrow_hashref)) {
 

@@ -1,7 +1,7 @@
 // (C) Copyright Boitho 2006, Magnus Galåen (magnusga@idi.ntnu.no)
 
-// BUGS: tekststreng > 1600 tegn?
-// BUGS: fraselengde > MAX_SNIPPET_LEN ?
+// BUGS: text string > 1600 chars?
+// BUGS: phrase length > MAX_SNIPPET_LEN ?
 
 %include
 {
@@ -34,20 +34,20 @@
 #define POS_DATA_SIZE	100
 
 
-// Braheten til en posisjon (til bruk i dynamisk programmering):
+// The goodness of a position (for use in dynamic programming):
 struct pos_data_struct
 {
-    int		*match_start, *match_end;		// Array med antall påbegynte og avsluttende treff.
+    int		*match_start, *match_end;		// Array with the number of started and completed matches.
     int		b_start, b_end;
     int		start_rpos, stop_rpos;
     BOOL	is_div_start, is_head_start, is_span_start, is_sentence_start;
-	// - Antall trefford hittil i dokumentet [33,4,0,89]
-	// - Antall påbegynte treffraser _før_denne_pos_ i dokumentet [2,1,3]
-	// - Antall avsluttede treffraser _med_denne_pos_ i dokumentet [2,0,3]
-	// - Er dette en div-start?
-	// - Er dette en head-start?
-	// - Er dette en span-start?
-	// - Er treffet i en head/denne head-en?
+	// - Number of matched words so far in the document [33,4,0,89]
+	// - Number of phrase matches started _before_this_pos_ in the document [2,1,3]
+	// - Number of phrase matches completed _at_this_pos_ in the document [2,0,3]
+	// - Is this a div-start?
+	// - Is this a head-start?
+	// - Is this a span-start?
+	// - Is the match in a head/this head?
 };
 
 struct match_data_struct
@@ -81,7 +81,7 @@ struct parser_data
 };
 
 
-// Flytt til neste posisjon i 'pos_data' (sirkulær array).
+// Move to the next position in 'pos_data' (circular array).
 void pos_data_next_ptr( struct parser_data *pd )
 {
     int		i;
@@ -99,7 +99,7 @@ void pos_data_next_ptr( struct parser_data *pd )
 	}
 }
 
-// Returner relativ posisjon i 'pos_data' (sirkulær array).
+// Return a relative position in 'pos_data' (circular array).
 int pos_data_get_rel_ptr( struct parser_data *pd, int rel_pos )
 {
     int		i = pd->pos_data_ptr;
@@ -123,7 +123,7 @@ void save_snippet( struct parser_data *pd )
 
 		int	dest_pos = 0, size, matches=0, bstart=0, written_matches=0;
 
-		// For å hindre at invalide b-tagger blir skrevet ut (f.eks: "bla</b> bla <b>bla bla</b> bla <b>bla").
+		// To prevent invalid b-tags from being written out (e.g: "bla</b> bla <b>bla bla</b> bla <b>bla").
         	for (i=pd->pos_data_snippet_start; i<0; i++)
 		    {
 			if (pd->pos_data[pos_data_get_rel_ptr(pd, i)].b_start)
@@ -207,12 +207,12 @@ void save_snippet( struct parser_data *pd )
 	    }
 }
 
-// Sjekk om denne snippeten er bedre enn den tidligere beste.
+// Check whether this snippet is better than the previous best.
 void check_if_this_is_the_best_snippet( struct parser_data *pd )
 {
     int		i, j;
 
-    // Lag pd->match_cur:
+    // Build pd->match_cur:
     pd->match_cur->balance = 0;
     pd->match_cur->sum = 0;
     pd->match_cur->num_words = - pd->pos_data_snippet_start + 1;
@@ -222,7 +222,7 @@ void check_if_this_is_the_best_snippet( struct parser_data *pd )
     pd->match_cur->begins_sentence = pd->pos_data[pos_data_get_rel_ptr(pd, pd->pos_data_snippet_start)].is_sentence_start;
     int	more_in_front = 0;
 
-    // Preferanse:	head | første treff | div | treff i første halvdel | span | setning | (TODO: avslutter setning)
+    // Preference:	head | first match | div | match in the first half | span | sentence | (TODO: ends sentence)
 
     for (i=0; i<pd->qa.n; i++)
         {
@@ -259,7 +259,7 @@ void check_if_this_is_the_best_snippet( struct parser_data *pd )
         better_match = TRUE;
 
     if (pd->match_cur->balance == pd->match_best->balance && pd->match_cur->sum == pd->match_best->sum)
-//	&& pd->match_cur->balance > 1)	// Minst ett treff!
+//	&& pd->match_cur->balance > 1)	// At least one match!
         {
     	    if (pd->match_cur->begins_with_head > pd->match_best->begins_with_head)
 	        better_match = TRUE;
@@ -451,23 +451,23 @@ sentence ::= .
 /*
 sentence ::= sentence WORD(W).
     {
-	// Sjekk om W er en match.
+	// Check whether W is a match.
 
-	// Dynamisk Programmering: Hvert ord skal være en struct som beskriver "braheten":
-	// - Antall trefford hittil i dokumentet [33,4,0,89]
-	// - Antall påbegynte treffraser _før_denne_pos_ i dokumentet [2,1,3]
-	// - Antall avsluttede treffraser _med_denne_pos_ i dokumentet [2,0,3]
-	// - Er dette en div-start?
-	// - Er dette en head-start?
-	// - Er dette en span-start?
-	// - Er treffet i en head/denne head-en?
+	// Dynamic Programming: Each word should be a struct describing its "goodness":
+	// - Number of matched words so far in the document [33,4,0,89]
+	// - Number of phrase matches started _before_this_pos_ in the document [2,1,3]
+	// - Number of phrase matches completed _at_this_pos_ in the document [2,0,3]
+	// - Is this a div-start?
+	// - Is this a head-start?
+	// - Is this a span-start?
+	// - Is the match in a head/this head?
     }
 */
 sentence ::= sentence WORD(W).
     {
 //	printf ("%s\n", W);
 	assert( strlen(W.str) < MAX_SNIPPET_LEN/2 );
-	// Dersom vi får sinnsykt lange ord, kan det skape problemer.
+	// If we get insanely long words, it can cause problems.
 
 	int	i, j;
 
@@ -489,7 +489,7 @@ sentence ::= sentence WORD(W).
 		int	len = strlen(W.str);
 		if (W.space) len++;
 
-		// Sjekk om snippet har blitt for stor:
+		// Check whether the snippet has become too large:
 		while ( pd->pos_data[pd->pos_data_ptr].stop_rpos + len
 		    > pd->pos_data[pos_data_get_rel_ptr(pd, pd->pos_data_snippet_start)].start_rpos + MAX_SNIPPET_LEN )
 		    {
@@ -521,7 +521,7 @@ sentence ::= sentence WORD(W).
 	    pd->pos_data_ptr = 0;
 	else
 	    {
-		pos_data_next_ptr( pd );	// Snirkulær.
+		pos_data_next_ptr( pd );	// Circular.
 		pd->pos_data_snippet_start--;
 	    }
 
@@ -543,7 +543,7 @@ sentence ::= sentence WORD(W).
 	pd->is_span_start = FALSE;
 // /*DEBUG:*/ printf(" --- (%i,%i,%i) ---\n", pd->pos_data[pd->pos_data_ptr].is_div_start, pd->pos_data[pd->pos_data_ptr].is_head_start, pd->pos_data[pd->pos_data_ptr].is_span_start );
 
-	// Legg til dette ordet:
+	// Add this word:
 	if (W.space && pd->cur_rpos>0) buf_printf(pd, " ");
 
 	pd->pos_data[pd->pos_data_ptr].start_rpos = pd->cur_rpos;
@@ -554,9 +554,9 @@ sentence ::= sentence WORD(W).
 	pd->cur_stop_rpos = pd->cur_rpos;
 
 
-	// Sjekk om W er en match:
+	// Check whether W is a match:
 	for (i=0; i<pd->qa.n; i++)
-	    // Sjekk for treff på frase:
+	    // Check for a phrase match:
 	    if (pd->qa.query[i].n > 1)
 		{
 		    if (!strcasecmp(pd->qa.query[i].s[pd->frase_bygger[i]], W.str))
@@ -566,7 +566,7 @@ sentence ::= sentence WORD(W).
 				{
 				    pd->frase_bygger[i] = 0;
 
-				    // Merk: pos_data for første ordet i frasen vil _ikke_ bli merket.
+				    // Note: pos_data for the first word in the phrase will _not_ be marked.
 				    for (j=1; j< pd->qa.query[i].n -1; j++)
 					pd->pos_data[ pos_data_get_rel_ptr( pd, -j ) ].match_start[i]++;
 
@@ -582,7 +582,7 @@ sentence ::= sentence WORD(W).
 			    pd->frase_bygger[i] = 0;
 			}
 		}
-	    // Treff på enkeltord:
+	    // Single-word match:
 	    else if (!strcasecmp(pd->qa.query[i].s[0], W.str))
 		{
 		    pd->pos_data[pd->pos_data_ptr].match_start[i]++;
@@ -592,7 +592,7 @@ sentence ::= sentence WORD(W).
 		    pd->pos_data[pd->pos_data_ptr].b_end = TRUE;
 		}
 
-	// Sjekk om denne snippeten er bedre enn forrige valgte:
+	// Check whether this snippet is better than the previously chosen one:
         check_if_this_is_the_best_snippet(pd);
 
  	pd->siste_tegn = 'a';

@@ -49,7 +49,7 @@ while ((!$terminated) && (($DocID,$text,$radress,$rsize) = Boitho::Reposetory::a
 $revindexha->FileClose();
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {	
 	if (not $terminated) {

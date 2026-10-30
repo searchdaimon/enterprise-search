@@ -269,9 +269,9 @@ handle_response(const xmlDocPtr doc, xmlNodePtr response, struct crawlinfo *ci, 
 					free(type);
 				} 
 				#ifdef WITH_PUBLIC_FOLDERS
-				// Runarb: 12 des 2008:
-				// ser ut til at mail i public fiolders konverteres til IPM.Post ... Tør ikke å bare grabbe
-				// IPM.Post for alle mail, da det kansje kan være noe annet i vanlig Exchange?
+				// Runarb: 12 Dec 2008:
+				// looks like mail in public folders is converted to IPM.Post ... don't dare to just grab
+				// IPM.Post for all mail, since it might be something else in regular Exchange?
 				else if (strcmp(type, "IPM.Post") == 0) {
 					free(type);
 				}

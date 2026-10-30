@@ -1,24 +1,24 @@
 /*
  *	(C) Boitho 2004-2008, Written by Magnus Galåen
  *
- *  Støttede operatorer er som følger;
- *	+	(Pluss)
+ *  Supported operators are as follows;
+ *	+	(Plus)
  *	-	(Minus)
- *	"	(Strofe)
- *	~	(Minus-strofe)
+ *	"	(Phrase)
+ *	~	(Minus-phrase)
  *	|	(Or)
  *
  *  CHANGELOG:
  *
- *    11.07.2008	Lagt til kommandoer sort og group.
- *    23.01.2008	Lagt til 'string_alternaive' og expand_query()
- *    10.01.2008	Lagt til funksjoner copy_query() og sprint_query().
- *    06.03.2007	Epostadresser blir nå skrevet om til fraser (med '.' og '@' som delimitere).
- *    22.02.2007	Har lagt til støtte for utf-8 unicode. Latin-1-supplement blir automatisk konvertert.
- *    23.11.2006	Har lagt til støtte for kommandoer: filetype/language/collection/date/status
- *    30.10.2006	La til støtte for minus-operator. Fikset potensiell memory-leak ved malformatert query.
- *    10.03.2006	Skiftet datastruktur fra "struct query" (basert på lenket
- * 					liste) til "query_array" (direkte-oppslag).
+ *    11.07.2008	Added commands sort and group.
+ *    23.01.2008	Added 'string_alternaive' and expand_query()
+ *    10.01.2008	Added functions copy_query() and sprint_query().
+ *    06.03.2007	Email addresses are now rewritten into phrases (with '.' and '@' as delimiters).
+ *    22.02.2007	Added support for utf-8 unicode. Latin-1 supplement is automatically converted.
+ *    23.11.2006	Added support for commands: filetype/language/collection/date/status
+ *    30.10.2006	Added support for the minus operator. Fixed a potential memory leak on malformatted query.
+ *    10.03.2006	Changed data structure from "struct query" (based on a linked
+ * 					list) to "query_array" (direct lookup).
  */
 
 #ifndef _QUERY_PARSER_H_
@@ -68,45 +68,45 @@ typedef struct
 
 
 /*
- *	Tolker query i 'text', og strukturerer svaret i 'qa':
+ *	Parses the query in 'text', and structures the result in 'qa':
  */
 void get_query( char text[], int text_size, query_array *qa );
 
 /*
- *	Lager query_array fra vector< pair< int, vector<string> > >:
+ *	Builds a query_array from vector< pair< int, vector<string> > >:
  */
 void make_query_array( container *query, query_array *qa );
 
 /*
- *	Frigjør og deallokerer minne i datastrukturen 'qa':
- *	NB: selve *qa blir ikke deallokert! (se test.c)
+ *	Frees and deallocates memory in the 'qa' data structure:
+ *	NB: *qa itself is not deallocated! (see test.c)
  */
 void destroy_query( query_array *qa );
 
 /*
- *	Kopierer og allokerer en ny qa:
+ *	Copies and allocates a new qa:
  */
 void copy_query( query_array *dest, query_array *src );
 
 /*
- *	Hent ut "ryddig" query-streng:
+ *	Extract a "clean" query string:
  */
 void sprint_query( char *s, int n, query_array *qa );
 char* asprint_query( query_array *qa );
 int bsprint_query_with_remove( buffer *B, container *remove, query_array *qa, int escape );
 
 /*
- *	Hent ut "ryddig" query-streng:
+ *	Extract a "clean" query string:
  */
 void sprint_expanded_query( char *s, int n, query_array *qa );
 
 /*
- *	Skriv ut query_array:
+ *	Print the query_array:
  */
 void sprint_query_array( char *s, int n, query_array *qa );
 
 /*
- *	Deprecated (vi har gått over til utf-8): Gjør om utvidede ascii-tegn til html-escapes i query-et:
+ *	Deprecated (we have switched to utf-8): Converts extended ascii characters into html escapes in the query:
  */
 void copy_htmlescaped_query( query_array *qa_dest, query_array *qa_src );
 

@@ -54,7 +54,7 @@ sub eval_file2 {
 		my $sub = <$srch>;
 		close $srch;
 
-		# Find which folder this file resists in and add the folder to the include path
+		# Find which folder this file resides in and add the folder to the include path
 		my $localinc = $file_path;
 		$localinc =~ s/(\/[^\/]+)$//;
 		unshift @INC, $localinc;
@@ -89,7 +89,7 @@ sub eval_file2 {
      # use Devel::Symdump;
      #print Devel::Symdump->rnew($package)->as_string, $/;
  
-     #print "eval_file: rutine return value $ret\n";
+     #print "eval_file: routine return value $ret\n";
      return $ret;
 }
 

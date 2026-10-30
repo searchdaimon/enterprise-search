@@ -13,10 +13,10 @@ if ($opts{d}) {
 
 
 #options:
-# 	-s ip	Bruk bar denne ip adressen til å lagre på
+# 	-s ip	Use only this ip address to store on
 
 my $terminated = 0;
-my $waitingForConection = 0; #holder om vi står å vente på en tilkobling slik at vi kan avslutte med en gang
+my $waitingForConection = 0; #tracks whether we are waiting for a connection so that we can exit immediately
 my $opt_storage_server = $opts{s}; 
 
 if (defined $opt_storage_server) {
@@ -59,7 +59,7 @@ use common qw{fin_domene};
 use constant MinUrlInQue => 2500; #url, responskode, data type, html
 use constant MinClientApplicationVersion => 0.1;
 
-use constant RobotsTxtStorageServer => '213.179.58.99'; #hvos vi skal sende robots.txt filene vi laster ned ?
+use constant RobotsTxtStorageServer => '213.179.58.99'; #where we should send the robots.txt files we download ?
 
 use constant subname => 'www';
 
@@ -67,24 +67,24 @@ use constant UrlQueuePostLength => 204;
 
 use constant RobotName => 'boitho.com-dc';
 
-use constant SocketTimeout => 600; #10 minn timeout
+use constant SocketTimeout => 600; #10 min timeout
 
-#use constant MakeThumbnale => 1; #om vi skal lage bilder for sidene vi laster ned. 1= skall, 0=skall ikke
-use constant MakeThumbnale => 0; #om vi skal lage bilder for sidene vi laster ned. 1= skall, 0=skall ikke
+#use constant MakeThumbnale => 1; #whether we should make images for the pages we download. 1= shall, 0=shall not
+use constant MakeThumbnale => 0; #whether we should make images for the pages we download. 1= shall, 0=shall not
 
 #my $UrlQueue = Thread::Queue->new;
 
 
-#oppner robot.txt databasen
+#open the robot.txt database
 
 		
-#laster blokklisten
+#load the block list
 %DomainBlockList = loadeBaqnnList();
 
-#cashe over lagringsservere for loter
+#cache of storage servers for lots
 my %lotStorageServerCashe = {};
 		
-#oppreter treaden som vil hontre urlkøen
+#create the thread that will handle the url queue
 #$UrlQueueTreadHA = threads->new(\&UrlQueueTread);
 
 Boitho::Lot::lotlistLoad();
@@ -164,7 +164,7 @@ sub make_new_child {
     		
 
  	#our $terminated = 0;
-        #our $waitingForConection = 0; #holder om vi står å vente på en tilkobling slik at vi kan avslutte med en gang
+        #our $waitingForConection = 0; #tracks whether we are waiting for a connection so that we can exit immediately
 
 
 		
@@ -173,7 +173,7 @@ sub make_new_child {
             or die "Can't unblock SIGINT for fork: $!\n";
     
 
-	#instalerer signal handler, slik at vi ikke dør mitt i ting, og vi får tid til å lagre
+	#install signal handler, so that we do not die in the middle of things, and we get time to save
         $SIG{INT} = $SIG{TERM} = $SIG{HUP} = \&signal_handler;
 	
 		###########################################################
@@ -189,10 +189,10 @@ sub make_new_child {
 		
 			#if ($FileSize > (MinUrlInQue * UrlQueuePostLength)) {	
 			if ($FileSize != 0) {
-				#Ok, filen er stor nokk, vi leser
+				#Ok, the file is big enough, we read
 			
 			
-				#finner antall urler vi skal lese
+				#find the number of urls we should read
 				my $urlsToRead = 0;
 				if ($FileSize > (MinUrlInQue * UrlQueuePostLength)) {
 					$urlsToRead = MinUrlInQue;
@@ -201,7 +201,7 @@ sub make_new_child {
 					$urlsToRead = ($FileSize / UrlQueuePostLength);
 				}
 
-				#finner ut til hvor vi skal lese til
+				#figure out where we should read to
 				my $StartToRead = $FileSize - ($urlsToRead * UrlQueuePostLength);
 		
 				seek(UrlQueueFA,$StartToRead,0) or warn("cant seek to $StartToRead $!");
@@ -222,7 +222,7 @@ sub make_new_child {
 					$lastetUrler++;
 				}
 			
-				#Sletter de urlene vi nettop leste
+				#delete the urls we just read
 				truncate(UrlQueueFA,$StartToRead) or warn("Cant truncate $!. StartToRead is $StartToRead");
 			
 				print "Lastet $lastetUrler til UrlQueue som ble på " . scalar(@UrlQueue) . "\n";
@@ -241,7 +241,7 @@ sub make_new_child {
 		
 	
 
-		#hvis vi ikke har noen urler kobler vi oss til, og lar "new_connection" ta seg av problemet
+		#if we have no urls we connect, and let "new_connection" take care of the problem
 		if (scalar(@UrlQueue) == 0) {
 				# handle connections until we've reached $MAX_CLIENTS_PER_CHILD
 				#temp:
@@ -260,7 +260,7 @@ sub make_new_child {
 					close $client;
 				#}
 		}
-		#hvis vi har URLer skal vi godta nye tilkoblinger får så lenge vi har det
+		#if we have URLs we should accept new connections for as long as we have them
 		else {
 
 			%sett = {};
@@ -280,7 +280,7 @@ sub make_new_child {
     
 
     
-		#lagerer eventuell data
+		#store any data
 		SaveQueues();
 
 #temp:
@@ -300,7 +300,7 @@ sub make_new_child {
 ###############################################################################################################################
 
 ############################################################################################################################
-# Lagerer URLKøen
+# Stores the URL queue
 ############################################################################################################################
 sub SaveQueues {
 
@@ -329,7 +329,7 @@ sub SaveQueues {
 }
 
 ############################################################################################################################
-# hånterer signaler
+# handles signals
 ############################################################################################################################
 sub signal_handler {	
 	my $signame = shift;
@@ -367,7 +367,7 @@ sub new_connection {
 	print "start of new_conection" . (Time::HiRes::time - $StartTime) . "\n\n";  
   	
 	#print "i tread\n";
-  	#skriv ut datene vi fikk inn
+  	#print out the data we received
   	#print <$fh> . "\n";
 	#exit;
   	#$fh->recv($data_read, $maxlen_read);
@@ -377,7 +377,7 @@ sub new_connection {
 	#chomp(@data_read = <$client>);
 	#$data_read = join(" ", @data_read);
 	
-	#leser første 10 bytes for å finne ut hvor mye vi skal lese
+	#read the first 10 bytes to find out how much we should read
 	#my $maxlen_read = 0;
 	#read($fh,$maxlen_read,10);
 	
@@ -390,7 +390,7 @@ sub new_connection {
 	#print "maxlen_read: $maxlen_read. protokollversjon: -$protokollversjon-\n";
 
 
-	#lengden er total beskjedslengde, så i må trekke fra 10 som er hedderen på beskjeden
+	#the length is the total message length, so we must subtract 10 which is the header on the message
 	#$maxlen_read = $maxlen_read -10;
 	
 	#print "lest første 10 bytes" . (Time::HiRes::time - $StartTime) . "\n\n";
@@ -399,7 +399,7 @@ sub new_connection {
 
 	#read($fh,$data_read,$maxlen_read);
 
-    #setter en timer slik at vi ikke henger her for altid hvis noe skulle klikke
+    #set a timer so that we do not hang here forever if something should go wrong
     my $maxlen_read = 0;
     eval {
         local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required
@@ -407,17 +407,17 @@ sub new_connection {
 
 
       
-	#leser lengde
+	#read length
         read($fh,$maxlen_read,8);
 
-	#lengden er total beskjedslengde, så i må trekke fra 10 som er hedderen på beskjeden
+	#the length is the total message length, so we must subtract 10 which is the header on the message
         $maxlen_read = $maxlen_read -10;
 
-	#leser protokol
+	#read protocol
         read($fh,$protokollversjon,2);
 	print "lest første 10 bytes" . (Time::HiRes::time - $StartTime) . "\n\n";
 
-	#leser data
+	#read data
 	read($fh,$data_read,$maxlen_read);
 
 #########
@@ -447,7 +447,7 @@ if ($@) {
 
 	print "parset xml" . (Time::HiRes::time - $StartTime) . "\n\n";
 	
-	#kjører gjenom jobbene
+	#runs through the jobs
 	#for my $jobb (@{$cust_xml->{'boithodc'}}) {
 		
 		print "Motok komando: $jobb->{'komando'}->[0]\n";
@@ -457,7 +457,7 @@ if ($@) {
 		
 		my $clientapplicationversion = $jobb->{'applicationversion'}->[0];
 		##################################################################################################################
-		# Sjekker klientens aplikasjon versjon
+		# Check the client application version
 		#
 		##################################################################################################################
 		if ($jobb->{'applicationversion'}->[0] < MinClientApplicationVersion) {
@@ -490,18 +490,18 @@ if ($@) {
 			socketSend($fh,$output->value);
 		}
 		##################################################################################################################
-		#	Honterer forespørsel om status
+		#	Handles request for status
 		#
 		###################################################################################################################
 		elsif ($jobb->{'komando'}->[0] eq 'status') {
 			print $fh "Ok\n";
 		}
 		##################################################################################################################
-		#	Honterer forespørsel om URLer for kombinert bilde og side nedlasting fra integrerte klienter
+		#	Handles request for URLs for combined image and page download from integrated clients
 		#
 		###################################################################################################################
 		elsif ($jobb->{'komando'}->[0] eq 'get_sider_for_integrert_nedlasting') {
-			#deklarere svar XMLet
+			#declare the response XML
 			
 			
 			
@@ -516,7 +516,7 @@ if ($@) {
 			for my $data (@{$jobb->{'data'}}) {
 			print "ba om $data->{'antall'}->[0] sider\n";
 				#####################################
-				#honterer å sende data til klienten
+				#handles sending data to the client
 				if (scalar(@UrlQueue) <= 0){
 				#if (1) {
 					print "Har bare " . scalar(@UrlQueue) . "urler på kø, klienten får såve\n";
@@ -536,7 +536,7 @@ if ($@) {
 				}
 				else {
 			
-					#låser, slik at bare vi har tilgang til databasen
+					#lock, so that only we have access to the database
 					open(LOCK,">../data/robottxt.lock") or die ("Cant open data/robottxt.lock: $!");
 					#print "locking robottxt.lock\n";
 					flock(LOCK,2) or die ("Can't lock lock file: $!");
@@ -573,7 +573,7 @@ if ($@) {
                                         ## someone wrote to it while we waited for the lock...
                                         seek(FORBIDDEN,0,2);
 
-					#opner databasen
+					#open the database
 					#dbmopen %DBMrobottxt, 'data/robottxt', 0666 or die("Can't open dbm data/robottxt: $!");
 					tie %DBMrobottxt, "DB_File", '../data/robottxt' or die("Can't open dbm ../data/robottxt: $!");
 					
@@ -585,7 +585,7 @@ if ($@) {
 					while ($count < $data->{'antall'}->[0]) {
 					
 						#my $UrlElement = $UrlQueue->dequeue();
-						my $UrlElement = pop(@UrlQueue) or last; #hvis vi er tom for urler sender vi de vi eventuelt har
+						my $UrlElement = pop(@UrlQueue) or last; #if we are out of urls we send whatever we may have
 						
 						#print "UrlElement: $UrlElement " . scalar(@UrlQueue) . "\n";
 				
@@ -605,7 +605,7 @@ if ($@) {
                                                         print "Bad UrlElement only " . length($UrlElement) . " bytes long\n";
                                                 }
 						elsif (IsBlocketByDomain($domene)) {
-							#honterer at en side er blokert
+							#handles that a page is blocked
 							print " siden ere på blokklisten ";
 							print BANNET $UrlElement;
 						}
@@ -613,7 +613,7 @@ if ($@) {
 							print ", sett før ($sett{$domene} times)";
 							$sett{$domene} = $sett{$domene} +1;
 
-							#putt på overflow
+							#put on overflow
 							print OVERFLOW $UrlElement;
 							
 						}
@@ -622,7 +622,7 @@ if ($@) {
 							print UDOWN $UrlElement;
 						}
 						#print "DomenesRobottxt: $DomenesRobottxt\n";
-						#sjekker at vi har sjekket om at domene har robot txt fil, og at det ikke var noen
+						#check that we have checked whether the domain has a robots.txt file, and that there was none
 						elsif (($DomenesRobottxt eq '0') || ($RobotsTxtType eq '3')) {
 							
 							if ($DomenesRobottxt eq '0') {
@@ -647,7 +647,7 @@ if ($@) {
 								$writer->characters(calkualtStorageServer($DocID));
 							$writer->endTag();
 							
-							#setter om vi skal lage thumbnale eller ikke for siden
+							#set whether we should make a thumbnail or not for the page
                                                         if (MakeThumbnale) {
                                                                 $writer->startTag('MakeThumbnale');
                                                                         $writer->characters('TRUE');
@@ -667,7 +667,7 @@ if ($@) {
 							$sett{$domene} = 1;
 						}
 						elsif ($RobotsTxtType eq '1') {
-						#domene har robots.txt fil, og vi har den på disk
+						#domain has a robots.txt file, and we have it on disk
 							print "domene har robots.txt fil, og vi hr den på disk, tetster den\n";
 	
 							my $robotstxturl = "http://$domene/robots.txt";
@@ -692,7 +692,7 @@ if ($@) {
 									$writer->characters(calkualtStorageServer($DocID));
 								$writer->endTag();
 							
-								#setter om vi skal lage thumbnale eller ikke for siden
+								#set whether we should make a thumbnail or not for the page
 								if (MakeThumbnale) {
 									$writer->startTag('MakeThumbnale');
                                                                 		$writer->characters('TRUE');
@@ -711,23 +711,23 @@ if ($@) {
 							
 							}
 							else {
-								#Blokkert av robots.txt fil. Lagrer i blokkert filen
+								#Blocked by robots.txt file. Store in the blocked file
 								print FORBIDDEN $UrlElement;
 							}
 						}
-						elsif (($DomenesRobottxt eq '')  || (($RobotsTxtType eq '2') && ($RobotsTxtData < (time - 3600)))) { #hvis vi ikke har robots.txt fil, eller vi ikke har fåttilbake en (60 min siden vi sente den ut).
+						elsif (($DomenesRobottxt eq '')  || (($RobotsTxtType eq '2') && ($RobotsTxtData < (time - 3600)))) { #if we do not have a robots.txt file, or we have not gotten one back (60 min since we sent it out).
 							#print "2: $RobotsTxtData < " . (time - 3600) . "\n";
 
 print ", har ikke robots.txt på disk, DomenesRobottxt : $DomenesRobottxt";
 print ", time: $RobotsTxtData < " . (time - 3600);
 
 							#print "Har ikke lastet ned robot.txt filen for $domene enda\n";
-							#Gir klienten beskjed om å skaffe den
-							#skriver post som betyr at vi har sent den ut til fetshin. Slik at ingen andre gjør det.
+							#Tell the client to fetch it
+							#write a record meaning that we have sent it out for fetching. So that no one else does it.
 #print "writeing domain info: $domene\n";
 							$DBMrobottxt{$domene} = pack('A A*','2',time);
 						
-							#ber klienten hente robot.txt filen
+							#ask the client to fetch the robots.txt file
 							$writer->startTag('robottxt');
 							$writer->startTag('url');
 								$writer->characters('http://' . $domene . '/robots.txt');
@@ -739,7 +739,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 							
 							$writer->endTag();
 						
-							#putter domene ut på køen igjen
+							#put the domain back on the queue
 							#$UrlQueue->enqueue("$DocID,$url");
 							#push(@UrlQueue,"$DocID,$url");
 							print OVERFLOW $UrlElement;							
@@ -748,21 +748,21 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 							$sett{$domene} = 1;
 						}
 						elsif ($RobotsTxtType eq '2') {
-						#hvis vi har sent ut beskjed om å fetshe den, men ikke fåt noen
+						#if we have sent out a message to fetch it, but not gotten any
 							#temp: print "Venter på robots.txt for $domene, time: $RobotsTxtData < " . (time - 3600) . " overflover";
 							print OVERFLOW $UrlElement;
 						
 						}
 						else {
 							print "Ble ikke fanget opp. Noe er feil ?\n";
-							#skal på over flow
+							#goes on overflow
 							print OVERFLOW $UrlElement;
 						}
 
 						#$sett{$domene} = 1;
 					}
 				
-					#stenger databsen
+					#close the database
 					#dbmclose (%DBMdatabase) or warn("cant dbmclose: $!");
 					untie %DBMrobottxt or die("Can't close dbm ../data/robottxt: $!");
 					#undefine %DBMdatabase;
@@ -788,14 +788,14 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 			
 		}
 		##################################################################################################################
-		# Hontere lagring 
+		# Handle storage
 		##################################################################################################################
 		elsif ($jobb->{'komando'}->[0] eq 'oppdater') {
 		
 			print "utfører oppdater\n";
 			print "utfører oppdater" . (Time::HiRes::time - $StartTime) . "\n\n";
 			
-			#opner Reposetory'et
+			#open the Repository
 			#Boitho::Reposetory::ropen();
 		
 			
@@ -805,20 +805,20 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 			
 			
 						
-			#finner tiden, siden dette er kostbart kjør vi det bare en gang, i steden for en gang pr side
+			#find the time; since this is expensive we do it only once, instead of once per page
 
 			my $curentTime = time;
 			
 			warn "robot.s scalar". scalar(@{$jobb->{'robottxt'}});
 						
-			#hvis vi har robots.txt filer
+			#if we have robots.txt files
 			if (scalar(@{$jobb->{'robottxt'}}) != 0) {
-				#loser, slik at bare vi har tilgang til databasen
+				#lock, so that only we have access to the database
                         	open(LOCK,">../data/robottxt.lock") or die ("Cant open ../data/robottxt.lock: $!");
                         	flock(LOCK,2) or die ("Can't lock lock file: $!");
                         	print LOCK $$;
 
-                        	#opner databasen
+                        	#open the database
                                 tie %DBMrobottxt, "DB_File", '../data/robottxt' or die("Can't open dbm ../data/robottxt: $!");
 
                         
@@ -828,7 +828,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 				for my $robottxtha (@{$jobb->{'robottxt'}}) {
 				
 					$countRobotstxt++;
-					#for robottxt filer
+					#for robots.txt files
 					print "$robottxtha->{'url'}->[0]\n";
 				
 					my $domene = fin_domene($robottxtha->{'url'}->[0]);
@@ -843,15 +843,15 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 				
 			
 					if (($robottxtha->{'response'}->[0] >= 199) && ($robottxtha->{'response'}->[0] <= 299)) {
-						#er i 200 område, vi har robot.txt fil
+						#in the 200 range, we have a robots.txt file
 				
 				
-						#dekoder
+						#decode
 						#$robottxtha->{'html'}->[0] = uncompress(MIME::Base64::decode($robottxtha->{'html'}->[0]));
 						$robottxtha->{'html'}->[0] = MIME::Base64::decode($robottxtha->{'html'}->[0]) or warn('Cant Base64 decode: ' . $!);
 						$robottxtha->{'html'}->[0] = uncompress($robottxtha->{'html'}->[0]) or warn("Cant uncompress: $! length vas: " . length($robottxtha->{'html'}->[0]) . " respons was: " . $robottxtha->{'response'}->[0] . " user: " . $userName . ' domain: ' . $robottxtha->{'url'}->[0]);
 				
-						#hvis robot.txtene er minder en 800 bytes lagres den idatabasen, hvis ikke er det ikke plass, er en grense på 1009 byt for value og key.
+						#if the robots.txt is smaller than 800 bytes it is stored in the database, otherwise there is no room; there is a limit of 1009 bytes for value and key.
 						if (length($robottxtha->{'html'}->[0]) < 800) {
 							$DBMrobottxt{$domene} = pack('A A*','1',$robottxtha->{'html'}->[0]) or warn($!);
 							print "Mindre en 800 bytes, lagrer\n";
@@ -870,7 +870,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 					}
 					else {
 						print "404, lagrer som ikke har\n";
-					#ingen robot txt fil, 404 303 eller tilsvarende error
+					#no robots.txt file, 404 303 or similar error
 						$DBMrobottxt{$domene} = pack('A','0');
 				
 					}
@@ -879,15 +879,15 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 			
 
 			
-				#stenger databsen
+				#close the database
 				untie %DBMrobottxt or die("Can't close dbm ../data/robottxt: $!");
 				
 				close(LOCK) or warn ("Canr close: $!");
-			} #enf if vi har robots.txt's
+			} #end if we have robots.txt's
 
 			print "scalar crawl" . scalar(@{$jobb->{'crawl'}}) . "\n";
 			if (scalar(@{$jobb->{'crawl'}}) != 0) {
-				#for crawlede sider
+				#for crawled pages
 
 
 				@{$jobb->{'crawl'}} = sort byDocID @{$jobb->{'crawl'}};
@@ -905,16 +905,16 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 
 						$countOKCrawl++;
 			
-						#behandler html
+						#process html
 						$crawlha->{'html'}->[0] = MIME::Base64::decode($crawlha->{'html'}->[0]) or warn('Cant unbase64: ' . $!);
 						#$crawlha->{'html'}->[0] = uncompress($crawlha->{'html'}->[0]) or warn('Cant uncompress ' . $!);
 					
 						
-						#tester om IP adressen er slått opp, hvis den ikke er det slår vi den opp
+						#test whether the IP address has been looked up; if not we look it up
 						if ($crawlha->{'ipaddress'}->[0] eq '') {
 							my $ipInBinary = inet_aton($domene);
 							
-							#tester lengde for å se om vi fikk til å slå den opp
+							#test the length to see whether we managed to look it up
 							if (length($ipInBinary) == 4) {
 								$crawlha->{'ipaddress'}->[0] = inet_ntoa($ipInBinary);
 							}
@@ -927,15 +927,15 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 					
 					
 							
-						#tester om vi har noe bilde data. Lagrer hvis vi har
+						#test whether we have any image data. Store if we do
 						if ($crawlha->{'data'}->[0] eq '') {
 						warn ("did get html, but no image for $crawlha->{'docid'}->[0]\n");
 						} 
 						else {
-							#behandler bilde
+							#process image
                                         		$crawlha->{'data'}->[0] = MIME::Base64::decode($crawlha->{'data'}->[0]) or warn($!);
 
-                                	        	#fra verjon 0.4 bruker vi ikke xlib på bildene
+                                	        	#from version 0.4 we do not use xlib on the images
                         	                	if ($clientapplicationversion <= 0.3) {
                 	                        	        $crawlha->{'data'}->[0] = uncompress($crawlha->{'data'}->[0]) or warn($!);
         	                                	}
@@ -949,7 +949,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 						#exit;
 					}
 					else {
-						#ikke 200 side
+						#not a 200 page
 						
 						Boitho::Reposetory::rApendPost($crawlha->{'docid'}->[0],$crawlha->{'url'}->[0],'htm',$crawlha->{'response'}->[0],$crawlha->{'ipaddress'}->[0],$curentTime,$clientapplicationversion,$userID,'',0,'',0,subname);
 					
@@ -958,12 +958,12 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 					}
 				}
 			
-				#stenger Reposetory'et
+				#close the Repository
 				Boitho::Reposetory::rclose();
 
 			}			
 
-			#oppdater statestikk over antall sider dennne brukeren har crawlet
+			#update statistics on the number of pages this user has crawled
 			print "Trying to conecting to mysql server\n";
 			my $dbh = MySQLDcConnect::GetHandler();
 			print "conectet\n";
@@ -987,7 +987,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 
 		$totallest = 0;
 
-		#finner tiden, siden dette er kostbart kjør vi det bare en gang, i steden for en gang pr side
+		#find the time; since this is expensive we do it only once, instead of once per page
                 my $curentTime = time;
 
 		$userID = 0;
@@ -1091,13 +1091,13 @@ print ", time: $RobotsTxtData < " . (time - 3600);
                                                 	print "motot crawler data for DocID " . $side{DociD};
 
 							$countOKCrawl++;
-	                                                #tester om vi har noe bilde data. Lagrer hvis vi har
+	                                                #test whether we have any image data. Store if we do
                                                 
                 	                        
 							print "image length $side{imagelength} ,Faktisn inage length: " . length($image) ."\n";
 						}
                         	                else {
-                                	                #ikke 200 side
+                                	                #not a 200 page
                                                 
 							
 							#Boitho::Reposetory::rApendPost($side{DociD},$side{Url},'htm',$side{Respons},$side{IPAddress},$curentTime,$clientapplicationversion,$userID,'',0,'',0);
@@ -1106,7 +1106,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
                                         	}
 
 							print "rApendPost start\n";
-							#lagrer info uanset hva status er. 301 og 302 putter info i htmlen om redirekt adresse
+							#store info regardless of status. 301 and 302 put info in the html about the redirect address
 							Boitho::Reposetory::rApendPost($side{DociD},$side{Url},'htm',$side{Respons},,$side{IPAddress},$curentTime,$clientapplicationversion,$userID,$html,$side{htmllength},$image,$side{imagelength},subname);
 					
 							print "rApendPost end\n";
@@ -1115,12 +1115,12 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 					elsif ($side{type} eq 'robottxt') {
 						if (!$robotstxtinalisert) {
 
-							#loser, slik at bare vi har tilgang til databasen
+							#lock, so that only we have access to the database
                                 			open(LOCK,">../data/robottxt.lock") or die ("Cant open ../data/robottxt.lock: $!");
                                 			flock(LOCK,2) or die ("Can't lock lock file: $!");
                                 			print LOCK $$;
 
-                                			#opner databasen
+                                			#open the database
                                 			tie %DBMrobottxt, "DB_File", '../data/robottxt' or die("Can't open dbm ../data/robottxt: $!");
 
 			
@@ -1129,7 +1129,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 
                                 		$countRobotstxt++;
 
-                                        	#for robottxt filer
+                                        	#for robots.txt files
 
                                         	my $domene = fin_domene($side{Url});
 
@@ -1139,15 +1139,15 @@ print ", time: $RobotsTxtData < " . (time - 3600);
                                         	print "Url: $side{Url}\n";
 
 						if (($side{Respons} >= 199) && ($side{Respons} <= 299)) {
-                                                	#er i 200 område, vi har robot.txt fil
+                                                	#in the 200 range, we have a robots.txt file
 
-							#robots.txt filen er komprimert, og må unkomprimeres først
+							#the robots.txt file is compressed, and must be decompressed first
 							$html = uncompress($html) or warn("cant uncompress: $!");
 
-                                                	#hvis robot.txtene er minder en 800 bytes lagres den idatabasen, hvis ikke er det ikke plass, 
-							#så vi lagrer bare de første 799 bytene. Dette får å takle store robots.txt filer, som 
-							#webmasterworld, som har en blog i sin
-							#fra og med 11.04.07 2024 bytes
+                                                	#if the robots.txt is smaller than 800 bytes it is stored in the database, otherwise there is no room, 
+							#so we store only the first 799 bytes. This is to handle large robots.txt files, like 
+							#webmasterworld, which has a blog in theirs
+							#as of 11.04.07 2024 bytes
                                                 	if ($side{htmllength} < 2024) {
                                                         	$DBMrobottxt{$domene} = pack('A A*','1',$html) or warn($!);
                                                         	print "Mindre en 2024 bytes, lagrer\n";
@@ -1166,7 +1166,7 @@ print ", time: $RobotsTxtData < " . (time - 3600);
                                         	}
                                         	else {
                                                 	print "404, lagrer som ikke har\n";
-                                        		#ingen robot txt fil, 404 303 eller tilsvarende error
+                                        		#no robots.txt file, 404 303 or similar error
                                                 	$DBMrobottxt{$domene} = pack('A','0');
 
                                         	}
@@ -1178,9 +1178,9 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 
 				}
 
-				#hvis vi har opnet robots.txt ting stenger vi de
+				#if we have opened robots.txt things we close them
 				if ($robotstxtinalisert) {
-					#stenger databsen
+					#close the database
 	                                untie %DBMrobottxt or die("Can't close dbm ../data/robottxt: $!");
 
         	                        close(LOCK) or warn ("Canr close: $!");
@@ -1188,10 +1188,10 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 				}
 
 				if ($crawlinalisert) {
-					#stenger Reposetory'et
+					#close the Repository
         	                        Boitho::Reposetory::rclose();
 				}
-				#oppdater statestikk over antall sider dennne brukeren har crawlet
+				#update statistics on the number of pages this user has crawled
                         		print "Trying to conecting to mysql server\n";
                         	my $dbh = MySQLDcConnect::GetHandler();
                         		print "conectet\n";
@@ -1221,12 +1221,12 @@ print ", time: $RobotsTxtData < " . (time - 3600);
 #
 #       print "overflowData: -$overflowData-\n";
 
-	#sover litt så vi er sikker på at alt ble sent fra bufferene.
+	#sleep a little so we are sure everything was sent from the buffers.
 	#sleep(1);
-#stenger ned sokketen,
+#close down the socket,
 #close $fh;
 	
-	#dør pent, uten dette får vi memory lekasje da anatal tråder hoper seg opp. De ser ikke ut til å dø selv om de går ut av scop
+	#die nicely; without this we get a memory leak as the number of threads piles up. They do not seem to die even though they go out of scope
 	#$self = threads->self;
 	#$self->detach;
 	#exit;
@@ -1249,14 +1249,14 @@ sub socketSend {
 	#print $socket pack('i',length($data)) . $data;
 	
 	#print $socket sprintf('%10i', length($data) + 10) . $data;
-	#bruker eval for å forhindre at vi klikker hvis send ikke gikk. Fikk "send: Cannot determine peer address at mymod.pm line 146" feil en skjelden gang her
+	#use eval to prevent us from crashing if send failed. Got "send: Cannot determine peer address at mymod.pm line 146" error on a rare occasion here
 	#eval { $socket->send(sprintf('%10i', length($data) + 10) . $data) }; warn $@ if $@;
 	my $out = sprintf('%10i', length($data) + 10) . $data;
 	#print "sender: $out\n";
 	
 	eval { print $socket $out}; warn $@ if $@;
 	
-	sleep(5); #gir tid til å skrive ut data
+	sleep(5); #give time to print out the data
 	
 }
 
@@ -1264,7 +1264,7 @@ sub socketSend {
 #	my $DocID = shift;
 #	my $lot = Boitho::Lot::rLotForDOCid($DocID);
 #
-#	#husk vi bruker IP her, ikke hostname !!!!!
+#	#remember we use IP here, not hostname !!!!!
 #
 #	if ($lot > 595) {
 #		#bbs-002.boitho.com
@@ -1288,7 +1288,7 @@ sub socketSend {
 #}
 
 ###############################################################################
-# baserer seg på å ha en global cashe av StorageServer fro loter. Følgen må erklæres i main programet
+# relies on having a global cache of StorageServer for lots. The following must be declared in the main program
 #my %lotStorageServerCashe = {};
 #
 sub calkualtStorageServer {
@@ -1307,10 +1307,10 @@ sub calkualtStorageServer {
 
         if (not exists $lotStorageServerCashe{$lot}) {
 
-                #husk vi bruker IP her, ikke hostname !!!!!
+                #remember we use IP here, not hostname !!!!!
                 my $hostname =  Boitho::Lot::lotlistGetServer($lot);
 
-                #henter ip
+                #fetch ip
                 $ipaddr = inet_ntoa(inet_aton($hostname));
 
                 $lotStorageServerCashe{$lot} = $ipaddr;
@@ -1332,13 +1332,13 @@ sub byDocID {
 }
 
 ###################################################################################
-# Rutine for å teste om et domene er i bannlista
+# Routine to test whether a domain is in the ban list
 ###################################################################################
 sub IsBlocketByDomain() {
         my $domain = shift;
         my $ReturnStatus = 0;
 
-        my @elements = split(/\./,$domain);     #splitter opp domene i enkeltdele
+        my @elements = split(/\./,$domain);     #split the domain into individual parts
         @elements = reverse(@elements);
 
         my $forTest = '';
@@ -1362,12 +1362,12 @@ sub IsBlocketByDomain() {
         return $ReturnStatus;
 }
 #########################################################################
-#laster listen over sider vi blokkerer
+#load the list of pages we block
 #########################################################################
 sub loadeBaqnnList {
         my %DomainBlockList = {};
 
-        #leser inn alle sidene som er blokert
+        #read in all the blocked sites
         open(INF,'../data/bann_list.txt') or die($!);
         while (<INF>) {
 

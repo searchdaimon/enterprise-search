@@ -22,7 +22,11 @@ my %state = $page->get_state();
 my $tpl_file;
 my $vars = {};
 
-my $pageNet = Page::Settings::Network->new($page->get_dbh);
+# Built on first use only: its constructor dies when the appliance network
+# config (ifcfg-*, configwrite) is absent, e.g. in a container, and that must
+# not take every other settings page down with it.
+my $pageNet;
+sub pageNet { $pageNet ||= Page::Settings::Network->new($page->get_dbh) }
 my $pageCM = Page::Settings::CollectionManager->new($page->get_dbh);
 
 my $using_api = 0;
@@ -42,10 +46,10 @@ elsif (defined($state{'submit'})) {
 
 	if (defined $btn->{'network_conf'}) {
             my ($tpl_file, $restart_id) 
-                = $pageNet->show_restart($vars, $state{netconf});
+                = pageNet()->show_restart($vars, $state{netconf});
    
             $page->process_tpl($tpl_file, $vars, tpl_folders => $tpl_folders);
-            $pageNet->run_updates($restart_id, $state{netconf}, $state{resolv});
+            pageNet()->run_updates($restart_id, $state{netconf}, $state{resolv});
             exit;
         }
 
@@ -162,11 +166,11 @@ elsif (defined $state{'view'}) {
 	}
 
         elsif ($view eq "network_restart") {
-            $tpl_file = $pageNet->show_post_restart($vars, $state{restart});
+            $tpl_file = pageNet()->show_post_restart($vars, $state{restart});
         }
 
 	elsif ($view eq "network") {
-		$tpl_file = $pageNet->show_network_config($vars);
+		$tpl_file = pageNet()->show_network_config($vars);
 	}
 
         elsif ($view eq "collection_manager") {
