@@ -1,0 +1,67 @@
+# CI: unit tests in the image's `test` stage, then the full appliance smoke test
+# against the compose stack. Everything runs in Docker because the C tree only
+# builds in the appliance environment (see CLAUDE.md).
+#
+# The base/builder stages compile Berkeley DB, flex and bison from source, so
+# the first run is slow (~20 min). Layers are cached in the GitHub Actions cache
+# and later runs only rebuild what changed.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit tests (C + Perl)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the test stage (runs the tests)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: test
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  smoke:
+    name: Smoke test (compose stack)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          tags: searchdaimon/enterprise-search:latest
+          load: true
+          push: false
+          cache-from: type=gha
+      - name: Start the stack
+        run: docker compose up -d --no-build
+      - name: Wait for httpd
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/ || true)
+            case "$code" in 200|301|302) echo "httpd up after ${i}0s"; exit 0;; esac
+            sleep 10
+          done
+          echo "httpd never came up"; docker compose logs es | tail -n 100; exit 1
+      - name: Run the smoke test
+        run: docker compose exec -T es bash test/smoke/smoke.sh
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose logs --no-color | tail -n 300
