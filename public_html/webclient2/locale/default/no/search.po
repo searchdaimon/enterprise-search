@@ -368,3 +368,6 @@ msgstr "ZIP-arkiv"
 
 msgid "Application data"
 msgstr "Program data"
+
+msgid "Refine search"
+msgstr "Avgrens søket"
