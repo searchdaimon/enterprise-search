@@ -77,6 +77,9 @@ RUN curl -sL https://cpanmin.us -o /usr/local/bin/cpanm && chmod +x /usr/local/b
 # Modules not in the AL2023 repos; app/admin runtime deps. MIME::Tools (MIME::Entity / MIME::Parser),
 # together with the distro perl-OLE-Storage_Lite above, are what the .msg file
 # filter needs to index Outlook messages (upstream issues #18 / #27).
+# SOAP::Lite is what the Sharepoint and Entropysoft connectors (crawlers/,
+# Modules/SD*) and crawlManager2/getacl.pl talk SOAP with. HTML::Strip (XS, built
+# with the toolchain installed above) is the Sharepoint connector's other dependency.
 RUN cpanm --notest \
         XML::SimpleObject \
         Net::IP \
@@ -84,7 +87,9 @@ RUN cpanm --notest \
         Apache::Htpasswd \
         HTTP::Request::AsCGI \
         SQL::Abstract \
-        MIME::Tools
+        MIME::Tools \
+        SOAP::Lite \
+        HTML::Strip
 
 RUN useradd boitho && chmod 701 /home/boitho
 
@@ -186,6 +191,38 @@ RUN make build host=searchdaimon3 \
 # boithobb-setuid RPM, which `make build` does not cover. Built unprivileged
 # here; owner/mode are set in the runtime stage.
 RUN make InitServices YumWrapper NetConfig repomodwrap host=searchdaimon3
+
+##############################################################################
+# test: unit tests (C + Perl) on top of the compiled builder
+##############################################################################
+# Not on the runtime image's dependency path, so a normal `docker compose build`
+# never runs it. CI (and anyone else) runs it explicitly:
+#
+#     docker build --target test .
+#
+# The C tests link against the lib/*.a and flex objects the builder produced, so
+# they test exactly the code the daemons were built from. ASan/UBSan is on.
+FROM builder AS test
+
+# The ASan/UBSan runtimes the sanitized test binaries load; gcc alone does not
+# pull them in. Installed here rather than in builder to keep that stage cached.
+RUN dnf -y install libasan libubsan && dnf clean all
+
+# The Perl sources the syntax check and module tests read, plus config/ (the
+# admin panel's config.pm reads config/setup.txt at compile time). Merged over
+# the builder tree (which holds only what the C build needed).
+COPY cgi-bin/ cgi-bin/
+COPY public_html/ public_html/
+COPY Modules/ Modules/
+COPY config/ config/
+COPY crawlers/ crawlers/
+COPY test/ test/
+# The web client reads config.pm, which the runtime stage also makes from the template.
+COPY public_html/webclient2/config.pm.template public_html/webclient2/config.pm
+
+# detect_leaks=0: the legacy code leaks small allocations by design (process-per-
+# request daemons); LeakSanitizer would otherwise fail every binary.
+RUN ASAN_OPTIONS=detect_leaks=0 make -C test check host=searchdaimon3 SANITIZE=1
 
 ##############################################################################
 # runtime: artifacts + the source tree
