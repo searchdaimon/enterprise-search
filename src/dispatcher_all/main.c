@@ -24,6 +24,11 @@
 
 
 #include "../common/define.h"
+
+/* MySQL host for the boithobb config database. BOITHO_MYSQL_HOST overrides the
+ * default when the database runs on another host (e.g. a separate container);
+ * the same convention as src/key/key.c and src/common/config.c. */
+#define DISPATCHER_MYSQL_HOST (getenv("BOITHO_MYSQL_HOST") ? getenv("BOITHO_MYSQL_HOST") : "localhost")
 #include "../common/lot.h"
 #include "../common/vid.h"
 #include "../common/stdlib.h"
@@ -763,7 +768,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
 		}
 	#else
-		if(!mysql_real_connect(&demo_db, "localhost", "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
+		if(!mysql_real_connect(&demo_db, DISPATCHER_MYSQL_HOST, "boitho", "G7J7v5L5Y7", BOITHO_MYSQL_DB, 3306, NULL, 0)){
 			fprintf(stderr,"Can't connect to mysqldb: %s",mysql_error(&demo_db));
 		}
 
