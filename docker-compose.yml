@@ -17,7 +17,7 @@
 
 services:
   db:
-    image: mariadb:10.11
+    image: mariadb:12.2
     container_name: enterprise-search-db
     # The appliance's MySQL used latin1, and the legacy schema relies on it: e.g.
     # `config` has a varchar(255) PRIMARY KEY, which is 255 bytes in latin1 but
